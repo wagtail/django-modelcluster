@@ -93,4 +93,4 @@ class ClusterTaggableManager(TaggableManager):
 
 
 # tell south to ignore ClusterTaggableManager, like it ignores taggit.TaggableManager
-add_ignored_fields(["^cluster\.tags\.ClusterTaggableManager"])
+add_ignored_fields(["^modelcluster\.tags\.ClusterTaggableManager"])

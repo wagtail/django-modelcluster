@@ -79,9 +79,15 @@ class ClusterTaggableManager(TaggableManager):
     def __get__(self, instance, model):
         # override TaggableManager's requirement for instance to have a primary key
         # before we can access its tags
-        manager = _ClusterTaggableManager(
-            through=self.through, model=model, instance=instance
-        )
+        try:
+            manager = _ClusterTaggableManager(
+                through=self.through, model=model, instance=instance, prefetch_cache_name = self.name
+            )
+        except TypeError:  # fallback for django-taggit pre 0.11
+            manager = _ClusterTaggableManager(
+                through=self.through, model=model, instance=instance
+            )
+
         return manager
 
     def value_from_object(self, instance):

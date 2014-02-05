@@ -197,7 +197,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                 rel_name = rel.get_accessor_name()
 
                 # apply 'formsets' and 'exclude_formsets' rules from meta
-                if opts.formsets and rel_name not in opts.formsets:
+                if opts.formsets is not None and rel_name not in opts.formsets:
                     continue
                 if opts.exclude_formsets and rel_name in opts.exclude_formsets:
                     continue

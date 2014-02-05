@@ -360,3 +360,24 @@ class ClusterFormTest(TestCase):
         self.assertEqual(1, Band.objects.get(id=beatles.id).albums.count())
         beatles.save()
         self.assertEqual(0, Band.objects.get(id=beatles.id).albums.count())
+
+    def test_cluster_form_without_formsets(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                formsets = ()
+
+        beatles = Band(name='The Beatles')
+        beatles.save()
+
+        form = BandForm({
+            'name': "The New Beatles",
+        }, instance=beatles)
+
+        self.assertTrue(form.is_valid())
+
+        form.save(commit=False)
+
+        self.assertEqual(1, Band.objects.filter(name='The Beatles').count())
+        beatles.save()
+        self.assertEqual(0, Band.objects.filter(name='The Beatles').count())

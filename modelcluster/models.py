@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django.utils.encoding import is_protected_type

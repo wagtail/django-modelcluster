@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from django.db.models import Model
 
 # Constructor for test functions that determine whether an object passes some boolean condition

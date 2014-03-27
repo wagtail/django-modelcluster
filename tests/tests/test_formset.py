@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from django.test import TestCase
 from modelcluster.forms import transientmodelformset_factory, childformset_factory
 from tests.models import Band, BandMember

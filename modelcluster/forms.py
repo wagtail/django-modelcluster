@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from django.forms.models import (
     BaseModelFormSet, modelformset_factory,
     ModelForm, _get_foreign_key, ModelFormMetaclass, ModelFormOptions
@@ -240,7 +242,7 @@ class ClusterForm(ModelForm):
 
     def as_p(self):
         form_as_p = super(ClusterForm, self).as_p()
-        return form_as_p + u''.join([formset.as_p() for formset in self.formsets.values()])
+        return form_as_p + ''.join([formset.as_p() for formset in self.formsets.values()])
 
     def is_valid(self):
         form_is_valid = super(ClusterForm, self).is_valid()

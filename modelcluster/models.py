@@ -39,7 +39,7 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
         pk_field = pk_field.rel.to._meta.pk
 
     kwargs = {pk_field.attname: data['pk']}
-    for field_name, field_value in data.iteritems():
+    for field_name, field_value in data.items():
         try:
             field = model._meta.get_field(field_name)
         except FieldDoesNotExist:

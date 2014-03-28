@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from django.db.models import Model
 
 # Constructor for test functions that determine whether an object passes some boolean condition
@@ -34,7 +36,7 @@ class FakeQuerySet(object):
     def filter(self, **kwargs):
         filters = []  # a list of test functions; objects must pass all tests to be included
             # in the filtered list
-        for key, val in kwargs.iteritems():
+        for key, val in kwargs.items():
             key_clauses = key.split('__')
             if len(key_clauses) != 1:
                 raise NotImplementedError("Complex filters with double-underscore clauses are not implemented yet")

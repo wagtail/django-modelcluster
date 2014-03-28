@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from django.db import models, IntegrityError
 from django.db.models.fields.related import ForeignKey, ForeignRelatedObjectsDescriptor
 from django.utils.functional import cached_property

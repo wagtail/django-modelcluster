@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from django.test import TestCase
 from tests.models import Band, BandMember, Album
 from modelcluster.forms import ClusterForm

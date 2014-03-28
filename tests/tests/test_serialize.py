@@ -62,7 +62,7 @@ class SerializeTest(TestCase):
         snail_ice_cream = Dish.objects.create(name="Snail ice cream")
         chateauneuf = Wine.objects.create(name="Chateauneuf-du-Pape 1979")
         fat_duck = Restaurant(name="The Fat Duck", proprietor=heston_blumenthal, serves_hot_dogs=False, menu_items=[
-            MenuItem(dish=snail_ice_cream, price=20.00, recommended_wine=chateauneuf)
+            MenuItem(dish=snail_ice_cream, price='20.00', recommended_wine=chateauneuf)
         ])
         fat_duck_json = fat_duck.to_json()
 

@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+    from distutils.core import setup
 
 setup(
     name='django-modelcluster',
@@ -12,6 +15,9 @@ setup(
     packages=['modelcluster', 'tests'],
     license='BSD',
     long_description=open('README.rst').read(),
+    install_requires=[
+        "six>=1.6.1",
+    ],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Web Environment',

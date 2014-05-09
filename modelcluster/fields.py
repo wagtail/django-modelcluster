@@ -26,7 +26,9 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
 
     class DeferringRelatedManager(models.Manager):
         def __init__(self, instance):
+            super(DeferringRelatedManager, self).__init__()
             self.instance = instance
+            self.model = instance.__class__
 
         def get_live_query_set(self):
             """

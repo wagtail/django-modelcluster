@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from django.db import models, IntegrityError
+from django.db import models, IntegrityError, router
 from django.db.models.fields.related import ForeignKey, ForeignRelatedObjectsDescriptor
 from django.utils.functional import cached_property
 
@@ -23,9 +23,14 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
     """
 
     relation_name = related.get_accessor_name()
+    rel_field = related.field
+    superclass = related.model._default_manager.__class__
+    rel_model = related.model
 
-    class DeferringRelatedManager(models.Manager):
+    class DeferringRelatedManager(superclass):
         def __init__(self, instance):
+            super(DeferringRelatedManager, self).__init__()
+            self.model = rel_model
             self.instance = instance
 
         def get_live_query_set(self):
@@ -45,6 +50,21 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
                 return self.get_live_query_set()
 
             return FakeQuerySet(related.model, results)
+
+        def get_prefetch_queryset(self, instances):
+            rel_obj_attr = rel_field.get_local_related_value
+            instance_attr = rel_field.get_foreign_related_value
+            instances_dict = dict((instance_attr(inst), inst) for inst in instances)
+            db = self._db or router.db_for_read(self.model, instance=instances[0])
+            query = {'%s__in' % rel_field.name: instances}
+            qs = super(DeferringRelatedManager, self).get_queryset().using(db).filter(**query)
+            # Since we just bypassed this class' get_queryset(), we must manage
+            # the reverse relation manually.
+            for rel_obj in qs:
+                instance = instances_dict[rel_obj_attr(rel_obj)]
+                setattr(rel_obj, rel_field.name, instance)
+            cache_name = rel_field.related_query_name()
+            return qs, rel_obj_attr, instance_attr, False, cache_name
 
         def get_object_list(self):
             """

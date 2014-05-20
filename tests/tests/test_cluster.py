@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.test import TestCase
 from django.db import IntegrityError
 
-from tests.models import Band, BandMember
+from tests.models import Band, BandMember, Album
 
 class ClusterTest(TestCase):
     def test_can_create_cluster(self):
@@ -118,3 +118,13 @@ class ClusterTest(TestCase):
 
         also_beatles = Band.objects.get(id=beatles.id)
         self.assertEqual(3, beatles.members.filter(band=also_beatles).count())
+
+    def test_prefetch_related(self):
+        band1 = Band.objects.create(name='The Beatles', members=[
+            BandMember(id=1, name='John Lennon'),
+            BandMember(id=2, name='Paul McCartney'),
+        ])
+        with self.assertNumQueries(2):
+            lists = [list(band.members.all()) for band in Band.objects.prefetch_related('members')]
+        normal_lists = [list(band.members.all()) for band in Band.objects.all()]
+        self.assertEqual(lists, normal_lists)

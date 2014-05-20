@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.2 (xx.xx.20xx)
+~~~~~~~~~~~~~~~~
+ * Python 2.6 compatibility
+ * Python 3 compatibility
+ * Django 1.7 compatibility
+ * Added support for prefetch_related on DeferringRelatedManager
+
 0.1 (05.02.2014)
 ~~~~~~~~~~~~~~~~
  * Initial release.

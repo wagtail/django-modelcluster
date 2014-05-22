@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.2 (xx.xx.20xx)
+0.2 (22.05.2014)
 ~~~~~~~~~~~~~~~~
  * Python 2.6 compatibility
  * Python 3 compatibility

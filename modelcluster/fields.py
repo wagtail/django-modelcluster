@@ -117,24 +117,24 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
                 if not item_matched:
                     items.append(target)
 
-                # Sort list
-                if rel_model._meta.ordering and len(items) > 1:
-                    # To get the desired behaviour, we need to order by keys in reverse order
-                    # See: https://docs.python.org/2/howto/sorting.html#sort-stability-and-complex-sorts
-                    for key in reversed(rel_model._meta.ordering):
-                        # Check if this key has been reversed
-                        reverse = False
-                        if key[0] == '-':
-                            reverse = True
-                            key = key[1:]
-
-                        # Sort
-                        # Use a tuple of (v is not None, v) as the key, to ensure that None sorts before other values,
-                        # as comparing directly with None breaks on python3
-                        items[:] = sorted(items, key=lambda x: (getattr(x, key) is not None, getattr(x, key)), reverse=reverse)
-
                 # update the foreign key on the added item to point back to the parent instance
                 setattr(target, related.field.name, self.instance)
+
+            # Sort list
+            if rel_model._meta.ordering and len(items) > 1:
+                # To get the desired behaviour, we need to order by keys in reverse order
+                # See: https://docs.python.org/2/howto/sorting.html#sort-stability-and-complex-sorts
+                for key in reversed(rel_model._meta.ordering):
+                    # Check if this key has been reversed
+                    reverse = False
+                    if key[0] == '-':
+                        reverse = True
+                        key = key[1:]
+
+                    # Sort
+                    # Use a tuple of (v is not None, v) as the key, to ensure that None sorts before other values,
+                    # as comparing directly with None breaks on python3
+                    items[:] = sorted(items, key=lambda x: (getattr(x, key) is not None, getattr(x, key)), reverse=reverse)
 
         def remove(self, *items_to_remove):
             """

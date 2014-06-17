@@ -129,6 +129,8 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
                             key = key[1:]
 
                         # Sort
+                        # Use a tuple of (v is not None, v) as the key, to ensure that None sorts before other values,
+                        # as comparing directly with None breaks on python3
                         items[:] = sorted(items, key=lambda x: (getattr(x, key) is not None, getattr(x, key)), reverse=reverse)
 
                 # update the foreign key on the added item to point back to the parent instance

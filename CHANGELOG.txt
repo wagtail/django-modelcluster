@@ -3,6 +3,7 @@ Changelog
 
 0.3 (xx.xx.20xx)
 ~~~~~~~~~~~~~~~~
+ * Added exists(), first() and last() methods on FakeQuerySet
  * Fix: Model ordering is applied when adding items to DeferringRelatedManager
 
 0.2 (22.05.2014)

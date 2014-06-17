@@ -66,6 +66,17 @@ class FakeQuerySet(object):
     def count(self):
         return len(self.results)
 
+    def exists(self):
+        return bool(self.results)
+
+    def first(self):
+        if self.results:
+            return self.results[0]
+
+    def last(self):
+        if self.results:
+            return self.results[-1]
+
     def select_related(self, *args):
         # has no meaningful effect on non-db querysets
         return self

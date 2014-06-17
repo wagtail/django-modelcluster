@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.3 (xx.xx.20xx)
+~~~~~~~~~~~~~~~~
+ * Fix: Model ordering is applied when adding items to DeferringRelatedManager
+
 0.2 (22.05.2014)
 ~~~~~~~~~~~~~~~~
  * Python 2.6 compatibility

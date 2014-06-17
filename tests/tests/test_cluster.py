@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.test import TestCase
 from django.db import IntegrityError
 
-from tests.models import Band, BandMember, Album
+from tests.models import Band, BandMember
 
 class ClusterTest(TestCase):
     def test_can_create_cluster(self):
@@ -28,6 +28,12 @@ class ClusterTest(TestCase):
         self.assertEqual(['Paul McCartney'], beatles.members.filter(name='Paul McCartney').values_list('name', flat=True))
         # quick-and-dirty check that we can invoke values_list with empty args list
         beatles.members.filter(name='Paul McCartney').values_list()
+
+        self.assertTrue(beatles.members.filter(name='Paul McCartney').exists())
+        self.assertFalse(beatles.members.filter(name='Reginald Dwight').exists())
+
+        self.assertEqual('John Lennon', beatles.members.first().name)
+        self.assertEqual('Paul McCartney', beatles.members.last().name)
 
         # these should not exist in the database yet
         self.assertFalse(Band.objects.filter(name='The Beatles').exists())
@@ -120,7 +126,7 @@ class ClusterTest(TestCase):
         self.assertEqual(3, beatles.members.filter(band=also_beatles).count())
 
     def test_prefetch_related(self):
-        band1 = Band.objects.create(name='The Beatles', members=[
+        Band.objects.create(name='The Beatles', members=[
             BandMember(id=1, name='John Lennon'),
             BandMember(id=2, name='Paul McCartney'),
         ])

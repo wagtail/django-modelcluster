@@ -87,3 +87,21 @@ class SerializeTest(TestCase):
         fat_duck = Restaurant.from_json(fat_duck_json)
         # the menu item should now be dropped entirely (because the foreign key to Dish has on_delete=CASCADE)
         self.assertEqual(0, fat_duck.menu_items.count())
+
+    def test_deserialize_with_sort_order(self):
+        beatles = Band.from_json('{"pk": null, "albums": [{"pk": null, "name": "With The Beatles", "sort_order": 2}, {"pk": null, "name": "Please Please Me", "sort_order": 1}], "name": "The Beatles", "members": []}')
+        self.assertEqual(2, beatles.albums.count())
+
+        # Make sure the albums were ordered correctly
+        self.assertEqual("Please Please Me", beatles.albums.all()[0].name)
+        self.assertEqual("With The Beatles", beatles.albums.all()[1].name)
+
+    def test_deserialize_with_reversed_sort_order(self):
+        Album._meta.ordering = ['-sort_order']
+        beatles = Band.from_json('{"pk": null, "albums": [{"pk": null, "name": "Please Please Me", "sort_order": 1}, {"pk": null, "name": "With The Beatles", "sort_order": 2}], "name": "The Beatles", "members": []}')
+        Album._meta.ordering = ['sort_order']
+        self.assertEqual(2, beatles.albums.count())
+
+        # Make sure the albums were ordered correctly
+        self.assertEqual("With The Beatles", beatles.albums.all()[0].name)
+        self.assertEqual("Please Please Me", beatles.albums.all()[1].name)

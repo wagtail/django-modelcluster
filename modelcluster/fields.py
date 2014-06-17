@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from six import text_type
+
 from django.db import models, IntegrityError, router
 from django.db.models.fields.related import ForeignKey, ForeignRelatedObjectsDescriptor
 from django.utils.functional import cached_property
@@ -116,6 +118,20 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
                         break
                 if not item_matched:
                     items.append(target)
+
+                # Sort list
+                if rel_model._meta.ordering and len(items) > 1:
+                    # To get the desired behaviour, we need to order by keys in reverse order
+                    # See: https://docs.python.org/2/howto/sorting.html#sort-stability-and-complex-sorts
+                    for key in reversed(rel_model._meta.ordering):
+                        # Check if this key has been reversed
+                        reverse = False
+                        if key[0] == '-':
+                            reverse = True
+                            key = key[1:]
+
+                        # Sort
+                        items[:] = sorted(items, key=lambda x: text_type(getattr(x, key)), reverse=reverse)
 
                 # update the foreign key on the added item to point back to the parent instance
                 setattr(target, related.field.name, self.instance)

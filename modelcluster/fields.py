@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-from six import text_type
-
 from django.db import models, IntegrityError, router
 from django.db.models.fields.related import ForeignKey, ForeignRelatedObjectsDescriptor
 from django.utils.functional import cached_property
@@ -131,7 +129,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
                             key = key[1:]
 
                         # Sort
-                        items[:] = sorted(items, key=lambda x: text_type(getattr(x, key)), reverse=reverse)
+                        items[:] = sorted(items, key=lambda x: (getattr(x, key) is not None, getattr(x, key)), reverse=reverse)
 
                 # update the foreign key on the added item to point back to the parent instance
                 setattr(target, related.field.name, self.instance)

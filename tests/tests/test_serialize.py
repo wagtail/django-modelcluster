@@ -1,9 +1,13 @@
 from __future__ import unicode_literals
 
-from django.test import TestCase
+import json
 import datetime
 
-from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine
+from django.test import TestCase
+from django.utils import timezone
+
+from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, Log
+
 
 class SerializeTest(TestCase):
     def test_serialize(self):
@@ -45,7 +49,7 @@ class SerializeTest(TestCase):
         self.assertEqual(BandMember, beatles.members.all()[0].__class__)
 
     def test_deserialize_json(self):
-        beatles = Band.from_json('{"pk": 9, "albums": [], "name": "The Beatles", "members": [{"pk": null, "name": "John Lennon", "band": null}, {"pk": null, "name": "Paul McCartney", "band": null}]}')
+        beatles = Band.from_json('{"pk": 9, "albums": [], "albums": [], "name": "The Beatles", "members": [{"pk": null, "name": "John Lennon", "band": null}, {"pk": null, "name": "Paul McCartney", "band": null}]}')
         self.assertEqual(9, beatles.id)
         self.assertEqual('The Beatles', beatles.name)
         self.assertEqual(2, beatles.members.count())
@@ -116,3 +120,35 @@ class SerializeTest(TestCase):
         self.assertEqual(2, beatles.albums.all()[0].pk)
         self.assertEqual(1, beatles.albums.all()[1].pk)
         self.assertEqual(3, beatles.albums.all()[2].pk)
+
+
+    WAGTAIL_05_RELEASE_DATETIME = datetime.datetime(2014, 8, 1, 11, 1, 42)
+
+    def test_serialise_with_datetime(self):
+        """
+        This tests that datetimes are saved with timezone information
+        """
+        # Time is in America/Chicago time
+        log = Log(time=self.WAGTAIL_05_RELEASE_DATETIME, data="Wagtail 0.5 released")
+        log_json = json.loads(log.to_json())
+
+        # Now check that the time is stored correctly with the timezone information at the end
+        self.assertEqual(log_json['time'], '2014-08-01T11:01:42-05:00')
+
+    def test_deserialise_with_utc_datetime(self):
+        """
+        This tests that a datetime with a different timezone is converted correctly
+        """
+        # Time is in BST
+        log = Log.from_json('{"data": "Wagtail 0.5 released", "time": "2014-08-01T15:01:42-01:00", "pk": null}')
+
+        # Naive and aware timezones cannot be compared so make the release date timezone-aware before comparison
+        self.assertEqual(log.time, timezone.make_aware(self.WAGTAIL_05_RELEASE_DATETIME, timezone.get_default_timezone()))
+
+    def test_deserialise_with_local_datatime(self):
+        """
+        This tests that a datetime with out timezone information is treated correctly
+        """
+        log = Log.from_json('{"data": "Wagtail 0.5 released", "time": "2014-08-01T11:01:42", "pk": null}')
+
+        self.assertEqual(log.time, self.WAGTAIL_05_RELEASE_DATETIME)

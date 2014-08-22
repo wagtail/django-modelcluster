@@ -145,7 +145,7 @@ class SerializeTest(TestCase):
         # Naive and aware timezones cannot be compared so make the release date timezone-aware before comparison
         self.assertEqual(log.time, timezone.make_aware(self.WAGTAIL_05_RELEASE_DATETIME, timezone.get_default_timezone()))
 
-    def test_deserialise_with_local_datatime(self):
+    def test_deserialise_with_local_datetime(self):
         """
         This tests that a datetime with out timezone information is treated correctly
         """

@@ -18,7 +18,7 @@ def get_field_value(field, model):
         # Make datetimes timezone aware
         # https://github.com/django/django/blob/master/django/db/models/fields/__init__.py#L1394-L1403
         if isinstance(value, datetime.datetime):
-            if value is not None and settings.USE_TZ and timezone.is_naive(value):
+            if settings.USE_TZ and timezone.is_naive(value):
                 default_timezone = timezone.get_default_timezone()
                 value = timezone.make_aware(value, default_timezone).astimezone(timezone.utc)
 

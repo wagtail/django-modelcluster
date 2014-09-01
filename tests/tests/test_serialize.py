@@ -143,7 +143,11 @@ class SerializeTest(TestCase):
         log = Log.from_json('{"data": "Wagtail 0.5 released", "time": "2014-08-01T16:01:42Z", "pk": null}')
 
         # Naive and aware timezones cannot be compared so make the release date timezone-aware before comparison
-        self.assertEqual(log.time, timezone.make_aware(self.WAGTAIL_05_RELEASE_DATETIME, timezone.get_default_timezone()))
+        expected_time = timezone.make_aware(self.WAGTAIL_05_RELEASE_DATETIME, timezone.get_default_timezone())
+
+        # Check that the datetime is correct and was converted back into the correct timezone
+        self.assertEqual(log.time, expected_time)
+        self.assertEqual(log.time.tzinfo, expected_time.tzinfo)
 
     def test_deserialise_with_local_datetime(self):
         """

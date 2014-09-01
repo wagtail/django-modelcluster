@@ -82,7 +82,15 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
                         else:
                             raise Exception("can't currently handle on_delete types other than CASCADE, SET_NULL and DO_NOTHING")
         else:
-            kwargs[field.name] = field.to_python(field_value)
+            value = field.to_python(field_value)
+
+            # Make sure datetimes are converted to localtime
+            if isinstance(field, models.DateTimeField):
+                if timezone.is_aware(value):
+                    default_timezone = timezone.get_default_timezone()
+                    value = value.astimezone(default_timezone)
+
+            kwargs[field.name] = value
 
     obj = model(**kwargs)
 

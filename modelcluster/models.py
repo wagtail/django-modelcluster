@@ -20,7 +20,7 @@ def get_field_value(field, model):
         if isinstance(value, datetime.datetime):
             if value is not None and settings.USE_TZ and timezone.is_naive(value):
                 default_timezone = timezone.get_default_timezone()
-                value = timezone.make_aware(value, default_timezone)
+                value = timezone.make_aware(value, default_timezone).astimezone(timezone.utc)
 
         if is_protected_type(value):
             return value

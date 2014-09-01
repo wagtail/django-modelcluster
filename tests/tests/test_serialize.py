@@ -126,21 +126,21 @@ class SerializeTest(TestCase):
 
     def test_serialise_with_datetime(self):
         """
-        This tests that datetimes are saved with timezone information
+        This tests that datetimes are saved as UTC
         """
         # Time is in America/Chicago time
         log = Log(time=self.WAGTAIL_05_RELEASE_DATETIME, data="Wagtail 0.5 released")
         log_json = json.loads(log.to_json())
 
         # Now check that the time is stored correctly with the timezone information at the end
-        self.assertEqual(log_json['time'], '2014-08-01T11:01:42-05:00')
+        self.assertEqual(log_json['time'], '2014-08-01T16:01:42Z')
 
     def test_deserialise_with_utc_datetime(self):
         """
-        This tests that a datetime with a different timezone is converted correctly
+        This tests that a datetimes saved as UTC are converted back correctly
         """
-        # Time is in BST
-        log = Log.from_json('{"data": "Wagtail 0.5 released", "time": "2014-08-01T15:01:42-01:00", "pk": null}')
+        # Time is in UTC
+        log = Log.from_json('{"data": "Wagtail 0.5 released", "time": "2014-08-01T16:01:42Z", "pk": null}')
 
         # Naive and aware timezones cannot be compared so make the release date timezone-aware before comparison
         self.assertEqual(log.time, timezone.make_aware(self.WAGTAIL_05_RELEASE_DATETIME, timezone.get_default_timezone()))

@@ -87,10 +87,12 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
             value = field.to_python(field_value)
 
             # Make sure datetimes are converted to localtime
-            if isinstance(field, models.DateTimeField):
+            if isinstance(field, models.DateTimeField) and settings.USE_TZ:
+                default_timezone = timezone.get_default_timezone()
                 if timezone.is_aware(value):
-                    default_timezone = timezone.get_default_timezone()
-                    value = value.astimezone(default_timezone)
+                    value = timezone.localtime(value, default_timezone)
+                else:
+                    value = timezone.make_aware(value, default_timezone)
 
             kwargs[field.name] = value
 

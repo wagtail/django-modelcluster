@@ -171,8 +171,10 @@ class SerializeTest(TestCase):
 
     def test_deserialise_with_local_datetime(self):
         """
-        This tests that a datetime with out timezone information is treated correctly
+        This tests that a datetime without timezone information is interpreted as a local time
         """
         log = Log.from_json('{"data": "Wagtail 0.5 released", "time": "2014-08-01T11:01:42", "pk": null}')
 
-        self.assertEqual(log.time, self.WAGTAIL_05_RELEASE_DATETIME)
+        expected_time = timezone.make_aware(self.WAGTAIL_05_RELEASE_DATETIME, timezone.get_default_timezone())
+        self.assertEqual(log.time, expected_time)
+        self.assertEqual(log.time.tzinfo, expected_time.tzinfo)

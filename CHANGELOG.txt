@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.4 (xx.xx.20xx)
+~~~~~~~~~~~~~~~~
+ * Fix: Datetimes are converted to UTC on serialisation and to local time on deserialisation, to match Django's behaviour when accessing the database
+
 0.3 (17.06.2014)
 ~~~~~~~~~~~~~~~~
  * Added exists(), first() and last() methods on FakeQuerySet

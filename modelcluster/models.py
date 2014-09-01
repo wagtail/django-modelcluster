@@ -1,16 +1,29 @@
 from __future__ import unicode_literals
 
+import json
+import datetime
+
 from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django.utils.encoding import is_protected_type
 from django.core.serializers.json import DjangoJSONEncoder
-
-import json
+from django.conf import settings
+from django.utils import timezone
 
 
 def get_field_value(field, model):
     if field.rel is None:
         value = field._get_val_from_obj(model)
+
+        # Make datetimes timezone aware
+        # https://github.com/django/django/blob/master/django/db/models/fields/__init__.py#L1394-L1403
+        if isinstance(value, datetime.datetime) and settings.USE_TZ:
+            if timezone.is_naive(value):
+                default_timezone = timezone.get_default_timezone()
+                value = timezone.make_aware(value, default_timezone).astimezone(timezone.utc)
+            # convert to UTC
+            value = timezone.localtime(value, timezone.utc)
+
         if is_protected_type(value):
             return value
         else:
@@ -71,7 +84,17 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
                         else:
                             raise Exception("can't currently handle on_delete types other than CASCADE, SET_NULL and DO_NOTHING")
         else:
-            kwargs[field.name] = field.to_python(field_value)
+            value = field.to_python(field_value)
+
+            # Make sure datetimes are converted to localtime
+            if isinstance(field, models.DateTimeField) and settings.USE_TZ:
+                default_timezone = timezone.get_default_timezone()
+                if timezone.is_aware(value):
+                    value = timezone.localtime(value, default_timezone)
+                else:
+                    value = timezone.make_aware(value, default_timezone)
+
+            kwargs[field.name] = value
 
     obj = model(**kwargs)
 

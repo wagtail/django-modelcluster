@@ -20,7 +20,9 @@ if not settings.configured:
             'taggit',
 
             'tests',
-        ]
+        ],
+        USE_TZ=True,
+        TIME_ZONE='America/Chicago',
     )
 
 

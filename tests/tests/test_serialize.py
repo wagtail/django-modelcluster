@@ -1,9 +1,13 @@
 from __future__ import unicode_literals
 
-from django.test import TestCase
+import json
 import datetime
 
-from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine
+from django.test import TestCase
+from django.utils import timezone
+
+from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, Log
+
 
 class SerializeTest(TestCase):
     def test_serialize(self):
@@ -116,3 +120,61 @@ class SerializeTest(TestCase):
         self.assertEqual(2, beatles.albums.all()[0].pk)
         self.assertEqual(1, beatles.albums.all()[1].pk)
         self.assertEqual(3, beatles.albums.all()[2].pk)
+
+
+    WAGTAIL_05_RELEASE_DATETIME = datetime.datetime(2014, 8, 1, 11, 1, 42)
+
+    def test_serialise_with_naive_datetime(self):
+        """
+        This tests that naive datetimes are saved as UTC
+        """
+        # Time is in America/Chicago time
+        log = Log(time=self.WAGTAIL_05_RELEASE_DATETIME, data="Wagtail 0.5 released")
+        log_json = json.loads(log.to_json())
+
+        # Now check that the time is stored correctly with the timezone information at the end
+        self.assertEqual(log_json['time'], '2014-08-01T16:01:42Z')
+
+    def test_serialise_with_aware_datetime(self):
+        """
+        This tests that aware datetimes are converted to as UTC
+        """
+        # make an aware datetime, consisting of WAGTAIL_05_RELEASE_DATETIME
+        # in a timezone 1hr west of UTC
+        try:
+            one_hour_west = timezone.get_fixed_timezone(-60)
+        except AttributeError:
+            # use deprecated-in-Django-1.7 class constructor
+            from django.utils.tzinfo import FixedOffset
+            one_hour_west = FixedOffset(-60)
+
+        local_time = timezone.make_aware(self.WAGTAIL_05_RELEASE_DATETIME, one_hour_west)
+        log = Log(time=local_time, data="Wagtail 0.5 released")
+        log_json = json.loads(log.to_json())
+
+        # Now check that the time is stored correctly with the timezone information at the end
+        self.assertEqual(log_json['time'], '2014-08-01T12:01:42Z')
+
+    def test_deserialise_with_utc_datetime(self):
+        """
+        This tests that a datetimes saved as UTC are converted back correctly
+        """
+        # Time is in UTC
+        log = Log.from_json('{"data": "Wagtail 0.5 released", "time": "2014-08-01T16:01:42Z", "pk": null}')
+
+        # Naive and aware timezones cannot be compared so make the release date timezone-aware before comparison
+        expected_time = timezone.make_aware(self.WAGTAIL_05_RELEASE_DATETIME, timezone.get_default_timezone())
+
+        # Check that the datetime is correct and was converted back into the correct timezone
+        self.assertEqual(log.time, expected_time)
+        self.assertEqual(log.time.tzinfo, expected_time.tzinfo)
+
+    def test_deserialise_with_local_datetime(self):
+        """
+        This tests that a datetime without timezone information is interpreted as a local time
+        """
+        log = Log.from_json('{"data": "Wagtail 0.5 released", "time": "2014-08-01T11:01:42", "pk": null}')
+
+        expected_time = timezone.make_aware(self.WAGTAIL_05_RELEASE_DATETIME, timezone.get_default_timezone())
+        self.assertEqual(log.time, expected_time)
+        self.assertEqual(log.time.tzinfo, expected_time.tzinfo)

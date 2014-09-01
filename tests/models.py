@@ -89,3 +89,12 @@ class MenuItem(models.Model):
 
     def __str__(self):
         return "%s - %f" % (self.dish, self.price)
+
+
+@python_2_unicode_compatible
+class Log(ClusterableModel):
+    time = models.DateTimeField()
+    data = models.CharField(max_length=255)
+
+    def __str__(self):
+        return "[%s] %s" % (time.isoformat(), data)

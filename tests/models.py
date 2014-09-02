@@ -90,6 +90,15 @@ class MenuItem(models.Model):
     def __str__(self):
         return "%s - %f" % (self.dish, self.price)
 
+@python_2_unicode_compatible
+class Review(models.Model):
+    place = ParentalKey('Place', related_name='reviews')
+    author = models.CharField(max_length=255)
+    body = models.TextField()
+
+    def __str__(self):
+        return "%s on %s" % (self.author, self.place.name)
+
 
 @python_2_unicode_compatible
 class Log(ClusterableModel):

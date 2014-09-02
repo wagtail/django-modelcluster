@@ -43,7 +43,7 @@ class TagTest(TestCase):
         class PlaceForm(ClusterForm):
             class Meta:
                 model = Place
-                exclude_formsets = ['tagged_items']
+                exclude_formsets = ['tagged_items', 'reviews']
 
         mission_burrito = Place(name='Mission Burrito')
         mission_burrito.tags.add('mexican', 'burrito')

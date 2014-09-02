@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from django.test import TestCase
-from tests.models import Band, BandMember, Album
+from tests.models import Band, BandMember, Album, Restaurant
 from modelcluster.forms import ClusterForm
 from django.forms import Textarea, CharField
 
@@ -383,3 +383,10 @@ class ClusterFormTest(TestCase):
         self.assertEqual(1, Band.objects.filter(name='The Beatles').count())
         beatles.save()
         self.assertEqual(0, Band.objects.filter(name='The Beatles').count())
+
+    def test_formsets_from_model_superclass_are_exposed(self):
+        class RestaurantForm(ClusterForm):
+            class Meta:
+                model = Restaurant
+
+        self.assertIn('reviews', RestaurantForm.formsets)

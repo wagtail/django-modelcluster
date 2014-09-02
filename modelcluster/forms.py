@@ -8,6 +8,8 @@ from django.forms.models import (
 )
 from django.db.models.fields.related import RelatedObject
 
+from modelcluster.models import get_all_child_relations
+
 
 class BaseTransientModelFormSet(BaseModelFormSet):
     """ A ModelFormSet that doesn't assume that all its initial data instances exist in the db """
@@ -183,13 +185,8 @@ class ClusterFormMetaclass(ModelFormMetaclass):
         # replace that with ClusterFormOptions so that we can access _meta.formsets
         opts = new_class._meta = ClusterFormOptions(getattr(new_class, 'Meta', None))
         if opts.model:
-            try:
-                child_relations = opts.model._meta.child_relations
-            except AttributeError:
-                child_relations = []
-
             formsets = {}
-            for rel in child_relations:
+            for rel in get_all_child_relations(opts.model):
                 # to build a childformset class from this relation, we need to specify:
                 # - the base model (opts.model)
                 # - the child model (rel.model)

@@ -106,6 +106,26 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
     return obj
 
 
+def get_all_child_relations(model):
+    """
+    Return a list of RelatedObject records for child relations of the given model,
+    including ones attached to ancestors of the model
+    """
+    relations = []
+    for parent in model._meta.get_parent_list():
+        try:
+            relations.extend(parent._meta.child_relations)
+        except AttributeError:
+            pass
+
+    try:
+        relations.extend(model._meta.child_relations)
+    except AttributeError:
+        pass
+
+    return relations
+
+
 class ClusterableModel(models.Model):
     def __init__(self, *args, **kwargs):
         """

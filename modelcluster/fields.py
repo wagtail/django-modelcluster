@@ -239,9 +239,9 @@ class ParentalKey(ForeignKey):
         if self.rel.field_name is None:
             self.rel.field_name = cls._meta.pk.name
 
-        # store this as a child field in meta
+        # store this as a child field in meta. NB child_relations only contains relations
+        # defined to this specific model, not its superclasses
         try:
-            # TODO: figure out how model inheritance works with this
             cls._meta.child_relations.append(related)
         except AttributeError:
             cls._meta.child_relations = [related]

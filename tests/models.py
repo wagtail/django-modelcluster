@@ -97,4 +97,4 @@ class Log(ClusterableModel):
     data = models.CharField(max_length=255)
 
     def __str__(self):
-        return "[%s] %s" % (time.isoformat(), data)
+        return "[%s] %s" % (self.time.isoformat(), self.data)

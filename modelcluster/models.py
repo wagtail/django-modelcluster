@@ -212,10 +212,7 @@ class ClusterableModel(models.Model):
         if obj is None:
             return None
 
-        try:
-            child_relations = cls._meta.child_relations
-        except AttributeError:
-            child_relations = []
+        child_relations = get_all_child_relations(cls)
 
         for rel in child_relations:
             rel_name = rel.get_accessor_name()

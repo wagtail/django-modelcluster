@@ -65,12 +65,11 @@ class SerializeTest(TestCase):
         self.assertEqual(data['reviews'][0]['author'], 'Michael Winner')
 
     def test_deserialize_with_multi_table_inheritance(self):
-        fatduck = Restaurant.from_json('{"pk": 42, "name": "The Fat Duck", "serves_hot_dogs": false}')
-        self.assertEqual(42, fatduck.id)
-
-        data = fatduck.serializable_data()
-        self.assertEqual(42, data['pk'])
-        self.assertEqual("The Fat Duck", data['name'])
+        fat_duck = Restaurant.from_json('{"pk": 42, "name": "The Fat Duck", "serves_hot_dogs": false, "reviews": [{"pk": null, "author": "Michael Winner", "body": "Rubbish."}]}')
+        self.assertEqual(fat_duck.id, 42)
+        self.assertEqual(fat_duck.name, "The Fat Duck")
+        self.assertEqual(fat_duck.serves_hot_dogs, False)
+        self.assertEqual(fat_duck.reviews.all()[0].author, "Michael Winner")
 
     def test_dangling_foreign_keys(self):
         heston_blumenthal = Chef.objects.create(name="Heston Blumenthal")

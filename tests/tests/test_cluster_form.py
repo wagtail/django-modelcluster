@@ -390,3 +390,58 @@ class ClusterFormTest(TestCase):
                 model = Restaurant
 
         self.assertIn('reviews', RestaurantForm.formsets)
+
+        form = RestaurantForm({
+            'name': 'The Fat Duck',
+
+            'menu_items-TOTAL_FORMS': 0,
+            'menu_items-INITIAL_FORMS': 0,
+            'menu_items-MAX_NUM_FORMS': 1000,
+
+            'reviews-TOTAL_FORMS': 1,
+            'reviews-INITIAL_FORMS': 1,
+            'reviews-MAX_NUM_FORMS': 1000,
+
+            'reviews-0-id': '',
+            'reviews-0-author': 'Michael Winner',
+            'reviews-0-body': 'Rubbish.',
+
+            'tagged_items-TOTAL_FORMS': 0,
+            'tagged_items-INITIAL_FORMS': 0,
+            'tagged_items-MAX_NUM_FORMS': 1000,
+        })
+        self.assertTrue(form.is_valid())
+        instance = form.save(commit=False)
+
+        self.assertEqual(instance.reviews.count(), 1)
+        self.assertEqual(instance.reviews.first().author, 'Michael Winner')
+
+    def test_formsets_from_model_superclass_with_explicit_formsets_def(self):
+        class RestaurantForm(ClusterForm):
+            class Meta:
+                model = Restaurant
+                formsets = ('menu_items', 'reviews')
+
+        self.assertIn('reviews', RestaurantForm.formsets)
+
+        form = RestaurantForm({
+            'name': 'The Fat Duck',
+
+            'menu_items-TOTAL_FORMS': 0,
+            'menu_items-INITIAL_FORMS': 0,
+            'menu_items-MAX_NUM_FORMS': 1000,
+
+            'reviews-TOTAL_FORMS': 1,
+            'reviews-INITIAL_FORMS': 1,
+            'reviews-MAX_NUM_FORMS': 1000,
+
+            'reviews-0-id': '',
+            'reviews-0-author': 'Michael Winner',
+            'reviews-0-body': 'Rubbish.',
+
+        })
+        self.assertTrue(form.is_valid())
+        instance = form.save(commit=False)
+
+        self.assertEqual(instance.reviews.count(), 1)
+        self.assertEqual(instance.reviews.first().author, 'Michael Winner')

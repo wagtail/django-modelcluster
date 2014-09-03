@@ -49,7 +49,7 @@ class TaggedPlace(TaggedItemBase):
 @python_2_unicode_compatible
 class Place(ClusterableModel):
     name = models.CharField(max_length=255)
-    tags = ClusterTaggableManager(through=TaggedPlace)
+    tags = ClusterTaggableManager(through=TaggedPlace, blank=True)
 
     def __str__(self):
         return self.name

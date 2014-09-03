@@ -132,10 +132,7 @@ class ClusterableModel(models.Model):
         Extend the standard model constructor to allow child object lists to be passed in
         via kwargs
         """
-        try:
-            child_relation_names = [rel.get_accessor_name() for rel in self._meta.child_relations]
-        except AttributeError:
-            child_relation_names = []
+        child_relation_names = [rel.get_accessor_name() for rel in get_all_child_relations(self)]
 
         is_passing_child_relations = False
         for rel_name in child_relation_names:

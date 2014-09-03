@@ -6,7 +6,7 @@ import datetime
 from django.test import TestCase
 from django.utils import timezone
 
-from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, Log
+from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, Review, Log
 
 
 class SerializeTest(TestCase):
@@ -54,6 +54,15 @@ class SerializeTest(TestCase):
         self.assertEqual('The Beatles', beatles.name)
         self.assertEqual(2, beatles.members.count())
         self.assertEqual(BandMember, beatles.members.all()[0].__class__)
+
+    def test_serialize_with_multi_table_inheritance(self):
+        fat_duck = Restaurant(name='The Fat Duck', serves_hot_dogs=False, reviews=[
+            Review(author='Michael Winner', body='Rubbish.')
+        ])
+        data = json.loads(fat_duck.to_json())
+        self.assertEqual(data['name'], 'The Fat Duck')
+        self.assertEqual(data['serves_hot_dogs'], False)
+        self.assertEqual(data['reviews'][0]['author'], 'Michael Winner')
 
     def test_deserialize_with_multi_table_inheritance(self):
         fatduck = Restaurant.from_json('{"pk": 42, "name": "The Fat Duck", "serves_hot_dogs": false}')

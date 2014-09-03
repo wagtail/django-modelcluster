@@ -179,11 +179,7 @@ class ClusterableModel(models.Model):
 
     def serializable_data(self):
         obj = get_serializable_data_for_fields(self)
-
-        try:
-            child_relations = self._meta.child_relations
-        except AttributeError:
-            child_relations = []
+        child_relations = get_all_child_relations(self)
 
         for rel in child_relations:
             rel_name = rel.get_accessor_name()

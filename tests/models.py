@@ -102,7 +102,7 @@ class Review(models.Model):
 
 @python_2_unicode_compatible
 class Log(ClusterableModel):
-    time = models.DateTimeField()
+    time = models.DateTimeField(blank=True, null=True)
     data = models.CharField(max_length=255)
 
     def __str__(self):

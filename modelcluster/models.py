@@ -87,7 +87,7 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
             value = field.to_python(field_value)
 
             # Make sure datetimes are converted to localtime
-            if isinstance(field, models.DateTimeField) and settings.USE_TZ:
+            if isinstance(field, models.DateTimeField) and settings.USE_TZ and value is not None:
                 default_timezone = timezone.get_default_timezone()
                 if timezone.is_aware(value):
                     value = timezone.localtime(value, default_timezone)

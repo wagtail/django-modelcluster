@@ -178,3 +178,12 @@ class SerializeTest(TestCase):
         expected_time = timezone.make_aware(self.WAGTAIL_05_RELEASE_DATETIME, timezone.get_default_timezone())
         self.assertEqual(log.time, expected_time)
         self.assertEqual(log.time.tzinfo, expected_time.tzinfo)
+
+    def test_serialise_with_null_datetime(self):
+        log = Log(time=None, data="Someone scanned a QR code")
+        log_json = json.loads(log.to_json())
+        self.assertEqual(log_json['time'], None)
+
+    def test_deserialise_with_null_datetime(self):
+        log = Log.from_json('{"data": "Someone scanned a QR code", "time": null, "pk": null}')
+        self.assertEqual(log.time, None)

@@ -111,19 +111,23 @@ def get_all_child_relations(model):
     Return a list of RelatedObject records for child relations of the given model,
     including ones attached to ancestors of the model
     """
-    relations = []
-    for parent in model._meta.get_parent_list():
+    try:
+        return model._meta._child_relations_cache
+    except AttributeError:
+        relations = []
+        for parent in model._meta.get_parent_list():
+            try:
+                relations.extend(parent._meta.child_relations)
+            except AttributeError:
+                pass
+
         try:
-            relations.extend(parent._meta.child_relations)
+            relations.extend(model._meta.child_relations)
         except AttributeError:
             pass
 
-    try:
-        relations.extend(model._meta.child_relations)
-    except AttributeError:
-        pass
-
-    return relations
+        model._meta._child_relations_cache = relations
+        return relations
 
 
 class ClusterableModel(models.Model):

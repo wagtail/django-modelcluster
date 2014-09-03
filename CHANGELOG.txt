@@ -4,6 +4,7 @@ Changelog
 0.4 (xx.xx.20xx)
 ~~~~~~~~~~~~~~~~
  * Fix: Datetimes are converted to UTC on serialisation and to local time on deserialisation, to match Django's behaviour when accessing the database
+ * Fix: ClusterForm now picks up ParentalKey relations that are defined on a model's superclass
 
 0.3 (17.06.2014)
 ~~~~~~~~~~~~~~~~

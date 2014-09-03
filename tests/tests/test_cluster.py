@@ -91,13 +91,20 @@ class ClusterTest(TestCase):
         self.assertEqual(2, beatles.members.count())
         self.assertEqual(beatles, beatles.members.all()[0].band)
 
-    def test_can_pass_child_relations_from_superclass_as_constructor_kwargs(self):
-        fat_duck = Restaurant(name='The Fat Duck', reviews=[
+    def test_can_access_child_relations_of_superclass(self):
+        fat_duck = Restaurant(name='The Fat Duck', serves_hot_dogs=False, reviews=[
             Review(author='Michael Winner', body='Rubbish.')
         ])
         self.assertEqual(1, fat_duck.reviews.count())
         self.assertEqual(fat_duck.reviews.first().author, 'Michael Winner')
         self.assertEqual(fat_duck, fat_duck.reviews.all()[0].place)
+
+        fat_duck.save()
+        # ensure relations have been saved to the database
+        fat_duck = Restaurant.objects.get(id=fat_duck.id)
+        self.assertEqual(1, fat_duck.reviews.count())
+        self.assertEqual(fat_duck.reviews.first().author, 'Michael Winner')
+
 
     def test_can_only_commit_on_saved_parent(self):
         beatles = Band(name='The Beatles', members=[

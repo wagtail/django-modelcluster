@@ -157,10 +157,7 @@ class ClusterableModel(models.Model):
         """
         Save the model and commit all child relations.
         """
-        try:
-            child_relation_names = [rel.get_accessor_name() for rel in self._meta.child_relations]
-        except AttributeError:
-            child_relation_names = []
+        child_relation_names = [rel.get_accessor_name() for rel in get_all_child_relations(self)]
 
         update_fields = kwargs.pop('update_fields', None)
         if update_fields is None:

@@ -56,7 +56,9 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
 
             return FakeQuerySet(related.model, results)
 
-        def get_prefetch_queryset(self, instances):
+        def get_prefetch_queryset(self, instances, queryset=None):
+            if queryset is not None:
+                raise ValueError("Custom queryset can't be used for this lookup.")
             rel_obj_attr = rel_field.get_local_related_value
             instance_attr = rel_field.get_foreign_related_value
             instances_dict = dict((instance_attr(inst), inst) for inst in instances)

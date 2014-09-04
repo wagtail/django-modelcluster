@@ -56,7 +56,7 @@ class Place(ClusterableModel):
 
 
 class Restaurant(Place):
-    serves_hot_dogs = models.BooleanField()
+    serves_hot_dogs = models.BooleanField(default=False)
     proprietor = models.ForeignKey('Chef', null=True, blank=True, on_delete=models.SET_NULL, related_name='restaurants')
 
 @python_2_unicode_compatible

@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.4 (xx.xx.20xx)
+0.4 (04.09.2014)
 ~~~~~~~~~~~~~~~~
  * Django 1.7 compatibility
  * Fix: Datetimes are converted to UTC on serialisation and to local time on deserialisation, to match Django's behaviour when accessing the database

@@ -34,12 +34,17 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             self.instance = instance
 
         def get_live_query_set(self):
+            # deprecated; renamed to get_live_queryset to match the move from
+            # get_query_set to get_queryset in Django 1.6
+            return self.get_live_queryset()
+
+        def get_live_queryset(self):
             """
             return the original manager's queryset, which reflects the live database
             """
-            return original_manager_cls(self.instance).get_query_set()
+            return original_manager_cls(self.instance).get_queryset()
 
-        def get_query_set(self):
+        def get_queryset(self):
             """
             return the current object set with any updates applied,
             wrapped up in a FakeQuerySet if it doesn't match the database state
@@ -47,7 +52,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             try:
                 results = self.instance._cluster_related_objects[relation_name]
             except (AttributeError, KeyError):
-                return self.get_live_query_set()
+                return self.get_live_queryset()
 
             return FakeQuerySet(related.model, results)
 
@@ -82,7 +87,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             try:
                 object_list = cluster_related_objects[relation_name]
             except KeyError:
-                object_list = list(self.get_live_query_set())
+                object_list = list(self.get_live_queryset())
                 cluster_related_objects[relation_name] = object_list
 
             return object_list
@@ -189,7 +194,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
 
             original_manager = original_manager_cls(self.instance)
 
-            live_items = list(original_manager.get_query_set())
+            live_items = list(original_manager.get_queryset())
             for item in live_items:
                 if item not in final_items:
                     item.delete()

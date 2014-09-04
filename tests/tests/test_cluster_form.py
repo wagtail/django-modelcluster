@@ -1,9 +1,12 @@
 from __future__ import unicode_literals
 
+from six import text_type
+
 from django.test import TestCase
 from tests.models import Band, BandMember, Album, Restaurant
 from modelcluster.forms import ClusterForm
 from django.forms import Textarea, CharField
+from django.forms.widgets import TextInput
 
 import datetime
 
@@ -445,3 +448,18 @@ class ClusterFormTest(TestCase):
 
         self.assertEqual(instance.reviews.count(), 1)
         self.assertEqual(instance.reviews.first().author, 'Michael Winner')
+
+    def test_widgets_with_media(self):
+        class WidgetWithMedia(TextInput):
+            class Media:
+                js = ['test.js']
+                css = {'all': ['test.css']}
+
+        class FormWithWidgetMedia(ClusterForm):
+            class Meta:
+                model = Restaurant
+
+        form = FormWithWidgetMedia()
+
+        self.assertIn(text_type(form.media['js']), 'test.js')
+        self.assertIn(text_type(form.media['css']), 'test.css')

@@ -57,14 +57,16 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             return FakeQuerySet(related.model, results)
 
         def get_prefetch_queryset(self, instances, queryset=None):
-            if queryset is not None:
-                raise ValueError("Custom queryset can't be used for this lookup.")
+            if queryset is None:
+                db = self._db or router.db_for_read(self.model, instance=instances[0])
+                queryset = super(DeferringRelatedManager, self).get_queryset().using(db)
+
             rel_obj_attr = rel_field.get_local_related_value
             instance_attr = rel_field.get_foreign_related_value
             instances_dict = dict((instance_attr(inst), inst) for inst in instances)
-            db = self._db or router.db_for_read(self.model, instance=instances[0])
+
             query = {'%s__in' % rel_field.name: instances}
-            qs = super(DeferringRelatedManager, self).get_queryset().using(db).filter(**query)
+            qs = queryset.filter(**query)
             # Since we just bypassed this class' get_queryset(), we must manage
             # the reverse relation manually.
             for rel_obj in qs:

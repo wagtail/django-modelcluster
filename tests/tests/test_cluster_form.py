@@ -13,6 +13,7 @@ class ClusterFormTest(TestCase):
         class BandForm(ClusterForm):
             class Meta:
                 model = Band
+                fields = ['name']
 
         self.assertTrue(BandForm.formsets)
 
@@ -30,6 +31,7 @@ class ClusterFormTest(TestCase):
         class BandForm(ClusterForm):
             class Meta:
                 model = Band
+                fields = ['name']
 
         form = BandForm()
         self.assertEqual(3, len(form.formsets['members'].forms))
@@ -38,6 +40,7 @@ class ClusterFormTest(TestCase):
         class BandForm(ClusterForm):
             class Meta:
                 model = Band
+                fields = ['name']
 
         beatles = Band(name='The Beatles', members=[
             BandMember(name='George Harrison'),
@@ -87,6 +90,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 formsets = ('members',)
+                fields = ['name']
 
         form = BandForm()
         self.assertTrue(form.formsets.get('members'))
@@ -100,6 +104,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 exclude_formsets = ('albums',)
+                fields = ['name']
 
         form = BandForm()
         self.assertTrue(form.formsets.get('members'))
@@ -118,6 +123,7 @@ class ClusterFormTest(TestCase):
                         'name': Textarea()
                     }
                 }
+                fields = ['name']
 
         form = BandForm()
         self.assertEqual(Textarea, type(form['name'].field.widget))
@@ -133,6 +139,7 @@ class ClusterFormTest(TestCase):
             formfield_callback = formfield_for_dbfield
             class Meta:
                 model = Band
+                fields = ['name']
 
         form = BandFormWithFFC()
         self.assertEqual(Textarea, type(form['name'].field.widget))
@@ -142,6 +149,7 @@ class ClusterFormTest(TestCase):
         class BandForm(ClusterForm):
             class Meta:
                 model = Band
+                fields = ['name']
 
         beatles = Band(name='The Beatles', members=[
             BandMember(name='John Lennon'),
@@ -188,6 +196,7 @@ class ClusterFormTest(TestCase):
         class BandForm(ClusterForm):
             class Meta:
                 model = Band
+                fields = ['name']
 
         beatles = Band(name='The Beatles', members=[
             BandMember(name='John Lennon'),
@@ -235,6 +244,7 @@ class ClusterFormTest(TestCase):
         class BandForm(ClusterForm):
             class Meta:
                 model = Band
+                fields = ['name']
 
         form = BandForm({
             'name': "The Beatles",
@@ -274,6 +284,7 @@ class ClusterFormTest(TestCase):
         class BandForm(ClusterForm):
             class Meta:
                 model = Band
+                fields = ['name']
 
         form = BandForm()
         form_html = form.as_p()
@@ -284,6 +295,7 @@ class ClusterFormTest(TestCase):
         class BandForm(ClusterForm):
             class Meta:
                 model = Band
+                fields = ['name']
 
         form = BandForm({
             'name': "The Beatles",
@@ -314,6 +326,7 @@ class ClusterFormTest(TestCase):
         class BandForm(ClusterForm):
             class Meta:
                 model = Band
+                fields = ['name']
 
         please_please_me = Album(name='Please Please Me', release_date = datetime.date(1963, 3, 22))
         beatles = Band(name='The Beatles', albums=[please_please_me])
@@ -368,6 +381,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 formsets = ()
+                fields = ['name']
 
         beatles = Band(name='The Beatles')
         beatles.save()
@@ -388,6 +402,7 @@ class ClusterFormTest(TestCase):
         class RestaurantForm(ClusterForm):
             class Meta:
                 model = Restaurant
+                fields = ['name', 'tags', 'serves_hot_dogs', 'proprietor']
 
         self.assertIn('reviews', RestaurantForm.formsets)
 
@@ -421,6 +436,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Restaurant
                 formsets = ('menu_items', 'reviews')
+                fields = ['name', 'tags', 'serves_hot_dogs', 'proprietor']
 
         self.assertIn('reviews', RestaurantForm.formsets)
 

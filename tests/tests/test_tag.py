@@ -44,6 +44,7 @@ class TagTest(TestCase):
             class Meta:
                 model = Place
                 exclude_formsets = ['tagged_items', 'reviews']
+                fields = ['name', 'tags']
 
         mission_burrito = Place(name='Mission Burrito')
         mission_burrito.tags.add('mexican', 'burrito')

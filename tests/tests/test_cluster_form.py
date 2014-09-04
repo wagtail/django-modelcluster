@@ -474,6 +474,7 @@ class ClusterFormTest(TestCase):
         class FormWithWidgetMedia(ClusterForm):
             class Meta:
                 model = Restaurant
+                fields = ['name', 'tags', 'serves_hot_dogs', 'proprietor']
 
         form = FormWithWidgetMedia()
 

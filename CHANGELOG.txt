@@ -3,6 +3,7 @@ Changelog
 
 0.4 (xx.xx.20xx)
 ~~~~~~~~~~~~~~~~
+ * Django 1.7 compatibility
  * Fix: Datetimes are converted to UTC on serialisation and to local time on deserialisation, to match Django's behaviour when accessing the database
  * Fix: ParentalKey relations to a model's superclass are now picked up correctly by that model
 
@@ -15,7 +16,7 @@ Changelog
 ~~~~~~~~~~~~~~~~
  * Python 2.6 compatibility
  * Python 3 compatibility
- * Django 1.7 compatibility
+ * Django 1.7 beta compatibility
  * Added support for prefetch_related on DeferringRelatedManager
 
 0.1 (05.02.2014)

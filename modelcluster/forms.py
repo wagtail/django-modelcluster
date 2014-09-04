@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from six import add_metaclass
+from six import with_metaclass
 
 from django.forms.models import (
     BaseModelFormSet, modelformset_factory,
@@ -226,8 +226,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
         return new_class
 
 
-@add_metaclass(ClusterFormMetaclass)
-class ClusterForm(ModelForm):
+class ClusterForm(with_metaclass(ClusterFormMetaclass, ModelForm)):
     def __init__(self, data=None, files=None, instance=None, prefix=None, **kwargs):
         super(ClusterForm, self).__init__(data, files, instance=instance, prefix=prefix, **kwargs)
 

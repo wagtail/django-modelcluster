@@ -127,7 +127,7 @@ class BaseChildFormSet(BaseTransientModelFormSet):
 def childformset_factory(parent_model, model, form=ModelForm,
     formset=BaseChildFormSet, fk_name=None, fields=None, exclude=None,
     extra=3, can_order=False, can_delete=True, max_num=None,
-    formfield_callback=None):
+    formfield_callback=None, widgets=None):
 
     fk = _get_foreign_key(parent_model, model, fk_name=fk_name)
     # enforce a max_num=1 when the foreign key to the parent model is unique.
@@ -150,6 +150,7 @@ def childformset_factory(parent_model, model, form=ModelForm,
         'fields': fields,
         'exclude': exclude,
         'max_num': max_num,
+        'widgets': widgets,
     }
     FormSet = transientmodelformset_factory(model, **kwargs)
     FormSet.fk = fk
@@ -191,9 +192,6 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                 # - the base model (opts.model)
                 # - the child model (rel.model)
                 # - the fk_name from the child model to the base (rel.field.name)
-                # Additionally, to specify widgets, we need to construct a custom ModelForm subclass.
-                # (As of Django 1.6, modelformset_factory can be passed a widgets kwarg directly,
-                # and it would make sense for childformset_factory to support that as well)
 
                 rel_name = rel.get_accessor_name()
 
@@ -204,21 +202,14 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                     continue
 
                 try:
-                    subform_widgets = opts.widgets.get(rel_name)
+                    widgets = opts.widgets.get(rel_name)
                 except AttributeError:  # thrown if opts.widgets is None
-                    subform_widgets = None
-
-                if subform_widgets:
-                    class CustomModelForm(ModelForm):
-                        class Meta:
-                            widgets = subform_widgets
-                    form_class = CustomModelForm
-                else:
-                    form_class = ModelForm
+                    widgets = None
 
                 formset = childformset_factory(opts.model, rel.model,
                     extra=cls.extra_form_count,
-                    form=form_class, formfield_callback=formfield_callback, fk_name=rel.field.name)
+                    formfield_callback=formfield_callback, fk_name=rel.field.name,
+                    widgets=widgets)
                 formsets[rel_name] = formset
 
             new_class.formsets = formsets

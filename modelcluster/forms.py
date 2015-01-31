@@ -206,10 +206,21 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                 except AttributeError:  # thrown if opts.widgets is None
                     widgets = None
 
-                formset = childformset_factory(opts.model, rel.model,
-                    extra=cls.extra_form_count,
-                    formfield_callback=formfield_callback, fk_name=rel.field.name,
-                    widgets=widgets)
+                kwargs = {
+                    'extra': cls.extra_form_count,
+                    'formfield_callback': formfield_callback,
+                    'fk_name': rel.field.name,
+                    'widgets': widgets
+                }
+
+                # see if opts.formsets looks like a dict; if so, allow the value
+                # to override kwargs
+                try:
+                    kwargs.update(opts.formsets.get(rel_name))
+                except AttributeError:
+                    pass
+
+                formset = childformset_factory(opts.model, rel.model, **kwargs)
                 formsets[rel_name] = formset
 
             new_class.formsets = formsets

@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 
 from django.db.models import Model
 
+from modelcluster.utils import sort_by_fields
+
 # Constructor for test functions that determine whether an object passes some boolean condition
 def test_exact(model, attribute_name, value):
     field = model._meta.get_field(attribute_name)
@@ -105,6 +107,11 @@ class FakeQuerySet(object):
                 tuple([getattr(obj, field_name) for field_name in fields])
                 for obj in self.results
             ]
+
+    def order_by(self, *fields):
+        results = self.results[:]  # make a copy of results
+        sort_by_fields(results, fields)
+        return FakeQuerySet(self.model, results)
 
     def __getitem__(self, k):
         return self.results[k]

@@ -60,6 +60,13 @@ class BaseChildFormSet(BaseTransientModelFormSet):
 
         manager = getattr(self.instance, self.rel_name)
 
+        # if model has a sort_order_field defined, assign order indexes to the attribute
+        # named in it
+        if self.can_order and hasattr(self.model, 'sort_order_field'):
+            sort_order_field = getattr(self.model, 'sort_order_field')
+            for i, form in enumerate(self.ordered_forms):
+                setattr(form.instance, sort_order_field, i)
+
         # If the manager has existing instances with a blank ID, we have no way of knowing
         # whether these correspond to items in the submitted data. We'll assume that they do,
         # as that's the most common case (i.e. the formset contains the full set of child objects,
@@ -71,13 +78,6 @@ class BaseChildFormSet(BaseTransientModelFormSet):
 
         manager.add(*saved_instances)
         manager.remove(*self.deleted_objects)
-
-        # if model has a sort_order_field defined, assign order indexes to the attribute
-        # named in it
-        if self.can_order and hasattr(self.model, 'sort_order_field'):
-            sort_order_field = getattr(self.model, 'sort_order_field')
-            for i, form in enumerate(self.ordered_forms):
-                setattr(form.instance, sort_order_field, i)
 
         if commit:
             manager.commit()

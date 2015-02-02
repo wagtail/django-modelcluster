@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.test import TestCase
 from modelcluster.forms import transientmodelformset_factory, childformset_factory
-from tests.models import Band, BandMember
+from tests.models import Band, BandMember, Album
 
 class TransientFormsetTest(TestCase):
     BandMembersFormset = transientmodelformset_factory(BandMember, exclude=['band'], extra=3, can_delete=True)
@@ -237,3 +237,28 @@ class ChildFormsetTest(TestCase):
         self.assertTrue(band_members_formset.is_valid())
         band_members_formset.save(commit=False)
         self.assertEqual(2, beatles.members.count())
+
+
+class OrderedFormsetTest(TestCase):
+    def test_saving_formset_preserves_order(self):
+        AlbumsFormset = childformset_factory(Band, Album, extra=3, can_order=True)
+        beatles = Band(name='The Beatles')
+        albums_formset = AlbumsFormset({
+            'form-TOTAL_FORMS': 2,
+            'form-INITIAL_FORMS': 0,
+            'form-MAX_NUM_FORMS': 1000,
+
+            'form-0-name': 'With The Beatles',
+            'form-0-id': '',
+            'form-0-ORDER': '2',
+
+            'form-1-name': 'Please Please Me',
+            'form-1-id': '',
+            'form-1-ORDER': '1',
+        }, instance=beatles)
+        self.assertTrue(albums_formset.is_valid())
+
+        albums_formset.save(commit=False)
+
+        album_names = [album.name for album in beatles.albums.all()]
+        self.assertEqual(['Please Please Me', 'With The Beatles'], album_names)

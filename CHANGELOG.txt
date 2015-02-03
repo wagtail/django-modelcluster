@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.5 (xx.xx.2015)
+~~~~~~~~~~~~~~~~
+
+* ClusterForm.Meta formsets can now be specified as a dict to allow extra properties to be set on the underlying form.
+* Added order_by() method to FakeQuerySet
+* Fix: Child object ordering is now applied without needing to save to the database
+
 0.4 (04.09.2014)
 ~~~~~~~~~~~~~~~~
  * Django 1.7 compatibility

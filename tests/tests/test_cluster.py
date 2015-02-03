@@ -4,7 +4,7 @@ import django
 from django.test import TestCase
 from django.db import IntegrityError
 
-from tests.models import Band, BandMember, Restaurant, Review
+from tests.models import Band, BandMember, Restaurant, Review, Album
 
 # make sure that we're using the same unittest library that Django uses internally
 try:
@@ -45,6 +45,9 @@ class ClusterTest(TestCase):
 
         self.assertEqual('John Lennon', beatles.members.first().name)
         self.assertEqual('Paul McCartney', beatles.members.last().name)
+
+        self.assertTrue('John Lennon', beatles.members.order_by('name').first())
+        self.assertTrue('Paul McCartney', beatles.members.order_by('-name').first())
 
         # these should not exist in the database yet
         self.assertFalse(Band.objects.filter(name='The Beatles').exists())
@@ -177,3 +180,28 @@ class ClusterTest(TestCase):
             ]
         normal_lists = [list(band.members.filter(name__startswith='Paul')) for band in Band.objects.all()]
         self.assertEqual(lists, normal_lists)
+
+    def test_order_by_with_multiple_fields(self):
+        beatles = Band(name='The Beatles', albums=[
+            Album(name='Please Please Me', sort_order=2),
+            Album(name='With The Beatles', sort_order=1),
+            Album(name='Abbey Road', sort_order=2),
+        ])
+
+        albums = [album.name for album in beatles.albums.order_by('sort_order', 'name')]
+        self.assertEqual(['With The Beatles', 'Abbey Road', 'Please Please Me'], albums)
+
+        albums = [album.name for album in beatles.albums.order_by('sort_order', '-name')]
+        self.assertEqual(['With The Beatles', 'Please Please Me', 'Abbey Road'], albums)
+
+    def test_meta_ordering(self):
+        beatles = Band(name='The Beatles', albums=[
+            Album(name='Please Please Me', sort_order=2),
+            Album(name='With The Beatles', sort_order=1),
+            Album(name='Abbey Road', sort_order=3),
+        ])
+
+        # in the absence of an explicit order_by clause, it should use the ordering as defined
+        # in Album.Meta, which is 'sort_order'
+        albums = [album.name for album in beatles.albums.all()]
+        self.assertEqual(['With The Beatles', 'Please Please Me', 'Abbey Road'], albums)

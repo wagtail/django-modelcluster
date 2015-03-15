@@ -20,6 +20,13 @@ def get_field_rel(field):
         return field.rel
 
 
+def get_related_model(rel):
+    # In Django 1.7 and under, the related model is accessed by doing: rel.model
+    # This was renamed in Django 1.8 to rel.related_model. rel.model now returns
+    # the base model.
+    return getattr(rel, 'related_model', rel.model)
+
+
 def get_field_value(field, model):
     if get_field_rel(field) is None:
         value = field._get_val_from_obj(model)
@@ -200,7 +207,7 @@ class ClusterableModel(models.Model):
             rel_name = rel.get_accessor_name()
             children = getattr(self, rel_name).all()
 
-            if hasattr(rel.model, 'serializable_data'):
+            if hasattr(get_related_model(rel), 'serializable_data'):
                 obj[rel_name] = [child.serializable_data() for child in children]
             else:
                 obj[rel_name] = [get_serializable_data_for_fields(child) for child in children]
@@ -236,14 +243,15 @@ class ClusterableModel(models.Model):
             except KeyError:
                 continue
 
-            if hasattr(rel.model, 'from_serializable_data'):
+            related_model = get_related_model(rel)
+            if hasattr(related_model, 'from_serializable_data'):
                 children = [
-                    rel.model.from_serializable_data(child_data, check_fks=check_fks, strict_fks=True)
+                    related_model.from_serializable_data(child_data, check_fks=check_fks, strict_fks=True)
                     for child_data in child_data_list
                 ]
             else:
                 children = [
-                    model_from_serializable_data(rel.model, child_data, check_fks=check_fks, strict_fks=True)
+                    model_from_serializable_data(related_model, child_data, check_fks=check_fks, strict_fks=True)
                     for child_data in child_data_list
                 ]
 

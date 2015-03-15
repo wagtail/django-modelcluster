@@ -14,6 +14,7 @@ except ImportError:
         pass
 
 from modelcluster.queryset import FakeQuerySet
+from modelcluster.models import get_related_model
 
 
 def create_deferring_foreign_related_manager(related, original_manager_cls):
@@ -26,8 +27,8 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
 
     relation_name = related.get_accessor_name()
     rel_field = related.field
-    superclass = related.model._default_manager.__class__
-    rel_model = related.model
+    rel_model = get_related_model(related)
+    superclass = rel_model._default_manager.__class__
 
     class DeferringRelatedManager(superclass):
         def __init__(self, instance):
@@ -56,7 +57,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             except (AttributeError, KeyError):
                 return self.get_live_queryset()
 
-            return FakeQuerySet(related.model, results)
+            return FakeQuerySet(get_related_model(related), results)
 
         def get_prefetch_queryset(self, instances, queryset=None):
             if queryset is None:
@@ -155,7 +156,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
 
         def create(self, **kwargs):
             items = self.get_object_list()
-            new_item = related.model(**kwargs)
+            new_item = get_related_model(related)(**kwargs)
             items.append(new_item)
             return new_item
 
@@ -231,7 +232,8 @@ class ParentalKey(ForeignKey):
     def contribute_to_related_class(self, cls, related):
         # Internal FK's - i.e., those with a related name ending with '+' -
         # and swapped models don't get a related descriptor.
-        if not self.rel.is_hidden() and not related.model._meta.swapped:
+        related_model = get_related_model(related)
+        if not self.rel.is_hidden() and not related_model._meta.swapped:
             setattr(cls, related.get_accessor_name(), self.related_accessor_class(related))
             if self.rel.limit_choices_to:
                 cls._meta.related_fkey_lookups.append(self.rel.limit_choices_to)

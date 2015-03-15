@@ -6,7 +6,15 @@ from django.forms.models import (
     BaseModelFormSet, modelformset_factory,
     ModelForm, _get_foreign_key, ModelFormMetaclass, ModelFormOptions
 )
-from django.db.models.fields.related import RelatedObject
+
+try:
+    from django.db.models.fields.related import RelatedObject
+except ImportError: # Django 1.8 +
+    RelatedObject = None
+
+    # Use ForeignObjectRel instead
+    from django.db.models.fields.related import ForeignObjectRel
+
 
 from modelcluster.models import get_all_child_relations
 
@@ -45,7 +53,10 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         else:
             self.instance=instance
 
-        self.rel_name = RelatedObject(self.fk.rel.to, self.model, self.fk).get_accessor_name()
+        if RelatedObject is None: # Django 1.8 +
+            self.rel_name = ForeignObjectRel(self.fk, self.fk.rel.to, related_name=self.fk.rel.related_name).get_accessor_name()
+        else:
+            self.rel_name = RelatedObject(self.fk.rel.to, self.model, self.fk).get_accessor_name()
 
         if queryset is None:
             queryset = getattr(self.instance, self.rel_name).all()

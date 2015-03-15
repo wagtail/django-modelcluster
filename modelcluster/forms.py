@@ -201,7 +201,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
             for rel in get_all_child_relations(opts.model):
                 # to build a childformset class from this relation, we need to specify:
                 # - the base model (opts.model)
-                # - the child model (rel.model)
+                # - the child model (rel.field.model)
                 # - the fk_name from the child model to the base (rel.field.name)
 
                 rel_name = rel.get_accessor_name()
@@ -231,7 +231,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                 except AttributeError:
                     pass
 
-                formset = childformset_factory(opts.model, rel.model, **kwargs)
+                formset = childformset_factory(opts.model, rel.field.model, **kwargs)
                 formsets[rel_name] = formset
 
             new_class.formsets = formsets

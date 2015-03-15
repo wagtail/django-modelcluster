@@ -4,6 +4,7 @@ import json
 import datetime
 
 from django.db import models
+from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.fields import FieldDoesNotExist
 from django.utils.encoding import is_protected_type
 from django.core.serializers.json import DjangoJSONEncoder
@@ -11,8 +12,16 @@ from django.conf import settings
 from django.utils import timezone
 
 
+def get_field_rel(field):
+    if isinstance(field, ForeignObjectRel): # Django 1.8+
+        return field
+
+    if field.rel:
+        return field.rel
+
+
 def get_field_value(field, model):
-    if field.rel is None:
+    if get_field_rel(field) is None:
         value = field._get_val_from_obj(model)
 
         # Make datetimes timezone aware
@@ -58,27 +67,29 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
         except FieldDoesNotExist:
             continue
 
-        if field.rel and isinstance(field.rel, models.ManyToManyRel):
+        field_rel = get_field_rel(field)
+
+        if field_rel and isinstance(field_rel, models.ManyToManyRel):
             raise Exception('m2m relations not supported yet')
-        elif field.rel and isinstance(field.rel, models.ManyToOneRel):
+        elif field_rel and isinstance(field_rel, models.ManyToOneRel):
             if field_value is None:
                 kwargs[field.attname] = None
             else:
-                clean_value = field.rel.to._meta.get_field(field.rel.field_name).to_python(field_value)
+                clean_value = field_rel.to._meta.get_field(field_rel.field_name).to_python(field_value)
                 kwargs[field.attname] = clean_value
                 if check_fks:
                     try:
-                        field.rel.to._default_manager.get(**{field.rel.field_name: clean_value})
-                    except field.rel.to.DoesNotExist:
-                        if field.rel.on_delete == models.DO_NOTHING:
+                        field_rel.to._default_manager.get(**{field_rel.field_name: clean_value})
+                    except field_rel.to.DoesNotExist:
+                        if field_rel.on_delete == models.DO_NOTHING:
                             pass
-                        elif field.rel.on_delete == models.CASCADE:
+                        elif field_rel.on_delete == models.CASCADE:
                             if strict_fks:
                                 return None
                             else:
                                 kwargs[field.attname] = None
 
-                        elif field.rel.on_delete == models.SET_NULL:
+                        elif field_rel.on_delete == models.SET_NULL:
                             kwargs[field.attname] = None
 
                         else:

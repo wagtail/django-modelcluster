@@ -226,6 +226,10 @@ class ChildObjectsDescriptor(ForeignRelatedObjectsDescriptor):
 class ParentalKey(ForeignKey):
     related_accessor_class = ChildObjectsDescriptor
 
+    # Django 1.8 has a check to prevent unsaved instances being assigned to
+    # ForeignKeys. Disable it
+    allow_unsaved_instance_assignment = True
+
     # prior to https://github.com/django/django/commit/fa2e1371cda1e72d82b4133ad0b49a18e43ba411
     # ForeignRelatedObjectsDescriptor is hard-coded in contribute_to_related_class -
     # so we need to patch in that change to look up related_accessor_class instead

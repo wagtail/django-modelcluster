@@ -1,0 +1,19 @@
+language: python
+
+matrix:
+  include:
+   - env: TOXENV=py26-dj16
+   - env: TOXENV=py27-dj16
+   - env: TOXENV=py32-dj16
+   - env: TOXENV=py33-dj16
+   - env: TOXENV=py34-dj16
+   - env: TOXENV=py27-dj17
+   - env: TOXENV=py32-dj17
+   - env: TOXENV=py33-dj17
+   - env: TOXENV=py34-dj17
+
+install:
+  - pip install tox
+
+script:
+  tox

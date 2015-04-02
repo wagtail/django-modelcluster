@@ -3,3 +3,4 @@
 dist/
 .tox/
 MANIFEST
+/django_modelcluster.egg-info

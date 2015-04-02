@@ -2,18 +2,17 @@ from __future__ import unicode_literals
 
 from six import with_metaclass
 
+import django
 from django.forms.models import (
     BaseModelFormSet, modelformset_factory,
     ModelForm, _get_foreign_key, ModelFormMetaclass, ModelFormOptions
 )
 
-try:
-    from django.db.models.fields.related import RelatedObject
-except ImportError: # Django 1.8 +
-    RelatedObject = None
-
-    # Use ForeignObjectRel instead
+if django.VERSION >= (1, 8):
+    # RelatedObject has been replaced with ForeignObjectRel
     from django.db.models.fields.related import ForeignObjectRel
+else:
+    from django.db.models.fields.related import RelatedObject
 
 
 from modelcluster.models import get_all_child_relations
@@ -53,7 +52,7 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         else:
             self.instance=instance
 
-        if RelatedObject is None: # Django 1.8 +
+        if django.VERSION >= (1, 8):
             self.rel_name = ForeignObjectRel(self.fk, self.fk.rel.to, related_name=self.fk.rel.related_name).get_accessor_name()
         else:
             self.rel_name = RelatedObject(self.fk.rel.to, self.model, self.fk).get_accessor_name()

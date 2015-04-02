@@ -74,9 +74,16 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
     kwargs = {pk_field.attname: data['pk']}
     for field_name, field_value in data.items():
         try:
-            field = model._meta.get_field(field_name, many_to_many=False)
+            field = model._meta.get_field(field_name)
         except FieldDoesNotExist:
             continue
+
+        if django.VERSION >= (1, 8):
+            # Filter out reverse relations. In Django 1.7 and below, these
+            # would raise a FieldDoesNotExist error on the line above but
+            # we need to manually filter them out for Django 1.8 and above.
+            if isinstance(field, ForeignObjectRel):
+                continue
 
         field_rel = get_field_rel(field)
 

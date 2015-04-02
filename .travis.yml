@@ -11,6 +11,10 @@ matrix:
    - env: TOXENV=py32-dj17
    - env: TOXENV=py33-dj17
    - env: TOXENV=py34-dj17
+   - env: TOXENV=py27-dj18
+   - env: TOXENV=py32-dj18
+   - env: TOXENV=py33-dj18
+   - env: TOXENV=py34-dj18
 
 install:
   - pip install tox

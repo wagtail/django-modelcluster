@@ -6,13 +6,26 @@ from django.conf import settings
 from django.core.management import execute_from_command_line
 
 
+DATABASE_ENGINE = os.environ.get('DATABASE_ENGINE', None)
+
+if DATABASE_ENGINE:
+    DATABASES = {
+        'default': {
+            'ENGINE': DATABASE_ENGINE,
+            'NAME': 'modelcluster',
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+        }
+    }
+
+
 if not settings.configured:
     settings.configure(
-        DATABASES={
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-            }
-        },
+        DATABASES=DATABASES,
         INSTALLED_APPS=[
             'modelcluster',
 

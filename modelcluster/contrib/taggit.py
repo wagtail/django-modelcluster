@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from __future__ import absolute_import
 
 from taggit.managers import TaggableManager, _TaggableManager
 from taggit.utils import require_instance_manager

@@ -17,7 +17,7 @@ class BaseTransientModelFormSet(BaseModelFormSet):
         if self.is_bound and i < self.initial_form_count():
             pk_name = self.model._meta.pk.name
             pk_key = "%s-%s" % (self.add_prefix(i), pk_name)
-            pk_val = self.data[pk_key]
+            pk_val = self.data.get(pk_key, None)
             if pk_val:
                 kwargs['instance'] = self.queryset.get(**{pk_name: pk_val})
             else:

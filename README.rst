@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/torchbox/django-modelcluster.png?branch=master
+    :target: https://travis-ci.org/torchbox/django-modelcluster
+
 django-modelcluster
 ===================
 

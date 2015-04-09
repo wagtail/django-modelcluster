@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.6 (xx.xx.20xx)
+0.6 (09.04.2015)
 ~~~~~~~~~~~~~~~~
 * Django 1.8 compatibility
 * 'modelcluster.tags' module has been moved to 'modelcluster.contrib.taggit'

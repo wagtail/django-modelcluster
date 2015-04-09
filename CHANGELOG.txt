@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.6 (xx.xx.20xx)
+~~~~~~~~~~~~~~~~
+* Django 1.8 compatibility
+* 'modelcluster.tags' module has been moved to 'modelcluster.contrib.taggit'
+
 0.5 (03.02.2015)
 ~~~~~~~~~~~~~~~~
 * ClusterForm.Meta formsets can now be specified as a dict to allow extra properties to be set on the underlying form.

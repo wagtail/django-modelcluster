@@ -3,12 +3,24 @@ from __future__ import unicode_literals
 import json
 import datetime
 
+import django
 from django.db import models
+from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.fields import FieldDoesNotExist
 from django.utils.encoding import is_protected_type
 from django.core.serializers.json import DjangoJSONEncoder
 from django.conf import settings
 from django.utils import timezone
+
+
+def get_related_model(rel):
+    # In Django 1.7 and under, the related model is accessed by doing: rel.model
+    # This was renamed in Django 1.8 to rel.related_model. rel.model now returns
+    # the base model.
+    if django.VERSION >= (1, 8):
+        return rel.related_model
+    else:
+        return rel.model
 
 
 def get_field_value(field, model):
@@ -57,6 +69,13 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
             field = model._meta.get_field(field_name)
         except FieldDoesNotExist:
             continue
+
+        if django.VERSION >= (1, 8):
+            # Filter out reverse relations. In Django 1.7 and below, these
+            # would raise a FieldDoesNotExist error on the line above but
+            # we need to manually filter them out for Django 1.8 and above.
+            if isinstance(field, ForeignObjectRel):
+                continue
 
         if field.rel and isinstance(field.rel, models.ManyToManyRel):
             raise Exception('m2m relations not supported yet')
@@ -189,7 +208,7 @@ class ClusterableModel(models.Model):
             rel_name = rel.get_accessor_name()
             children = getattr(self, rel_name).all()
 
-            if hasattr(rel.model, 'serializable_data'):
+            if hasattr(get_related_model(rel), 'serializable_data'):
                 obj[rel_name] = [child.serializable_data() for child in children]
             else:
                 obj[rel_name] = [get_serializable_data_for_fields(child) for child in children]
@@ -225,14 +244,15 @@ class ClusterableModel(models.Model):
             except KeyError:
                 continue
 
-            if hasattr(rel.model, 'from_serializable_data'):
+            related_model = get_related_model(rel)
+            if hasattr(related_model, 'from_serializable_data'):
                 children = [
-                    rel.model.from_serializable_data(child_data, check_fks=check_fks, strict_fks=True)
+                    related_model.from_serializable_data(child_data, check_fks=check_fks, strict_fks=True)
                     for child_data in child_data_list
                 ]
             else:
                 children = [
-                    model_from_serializable_data(rel.model, child_data, check_fks=check_fks, strict_fks=True)
+                    model_from_serializable_data(related_model, child_data, check_fks=check_fks, strict_fks=True)
                     for child_data in child_data_list
                 ]
 

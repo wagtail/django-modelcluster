@@ -2,11 +2,18 @@ from __future__ import unicode_literals
 
 from six import with_metaclass
 
+import django
 from django.forms.models import (
     BaseModelFormSet, modelformset_factory,
     ModelForm, _get_foreign_key, ModelFormMetaclass, ModelFormOptions
 )
-from django.db.models.fields.related import RelatedObject
+
+if django.VERSION >= (1, 8):
+    # RelatedObject has been replaced with ForeignObjectRel
+    from django.db.models.fields.related import ForeignObjectRel
+else:
+    from django.db.models.fields.related import RelatedObject
+
 
 from modelcluster.models import get_all_child_relations
 
@@ -45,7 +52,10 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         else:
             self.instance=instance
 
-        self.rel_name = RelatedObject(self.fk.rel.to, self.model, self.fk).get_accessor_name()
+        if django.VERSION >= (1, 8):
+            self.rel_name = ForeignObjectRel(self.fk, self.fk.rel.to, related_name=self.fk.rel.related_name).get_accessor_name()
+        else:
+            self.rel_name = RelatedObject(self.fk.rel.to, self.model, self.fk).get_accessor_name()
 
         if queryset is None:
             queryset = getattr(self.instance, self.rel_name).all()
@@ -190,7 +200,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
             for rel in get_all_child_relations(opts.model):
                 # to build a childformset class from this relation, we need to specify:
                 # - the base model (opts.model)
-                # - the child model (rel.model)
+                # - the child model (rel.field.model)
                 # - the fk_name from the child model to the base (rel.field.name)
 
                 rel_name = rel.get_accessor_name()
@@ -220,7 +230,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                 except AttributeError:
                     pass
 
-                formset = childformset_factory(opts.model, rel.model, **kwargs)
+                formset = childformset_factory(opts.model, rel.field.model, **kwargs)
                 formsets[rel_name] = formset
 
             new_class.formsets = formsets

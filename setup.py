@@ -17,6 +17,7 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=[
         "six>=1.6.1",
+        "pytz>=2015.2",
     ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',

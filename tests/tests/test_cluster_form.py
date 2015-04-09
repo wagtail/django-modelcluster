@@ -174,14 +174,12 @@ class ClusterFormTest(TestCase):
                 model = Band
                 fields = ['name']
 
-        beatles = Band(name='The Beatles', members=[
-            BandMember(name='John Lennon'),
-            BandMember(name='Paul McCartney'),
-        ])
+        john = BandMember(name='John Lennon')
+        paul = BandMember(name='Paul McCartney')
+        beatles = Band(name='The Beatles', members=[john, paul])
         beatles.save()
-        member0, member1 = beatles.members.all()
-        self.assertTrue(member0.id)
-        self.assertTrue(member1.id)
+        self.assertTrue(john.id)
+        self.assertTrue(paul.id)
 
         form = BandForm({
             'name': "The New Beatles",
@@ -190,12 +188,12 @@ class ClusterFormTest(TestCase):
             'members-INITIAL_FORMS': 2,
             'members-MAX_NUM_FORMS': 1000,
 
-            'members-0-name': member0.name,
+            'members-0-name': john.name,
             'members-0-DELETE': 'members-0-DELETE',
-            'members-0-id': member0.id,
+            'members-0-id': john.id,
 
-            'members-1-name': member1.name,
-            'members-1-id': member1.id,
+            'members-1-name': paul.name,
+            'members-1-id': paul.id,
 
             'members-2-name': 'George Harrison',
             'members-2-id': '',
@@ -221,12 +219,10 @@ class ClusterFormTest(TestCase):
                 model = Band
                 fields = ['name']
 
-        beatles = Band(name='The Beatles', members=[
-            BandMember(name='John Lennon'),
-            BandMember(name='Paul McCartney'),
-        ])
+        john = BandMember(name='John Lennon')
+        paul = BandMember(name='Paul McCartney')
+        beatles = Band(name='The Beatles', members=[john, paul])
         beatles.save()
-        member0, member1 = beatles.members.all()
 
         # pack and unpack the record so that we're working with a non-db-backed queryset
         new_beatles = Band.from_json(beatles.to_json())
@@ -238,12 +234,12 @@ class ClusterFormTest(TestCase):
             'members-INITIAL_FORMS': 2,
             'members-MAX_NUM_FORMS': 1000,
 
-            'members-0-name': member0.name,
+            'members-0-name': john.name,
             'members-0-DELETE': 'members-0-DELETE',
-            'members-0-id': member0.id,
+            'members-0-id': john.id,
 
-            'members-1-name': member1.name,
-            'members-1-id': member1.id,
+            'members-1-name': paul.name,
+            'members-1-id': paul.id,
 
             'members-2-name': 'George Harrison',
             'members-2-id': '',

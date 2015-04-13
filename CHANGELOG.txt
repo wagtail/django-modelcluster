@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.6.2 (13.04.2015)
+~~~~~~~~~~~~~~~~~~
+* Fix: Updated add_ignored_fields declaration so that South / Django 1.6 correctly ignores modelcluster.contrib.taggit.ClusterTaggableManager again
+
 0.6.1 (09.04.2015)
 ~~~~~~~~~~~~~~~~~~
 * Django 1.8 compatibility

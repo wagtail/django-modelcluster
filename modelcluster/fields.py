@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django.core import checks
 from django.db import models, IntegrityError, router
 from django.db.models.fields.related import ForeignKey, ForeignRelatedObjectsDescriptor
 from django.utils.functional import cached_property
@@ -7,7 +8,7 @@ from django.utils.functional import cached_property
 from modelcluster.utils import sort_by_fields
 
 from modelcluster.queryset import FakeQuerySet
-from modelcluster.models import get_related_model
+from modelcluster.models import get_related_model, ClusterableModel
 
 
 def create_deferring_foreign_related_manager(related, original_manager_cls):
@@ -243,3 +244,21 @@ class ParentalKey(ForeignKey):
             cls._meta.child_relations.append(related)
         except AttributeError:
             cls._meta.child_relations = [related]
+
+    def check(self, **kwargs):
+        errors = super(ParentalKey, self).check(**kwargs)
+
+        # Check that the desination model is an subclass of ClusterableModel
+        if not issubclass(self.rel.to, ClusterableModel):
+            errors.append(
+                checks.Error(
+                    'ParentalKey must point to an subclass of ClusterableModel.',
+                    hint='Change {model_name} into a ClusterableModel or use a ForeignKey instead.'.format(
+                        model_name=self.rel.to._meta.app_label + '.' + self.rel.to.__name__,
+                    ),
+                    obj=self,
+                    id='modelcluster.E001',
+                )
+            )
+
+        return errors

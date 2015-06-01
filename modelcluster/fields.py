@@ -6,13 +6,6 @@ from django.utils.functional import cached_property
 
 from modelcluster.utils import sort_by_fields
 
-try:
-    from south.modelsinspector import add_introspection_rules
-except ImportError:
-    # south is not in use, so make add_introspection_rules a no-op
-    def add_introspection_rules(*args):
-        pass
-
 from modelcluster.queryset import FakeQuerySet
 from modelcluster.models import get_related_model
 
@@ -250,5 +243,3 @@ class ParentalKey(ForeignKey):
             cls._meta.child_relations.append(related)
         except AttributeError:
             cls._meta.child_relations = [related]
-
-add_introspection_rules([], ["^modelcluster\.fields\.ParentalKey"])

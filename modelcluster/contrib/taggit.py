@@ -16,13 +16,6 @@ def get_field_rel(field):
         return field.related
 
 
-try:
-    from south.modelsinspector import add_ignored_fields
-except ImportError:
-    # south is not in use, so make add_ignored_fields a no-op
-    def add_ignored_fields(*args):
-        pass
-
 class _ClusterTaggableManager(_TaggableManager):
     @require_instance_manager
     def get_tagged_item_manager(self):
@@ -109,7 +102,3 @@ class ClusterTaggableManager(TaggableManager):
         # the live database
         rel_name = get_field_rel(self.through._meta.get_field('content_object')).get_accessor_name()
         return getattr(instance, rel_name).all()
-
-
-# tell south to ignore ClusterTaggableManager, like it ignores taggit.TaggableManager
-add_ignored_fields(["^modelcluster\.contrib\.taggit\.ClusterTaggableManager"])

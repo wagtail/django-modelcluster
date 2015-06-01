@@ -205,3 +205,29 @@ class ClusterTest(TestCase):
         # in Album.Meta, which is 'sort_order'
         albums = [album.name for album in beatles.albums.all()]
         self.assertEqual(['With The Beatles', 'Please Please Me', 'Abbey Road'], albums)
+
+    def test_parental_key_checks_clusterable_model(self):
+        from django.core import checks
+        from django.db import models
+        from modelcluster.fields import ParentalKey
+
+        class Instrument(models.Model):
+            # Oops, BandMember is not a Clusterable model
+            member = ParentalKey('tests.BandMember')
+
+            class Meta:
+                # Prevent Django from thinking this is in the database
+                # This shouldn't affect the test
+                abstract = True
+
+        # Check for error
+        errors = Instrument.check()
+        self.assertEqual(1, len(errors))
+
+        # Check the error itself
+        error = errors[0]
+        self.assertIsInstance(error, checks.Error)
+        self.assertEqual(error.id, 'modelcluster.E001')
+        self.assertEqual(error.obj, Instrument.member.field)
+        self.assertEqual(error.msg, 'ParentalKey must point to an subclass of ClusterableModel.')
+        self.assertEqual(error.hint, 'Change tests.BandMember into a ClusterableModel or use a ForeignKey instead.')

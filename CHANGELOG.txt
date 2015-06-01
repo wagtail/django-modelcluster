@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.0.0 (xx.xx.20xx)
+~~~~~~~~~~~~~~~~~~
+* Removed Django 1.6 and Python 2.6 support
+* Added system check to ensure that ParentalKey points to a ClusterableModel
+
 0.6.2 (13.04.2015)
 ~~~~~~~~~~~~~~~~~~
 * Fix: Updated add_ignored_fields declaration so that South / Django 1.6 correctly ignores modelcluster.contrib.taggit.ClusterTaggableManager again

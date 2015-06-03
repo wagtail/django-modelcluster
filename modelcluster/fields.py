@@ -248,11 +248,11 @@ class ParentalKey(ForeignKey):
     def check(self, **kwargs):
         errors = super(ParentalKey, self).check(**kwargs)
 
-        # Check that the desination model is an subclass of ClusterableModel
+        # Check that the desination model is a subclass of ClusterableModel
         if not issubclass(self.rel.to, ClusterableModel):
             errors.append(
                 checks.Error(
-                    'ParentalKey must point to an subclass of ClusterableModel.',
+                    'ParentalKey must point to a subclass of ClusterableModel.',
                     hint='Change {model_name} into a ClusterableModel or use a ForeignKey instead.'.format(
                         model_name=self.rel.to._meta.app_label + '.' + self.rel.to.__name__,
                     ),

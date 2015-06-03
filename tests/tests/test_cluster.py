@@ -229,5 +229,5 @@ class ClusterTest(TestCase):
         self.assertIsInstance(error, checks.Error)
         self.assertEqual(error.id, 'modelcluster.E001')
         self.assertEqual(error.obj, Instrument.member.field)
-        self.assertEqual(error.msg, 'ParentalKey must point to an subclass of ClusterableModel.')
+        self.assertEqual(error.msg, 'ParentalKey must point to a subclass of ClusterableModel.')
         self.assertEqual(error.hint, 'Change tests.BandMember into a ClusterableModel or use a ForeignKey instead.')

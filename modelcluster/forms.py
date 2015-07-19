@@ -143,6 +143,7 @@ def childformset_factory(parent_model, model, form=ModelForm,
     # enforce a max_num=1 when the foreign key to the parent model is unique.
     if fk.unique:
         max_num = 1
+        validate_max = True
 
     if exclude is None:
         exclude = []

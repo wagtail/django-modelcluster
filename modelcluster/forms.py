@@ -136,8 +136,8 @@ class BaseChildFormSet(BaseTransientModelFormSet):
 
 def childformset_factory(parent_model, model, form=ModelForm,
     formset=BaseChildFormSet, fk_name=None, fields=None, exclude=None,
-    extra=3, can_order=False, can_delete=True, max_num=None,
-    formfield_callback=None, widgets=None):
+    extra=3, can_order=False, can_delete=True, max_num=None, validate_max=False,
+    formfield_callback=None, widgets=None, min_num=None, validate_min=False):
 
     fk = _get_foreign_key(parent_model, model, fk_name=fk_name)
     # enforce a max_num=1 when the foreign key to the parent model is unique.
@@ -160,7 +160,10 @@ def childformset_factory(parent_model, model, form=ModelForm,
         'fields': fields,
         'exclude': exclude,
         'max_num': max_num,
+        'validate_max': validate_max,
         'widgets': widgets,
+        'min_num': min_num,
+        'validate_min': validate_min,
     }
     FormSet = transientmodelformset_factory(model, **kwargs)
     FormSet.fk = fk

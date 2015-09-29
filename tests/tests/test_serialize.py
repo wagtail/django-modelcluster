@@ -6,7 +6,7 @@ import datetime
 from django.test import TestCase
 from django.utils import timezone
 from django.utils.encoding import is_protected_type
-from django.utils.six import text_type
+from django.utils.six import text_type, string_types
 
 from modelcluster.models import get_serializable_data_for_fields
 
@@ -38,7 +38,7 @@ class SerializeTest(TestCase):
         self.assertEqual(text_type(bar_obj.id), text_type(foo_obj))
         self.assertIsInstance(bar_obj.id, FooModel)
         bar_data = get_serializable_data_for_fields(bar_obj)
-        self.assertTrue(is_protected_type(bar_data["pk"]))
+        self.assertIsInstance(bar_data["pk"], string_types)
     
     def test_serialize_json_with_dates(self):
         beatles = Band(name='The Beatles', members=[

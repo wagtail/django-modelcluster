@@ -121,7 +121,7 @@ class FooValue(object):
         self.value = int(value)
 
     def __str__(self):
-        return base64.b64encode(text_type(self.value)).strip()
+        return text_type(base64.b64encode(text_type(self.value).encode("utf-8")).strip())
     
     def __int__(self):
         return self.value

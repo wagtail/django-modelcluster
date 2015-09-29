@@ -5,8 +5,12 @@ import datetime
 
 from django.test import TestCase
 from django.utils import timezone
+from django.utils.encoding import is_protected_type
+from django.utils.six import text_type
 
-from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, Review, Log
+from modelcluster.models import get_serializable_data_for_fields
+
+from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, Review, Log, FooModel, FooValue, BarModel
 
 
 class SerializeTest(TestCase):
@@ -18,7 +22,24 @@ class SerializeTest(TestCase):
 
         expected = {'pk': None, 'albums': [], 'name': 'The Beatles', 'members': [{'pk': None, 'name': 'John Lennon', 'band': None}, {'pk': None, 'name': 'Paul McCartney', 'band': None}]}
         self.assertEqual(expected, beatles.serializable_data())
-
+    
+    def test_serialize_related_to_custom_type(self):
+        FooModel.objects.create(id=1)
+        foo_obj = FooModel.objects.get()
+        self.assertFalse(is_protected_type(foo_obj.id))
+        foo_data = get_serializable_data_for_fields(foo_obj)
+        data_pk = foo_data["pk"]
+        self.assertNotIsInstance(data_pk, FooValue)
+        self.assertEqual(data_pk, text_type(foo_obj.id))
+        
+        BarModel.objects.create(id=foo_obj)
+        bar_obj = BarModel.objects.get()
+        self.assertFalse(is_protected_type(bar_obj.id))
+        self.assertEqual(text_type(bar_obj.id), text_type(foo_obj))
+        self.assertIsInstance(bar_obj.id, FooModel)
+        bar_data = get_serializable_data_for_fields(bar_obj)
+        self.assertTrue(is_protected_type(bar_data["pk"]))
+    
     def test_serialize_json_with_dates(self):
         beatles = Band(name='The Beatles', members=[
             BandMember(name='John Lennon'),

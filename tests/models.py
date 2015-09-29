@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils.six import text_type
 
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from taggit.models import TaggedItemBase
@@ -107,3 +108,53 @@ class Log(ClusterableModel):
 
     def __str__(self):
         return "[%s] %s" % (self.time.isoformat(), self.data)
+    
+
+@python_2_unicode_compatible
+class FooValue(object):
+    value = None
+    
+    def __init__(self, value):
+        super(FooValue, self).__init__()
+        self.value = int(value)
+
+    def __str__(self):
+        return text_type(self.value).encode("base64").strip()
+    
+    def __int__(self):
+        return self.value
+
+
+class FooField(models.IntegerField):
+    def get_prep_value(self, value):
+        if isinstance(value, FooValue):
+            value = int(value)
+        return value
+    
+    def get_db_prep_value(self, *args, **kwargs):
+        value = super(FooField, self).get_db_prep_value(*args, **kwargs)
+        if isinstance(value, FooValue):
+            value = int(value)
+        return value
+    
+    def to_python(self, value):
+        if value is not None and not isinstance(value, FooValue):
+            value = FooValue(value)
+        return value
+    
+    def from_db_value(self, value, expression, connection, context):
+        if not isinstance(value, FooValue):
+            value = FooValue(value)
+        return value
+
+
+@python_2_unicode_compatible
+class FooModel(models.Model):
+    id = FooField(primary_key=True)
+
+    def __str__(self):
+        return text_type("{} instance, id {}".format(self.__class__, self.id))
+
+class BarModel(models.Model):
+    id = models.OneToOneField(FooModel, primary_key=True)
+

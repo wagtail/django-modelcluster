@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import base64
+
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.six import text_type
@@ -119,7 +121,7 @@ class FooValue(object):
         self.value = int(value)
 
     def __str__(self):
-        return text_type(self.value).encode("base64").strip()
+        return base64.b64encode(text_type(self.value)).strip()
     
     def __int__(self):
         return self.value

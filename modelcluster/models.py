@@ -24,9 +24,12 @@ def get_related_model(rel):
 
 
 def get_field_value(field, model):
-    if field.rel is None:
-        value = field._get_val_from_obj(model)
-
+    value = field._get_val_from_obj(model)
+    
+    if not is_protected_type(value):
+        value = field.value_to_string(model)
+        
+    elif field.rel is None:
         # Make datetimes timezone aware
         # https://github.com/django/django/blob/master/django/db/models/fields/__init__.py#L1394-L1403
         if isinstance(value, datetime.datetime) and settings.USE_TZ:
@@ -35,13 +38,8 @@ def get_field_value(field, model):
                 value = timezone.make_aware(value, default_timezone).astimezone(timezone.utc)
             # convert to UTC
             value = timezone.localtime(value, timezone.utc)
-
-        if is_protected_type(value):
-            return value
-        else:
-            return field.value_to_string(model)
-    else:
-        return getattr(model, field.get_attname())
+            
+    return value
 
 def get_serializable_data_for_fields(model):
     pk_field = model._meta.pk

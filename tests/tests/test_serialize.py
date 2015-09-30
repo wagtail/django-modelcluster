@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import json
 import datetime
 
+from django import VERSION as DJANGO_VERSION
 from django.test import TestCase
 from django.utils import timezone
 from django.utils.encoding import is_protected_type
@@ -11,6 +12,8 @@ from django.utils.six import text_type, string_types
 from modelcluster.models import get_serializable_data_for_fields
 
 from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, Review, Log, FooModel, FooValue, BarModel
+
+from unittest import skipIf
 
 
 class SerializeTest(TestCase):
@@ -23,6 +26,7 @@ class SerializeTest(TestCase):
         expected = {'pk': None, 'albums': [], 'name': 'The Beatles', 'members': [{'pk': None, 'name': 'John Lennon', 'band': None}, {'pk': None, 'name': 'Paul McCartney', 'band': None}]}
         self.assertEqual(expected, beatles.serializable_data())
     
+    @skipIf(DJANGO_VERSION < (1, 8), "test model fields use `from_db_value()` introduced in DJ18")
     def test_serialize_related_to_custom_type(self):
         FooModel.objects.create(id=1)
         foo_obj = FooModel.objects.get()

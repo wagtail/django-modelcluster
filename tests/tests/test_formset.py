@@ -238,6 +238,104 @@ class ChildFormsetTest(TestCase):
         band_members_formset.save(commit=False)
         self.assertEqual(2, beatles.members.count())
 
+    def test_max_num_ignored_in_validation_when_validate_max_false(self):
+        BandMembersFormset = childformset_factory(Band, BandMember, max_num=2)
+
+        band_members_formset = BandMembersFormset({
+            'form-TOTAL_FORMS': 3,
+            'form-INITIAL_FORMS': 1,
+            'form-MAX_NUM_FORMS': 1000,
+
+            'form-0-name': 'John Lennon',
+            'form-0-id': '',
+
+            'form-1-name': 'Paul McCartney',
+            'form-1-id': '',
+
+            'form-2-name': 'Ringo Starr',
+            'form-2-id': '',
+        })
+        self.assertTrue(band_members_formset.is_valid())
+
+    def test_max_num_fail_validation(self):
+        BandMembersFormset = childformset_factory(Band, BandMember, max_num=2, validate_max=True)
+
+        band_members_formset = BandMembersFormset({
+            'form-TOTAL_FORMS': 3,
+            'form-INITIAL_FORMS': 1,
+            'form-MAX_NUM_FORMS': 1000,
+
+            'form-0-name': 'John Lennon',
+            'form-0-id': '',
+
+            'form-1-name': 'Paul McCartney',
+            'form-1-id': '',
+
+            'form-2-name': 'Ringo Starr',
+            'form-2-id': '',
+        })
+        self.assertFalse(band_members_formset.is_valid())
+        self.assertEqual(band_members_formset.non_form_errors()[0], "Please submit 2 or fewer forms.")
+
+    def test_max_num_pass_validation(self):
+        BandMembersFormset = childformset_factory(Band, BandMember, max_num=2, validate_max=True)
+
+        band_members_formset = BandMembersFormset({
+            'form-TOTAL_FORMS': 2,
+            'form-INITIAL_FORMS': 1,
+            'form-MAX_NUM_FORMS': 1000,
+
+            'form-0-name': 'John Lennon',
+            'form-0-id': '',
+
+            'form-1-name': 'Paul McCartney',
+            'form-1-id': '',
+        })
+        self.assertTrue(band_members_formset.is_valid())
+
+    def test_min_num_ignored_in_validation_when_validate_max_false(self):
+        BandMembersFormset = childformset_factory(Band, BandMember, min_num=2)
+
+        band_members_formset = BandMembersFormset({
+            'form-TOTAL_FORMS': 1,
+            'form-INITIAL_FORMS': 1,
+            'form-MAX_NUM_FORMS': 1000,
+
+            'form-0-name': 'John Lennon',
+            'form-0-id': '',
+        })
+        self.assertTrue(band_members_formset.is_valid())
+
+    def test_min_num_fail_validation(self):
+        BandMembersFormset = childformset_factory(Band, BandMember, min_num=2, validate_min=True)
+
+        band_members_formset = BandMembersFormset({
+            'form-TOTAL_FORMS': 1,
+            'form-INITIAL_FORMS': 1,
+            'form-MAX_NUM_FORMS': 1000,
+
+            'form-0-name': 'John Lennon',
+            'form-0-id': '',
+        })
+        self.assertFalse(band_members_formset.is_valid())
+        self.assertEqual(band_members_formset.non_form_errors()[0], "Please submit 2 or more forms.")
+
+    def test_min_num_pass_validation(self):
+        BandMembersFormset = childformset_factory(Band, BandMember, min_num=2, validate_min=True)
+
+        band_members_formset = BandMembersFormset({
+            'form-TOTAL_FORMS': 2,
+            'form-INITIAL_FORMS': 1,
+            'form-MAX_NUM_FORMS': 1000,
+
+            'form-0-name': 'John Lennon',
+            'form-0-id': '',
+
+            'form-1-name': 'Paul McCartney',
+            'form-1-id': '',
+        })
+        self.assertTrue(band_members_formset.is_valid())
+
 
 class OrderedFormsetTest(TestCase):
     def test_saving_formset_preserves_order(self):

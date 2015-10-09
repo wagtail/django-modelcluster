@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.0.0 (xx.xx.20xx)
-~~~~~~~~~~~~~~~~~~
+1.0 (09.10.2015)
+~~~~~~~~~~~~~~~~
 * Removed Django 1.6 and Python 2.6 support
 * Added system check to ensure that ParentalKey points to a ClusterableModel
 * Added validate_max, min_num and validate_min parameters to childformset_factory

@@ -154,6 +154,15 @@ class ClusterTest(TestCase):
         also_beatles = Band.objects.get(id=beatles.id)
         self.assertEqual(3, beatles.members.filter(band=also_beatles).count())
 
+    def test_queryset_exclude_filtering(self):
+        beatles = Band(name='The Beatles', members=[
+            BandMember(id=1, name='John Lennon'),
+            BandMember(id=2, name='Paul McCartney'),
+        ])
+
+        self.assertEqual(1, beatles.members.exclude(name='Paul McCartney').count())
+        self.assertEqual('John Lennon', beatles.members.exclude(name='Paul McCartney').first().name)
+
     def test_prefetch_related(self):
         Band.objects.create(name='The Beatles', members=[
             BandMember(id=1, name='John Lennon'),

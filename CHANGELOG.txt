@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.1 (xx.xx.20xx) - IN DEVELOPMENT
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Added exclude() method to FakeQuerySet
+
 1.0 (09.10.2015)
 ~~~~~~~~~~~~~~~~
 * Removed Django 1.6 and Python 2.6 support

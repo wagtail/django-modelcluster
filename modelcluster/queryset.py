@@ -35,7 +35,7 @@ class FakeQuerySet(object):
     def all(self):
         return self
 
-    def filter(self, **kwargs):
+    def _get_filters(self, **kwargs):
         filters = []  # a list of test functions; objects must pass all tests to be included
             # in the filtered list
         for key, val in kwargs.items():
@@ -45,9 +45,24 @@ class FakeQuerySet(object):
 
             filters.append(test_exact(self.model, key_clauses[0], val))
 
+        return filters
+
+    def filter(self, **kwargs):
+        filters = self._get_filters(**kwargs)
+
         filtered_results = [
             obj for obj in self.results
             if all([test(obj) for test in filters])
+        ]
+
+        return FakeQuerySet(self.model, filtered_results)
+
+    def exclude(self, **kwargs):
+        filters = self._get_filters(**kwargs)
+
+        filtered_results = [
+            obj for obj in self.results
+            if not all([test(obj) for test in filters])
         ]
 
         return FakeQuerySet(self.model, filtered_results)

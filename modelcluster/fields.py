@@ -2,8 +2,15 @@ from __future__ import unicode_literals
 
 from django.core import checks
 from django.db import IntegrityError, router
-from django.db.models.fields.related import ForeignKey, ForeignRelatedObjectsDescriptor
+from django.db.models.fields.related import ForeignKey
 from django.utils.functional import cached_property
+
+try:
+    from django.db.models.fields.related import ReverseManyToOneDescriptor
+except ImportError:
+    # Django 1.8 and below
+    from django.db.models.fields.related import ForeignRelatedObjectsDescriptor as ReverseManyToOneDescriptor
+
 
 from modelcluster.utils import sort_by_fields
 
@@ -196,7 +203,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
     return DeferringRelatedManager
 
 
-class ChildObjectsDescriptor(ForeignRelatedObjectsDescriptor):
+class ChildObjectsDescriptor(ReverseManyToOneDescriptor):
     def __get__(self, instance, instance_type=None):
         if instance is None:
             return self

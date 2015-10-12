@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import django
 from django.core import checks
 from django.db import IntegrityError, router
 from django.db.models.fields.related import ForeignKey
@@ -195,7 +196,14 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
                     item.delete()
 
             for item in final_items:
-                original_manager.add(item)
+                if django.VERSION >= (1, 9):
+                    # Django 1.9+ bulk saves items by default which executes
+                    # queries against the database. Disable this behaviour.
+                    # https://code.djangoproject.com/ticket/18556
+                    # https://github.com/django/django/commit/adc0c4fbac98f9cb975e8fa8220323b2de638b46
+                    original_manager.add(item, bulk=False)
+                else:
+                    original_manager.add(item)
 
             # purge the _cluster_related_objects entry, so we switch back to live SQL
             del self.instance._cluster_related_objects[relation_name]
@@ -230,6 +238,7 @@ class ParentalKey(ForeignKey):
 
     # Django 1.8 has a check to prevent unsaved instances being assigned to
     # ForeignKeys. Disable it
+    # This check was moved to the save() method in Django 1.8.4
     allow_unsaved_instance_assignment = True
 
     def contribute_to_related_class(self, cls, related):

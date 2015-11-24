@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from django.core import checks
-from django.db import models, IntegrityError, router
+from django.db import IntegrityError, router
 from django.db.models.fields.related import ForeignKey, ForeignRelatedObjectsDescriptor
 from django.utils.functional import cached_property
 
@@ -92,7 +92,6 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
                 cluster_related_objects[relation_name] = object_list
 
             return object_list
-
 
         def add(self, *new_items):
             """

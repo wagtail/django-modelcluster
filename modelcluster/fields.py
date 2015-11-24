@@ -198,9 +198,6 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
 
 
 class ChildObjectsDescriptor(ForeignRelatedObjectsDescriptor):
-    def __init__(self, related):
-        super(ChildObjectsDescriptor, self).__init__(related)
-
     def __get__(self, instance, instance_type=None):
         if instance is None:
             return self

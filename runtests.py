@@ -37,6 +37,7 @@ if not settings.configured:
         ),
         USE_TZ=True,
         TIME_ZONE='America/Chicago',
+        ROOT_URLCONF='tests.urls',
     )
 
 
@@ -47,4 +48,3 @@ def runtests():
 
 if __name__ == '__main__':
     runtests()
-

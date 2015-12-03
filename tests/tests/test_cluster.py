@@ -222,7 +222,7 @@ class ClusterTest(TestCase):
 
         class Instrument(models.Model):
             # Oops, BandMember is not a Clusterable model
-            member = ParentalKey('tests.BandMember')
+            member = ParentalKey(BandMember)
 
             class Meta:
                 # Prevent Django from thinking this is in the database

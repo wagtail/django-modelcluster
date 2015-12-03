@@ -4,6 +4,7 @@ Changelog
 1.1 (xx.xx.20xx) - IN DEVELOPMENT
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Added exclude() method to FakeQuerySet
+* Removed dependency on the 'six' package, in favour of Django's built-in version
 
 1.0 (09.10.2015)
 ~~~~~~~~~~~~~~~~

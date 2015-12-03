@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from six import with_metaclass
+from django.utils.six import with_metaclass
 
 import django
 from django.forms.models import (

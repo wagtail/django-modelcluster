@@ -197,8 +197,9 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
 
             for item in final_items:
                 if django.VERSION >= (1, 9):
-                    # Django 1.9+ bulk saves items by default which executes
-                    # queries against the database. Disable this behaviour.
+                    # Django 1.9+ bulk updates items by default which assumes
+                    # that they have already been saved to the database.
+                    # Disable this behaviour.
                     # https://code.djangoproject.com/ticket/18556
                     # https://github.com/django/django/commit/adc0c4fbac98f9cb975e8fa8220323b2de638b46
                     original_manager.add(item, bulk=False)

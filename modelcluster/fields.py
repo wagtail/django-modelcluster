@@ -226,11 +226,12 @@ class ChildObjectsDescriptor(ReverseManyToOneDescriptor):
 
     @cached_property
     def child_object_manager_cls(self):
-        if hasattr(self, 'rel'):
+        try:
             rel = self.rel
-        else:
+        except AttributeError:
             # Django 1.8 and below
             rel = self.related
+
         return create_deferring_foreign_related_manager(rel, self.related_manager_cls)
 
 

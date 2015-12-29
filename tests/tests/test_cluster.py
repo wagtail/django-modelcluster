@@ -228,3 +228,29 @@ class ClusterTest(TestCase):
         self.assertEqual(error.obj, Instrument.member.field)
         self.assertEqual(error.msg, 'ParentalKey must point to a subclass of ClusterableModel.')
         self.assertEqual(error.hint, 'Change tests.BandMember into a ClusterableModel or use a ForeignKey instead.')
+
+    def test_parental_key_checks_related_name_is_not_plus(self):
+        from django.core import checks
+        from django.db import models
+        from modelcluster.fields import ParentalKey
+
+        class Instrument(models.Model):
+            # Oops, related_name='+' is not allowed
+            band = ParentalKey(Band, related_name='+')
+
+            class Meta:
+                # Prevent Django from thinking this is in the database
+                # This shouldn't affect the test
+                abstract = True
+
+        # Check for error
+        errors = Instrument.check()
+        self.assertEqual(1, len(errors))
+
+        # Check the error itself
+        error = errors[0]
+        self.assertIsInstance(error, checks.Error)
+        self.assertEqual(error.id, 'modelcluster.E002')
+        self.assertEqual(error.obj, Instrument.band.field)
+        self.assertEqual(error.msg, "related_name='+' is not allowed on ParentalKey fields")
+        self.assertEqual(error.hint, "Either change it to a valid name or remove it")

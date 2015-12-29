@@ -4,6 +4,7 @@ Changelog
 2.0 (xx.xx.20xx)
 ~~~~~~~~~~~~~~~~
 * Removed Django 1.7 and Python 3.2 support
+* Added system check to disallow related_name='+' on ParentalKey
 
 1.1 (17.12.2015)
 ~~~~~~~~~~~~~~~~

@@ -271,4 +271,15 @@ class ParentalKey(ForeignKey):
                 )
             )
 
+        # ParentalKeys must have an accessor name (#49)
+        if self.rel.get_accessor_name() == '+':
+            errors.append(
+                checks.Error(
+                    "related_name='+' is not allowed on ParentalKey fields",
+                    hint="Either change it to a valid name or remove it",
+                    obj=self,
+                    id='modelcluster.E002',
+                )
+            )
+
         return errors

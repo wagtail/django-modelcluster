@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 import django
+from django.conf import settings
+from django.db.models import Q
 
 from taggit.managers import TaggableManager, _TaggableManager
 from taggit.utils import require_instance_manager
@@ -50,14 +52,21 @@ class _ClusterTaggableManager(_TaggableManager):
             if not isinstance(t, self.through.tag_model())
         ])
         tag_objs = set(tags) - str_tags
+        case_insensitive = getattr(settings, 'TAGGIT_CASE_INSENSITIVE', False)
+        if case_insensitive:
+            query = Q()
+            for tag in str_tags:
+                query |= Q(name__iexact=tag)
+        else:
+            query = Q(name__in=str_tags)
         # If str_tags has 0 elements Django actually optimizes that to not do a
         # query.  Malcolm is very smart.
-        existing = self.through.tag_model().objects.filter(
-            name__in=str_tags
-        )
+        existing = self.through.tag_model().objects.filter(query)
         tag_objs.update(existing)
 
-        for new_tag in str_tags - set(t.name for t in existing):
+        istr_tags = set([s.lower() if case_insensitive else s for s in str_tags])
+        iexistingstr_tags = set(t.name.lower() for t in existing)
+        for new_tag in istr_tags - iexistingstr_tags:
             tag_objs.add(self.through.tag_model().objects.create(name=new_tag))
 
         # Now write these to the relation

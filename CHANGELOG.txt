@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.1.1 (04.02.2016)
+~~~~~~~~~~~~~~~~
+* Fix: Made adding tags case insensitive if TAGGIT_CASE_INSENSITIVE setting is True for contrib app. Without it, attempted saves not careful of case sensitivity would cause Integrity error
+
 1.1 (17.12.2015)
 ~~~~~~~~~~~~~~~~
 * Django 1.9 compatibility

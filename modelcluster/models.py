@@ -14,7 +14,7 @@ from django.utils import timezone
 
 def get_field_value(field, model):
     if field.rel is None:
-        value = field._get_val_from_obj(model)
+        value = field.pre_save(model, add=model.pk is None)
 
         # Make datetimes timezone aware
         # https://github.com/django/django/blob/master/django/db/models/fields/__init__.py#L1394-L1403

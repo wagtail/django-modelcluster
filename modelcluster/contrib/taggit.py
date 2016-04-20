@@ -1,19 +1,10 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-import django
-
 from taggit.managers import TaggableManager, _TaggableManager
 from taggit.utils import require_instance_manager
 
 from modelcluster.queryset import FakeQuerySet
-
-
-def get_field_rel(field):
-    if django.VERSION >= (1, 8):
-        return field.rel
-    else:
-        return field.related
 
 
 class _ClusterTaggableManager(_TaggableManager):
@@ -24,7 +15,7 @@ class _ClusterTaggableManager(_TaggableManager):
         DeferringRelatedManager which allows writing related objects without committing them
         to the database.
         """
-        rel_name = get_field_rel(self.through._meta.get_field('content_object')).get_accessor_name()
+        rel_name = self.through._meta.get_field('content_object').rel.get_accessor_name()
         return getattr(self.instance, rel_name)
 
     def get_query_set(self):
@@ -101,5 +92,5 @@ class ClusterTaggableManager(TaggableManager):
         # retrieve the queryset via the related manager on the content object,
         # to accommodate the possibility of this having uncommitted changes relative to
         # the live database
-        rel_name = get_field_rel(self.through._meta.get_field('content_object')).get_accessor_name()
+        rel_name = self.through._meta.get_field('content_object').rel.get_accessor_name()
         return getattr(instance, rel_name).all()

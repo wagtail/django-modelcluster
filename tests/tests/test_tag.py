@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import unittest
+
 from django.test import TestCase
 from taggit.models import Tag
 from modelcluster.forms import ClusterForm
@@ -38,6 +40,34 @@ class TagTest(TestCase):
         self.assertEqual(0, TaggedPlace.objects.filter(content_object_id=mission_burrito.id).count())
         mission_burrito.save()
         self.assertEqual(2, TaggedPlace.objects.filter(content_object_id=mission_burrito.id).count())
+
+    def test_prefetch_tags_doesnt_break(self):
+        mission_burrito = Place(name='Mission Burrito')
+        mission_burrito.tags.add('mexican', 'burrito')
+        mission_burrito.save()
+
+        atomic_burger = Place(name='Atomic Burger')
+        atomic_burger.tags.add('burger')
+        atomic_burger.save()
+
+        places = list(Place.objects.order_by('name').prefetch_related('tags'))
+        self.assertEqual(places[0].name, 'Atomic Burger')
+        self.assertEqual(places[0].tags.first().name, 'burger')
+
+    @unittest.expectedFailure
+    def test_prefetch_tags_actually_prefetches(self):
+        mission_burrito = Place(name='Mission Burrito')
+        mission_burrito.tags.add('mexican', 'burrito')
+        mission_burrito.save()
+
+        atomic_burger = Place(name='Atomic Burger')
+        atomic_burger.tags.add('burger')
+        atomic_burger.save()
+
+        with self.assertNumQueries(2):
+            places = list(Place.objects.order_by('name').prefetch_related('tags'))
+            self.assertEqual(places[0].name, 'Atomic Burger')
+            self.assertEqual(places[0].tags.first().name, 'burger')
 
     def test_tag_form_field(self):
         class PlaceForm(ClusterForm):

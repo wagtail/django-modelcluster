@@ -258,8 +258,11 @@ class ParentalKey(ForeignKey):
     def check(self, **kwargs):
         errors = super(ParentalKey, self).check(**kwargs)
 
-        # Check that the desination model is a subclass of ClusterableModel
-        if not issubclass(self.rel.to, ClusterableModel):
+        # Check that the destination model is a subclass of ClusterableModel.
+        # If self.rel.to is a string at this point, it means that Django has been unable
+        # to resolve it as a model name; if so, skip this test so that Django's own
+        # system checks can report the appropriate error
+        if isinstance(self.rel.to, type) and not issubclass(self.rel.to, ClusterableModel):
             errors.append(
                 checks.Error(
                     'ParentalKey must point to a subclass of ClusterableModel.',

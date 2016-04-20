@@ -254,3 +254,27 @@ class ClusterTest(TestCase):
         self.assertEqual(error.obj, Instrument.band.field)
         self.assertEqual(error.msg, "related_name='+' is not allowed on ParentalKey fields")
         self.assertEqual(error.hint, "Either change it to a valid name or remove it")
+
+    def test_parental_key_checks_target_is_resolved_as_class(self):
+        from django.core import checks
+        from django.db import models
+        from modelcluster.fields import ParentalKey
+
+        class Instrument(models.Model):
+            banana = ParentalKey('Banana')
+
+            class Meta:
+                # Prevent Django from thinking this is in the database
+                # This shouldn't affect the test
+                abstract = True
+
+        # Check for error
+        errors = Instrument.check()
+        self.assertEqual(1, len(errors))
+
+        # Check the error itself
+        error = errors[0]
+        self.assertIsInstance(error, checks.Error)
+        self.assertEqual(error.id, 'fields.E300')
+        self.assertEqual(error.obj, Instrument.banana.field)
+        self.assertEqual(error.msg, "Field defines a relation with model 'Banana', which is either not installed, or is abstract.")

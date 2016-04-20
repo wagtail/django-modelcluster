@@ -16,7 +16,7 @@ except ImportError:
 from modelcluster.utils import sort_by_fields
 
 from modelcluster.queryset import FakeQuerySet
-from modelcluster.models import get_related_model, ClusterableModel
+from modelcluster.models import ClusterableModel
 
 
 def create_deferring_foreign_related_manager(related, original_manager_cls):
@@ -29,7 +29,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
 
     relation_name = related.get_accessor_name()
     rel_field = related.field
-    rel_model = get_related_model(related)
+    rel_model = related.related_model
     superclass = rel_model._default_manager.__class__
 
     class DeferringRelatedManager(superclass):
@@ -59,7 +59,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             except (AttributeError, KeyError):
                 return self.get_live_queryset()
 
-            return FakeQuerySet(get_related_model(related), results)
+            return FakeQuerySet(related.related_model, results)
 
         def get_prefetch_queryset(self, instances, queryset=None):
             if queryset is None:
@@ -157,7 +157,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
 
         def create(self, **kwargs):
             items = self.get_object_list()
-            new_item = get_related_model(related)(**kwargs)
+            new_item = related.related_model(**kwargs)
             items.append(new_item)
             return new_item
 

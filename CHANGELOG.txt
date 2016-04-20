@@ -1,6 +1,10 @@
 Changelog
 =========
 
+2.0 (xx.xx.20xx)
+~~~~~~~~~~~~~~~~
+* Removed Django 1.7 support
+
 1.1 (17.12.2015)
 ~~~~~~~~~~~~~~~~
 * Django 1.9 compatibility

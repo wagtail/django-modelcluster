@@ -149,12 +149,7 @@ class SerializeTest(TestCase):
         """
         # make an aware datetime, consisting of WAGTAIL_05_RELEASE_DATETIME
         # in a timezone 1hr west of UTC
-        try:
-            one_hour_west = timezone.get_fixed_timezone(-60)
-        except AttributeError:
-            # use deprecated-in-Django-1.7 class constructor
-            from django.utils.tzinfo import FixedOffset
-            one_hour_west = FixedOffset(-60)
+        one_hour_west = timezone.get_fixed_timezone(-60)
 
         local_time = timezone.make_aware(self.WAGTAIL_05_RELEASE_DATETIME, one_hour_west)
         log = Log(time=local_time, data="Wagtail 0.5 released")

@@ -113,7 +113,8 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             # instead, we consider them to match IF:
             # - they are exactly the same Python object (by reference), or
             # - they have a non-null primary key that matches
-            items_match = lambda item, target: (item is target) or (item.pk == target.pk and item.pk is not None)
+            def items_match(item, target):
+                return (item is target) or (item.pk == target.pk and item.pk is not None)
 
             for target in new_items:
                 item_matched = False
@@ -149,7 +150,8 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             # instead, we consider them to match IF:
             # - they are exactly the same Python object (by reference), or
             # - they have a non-null primary key that matches
-            items_match = lambda item, target: (item is target) or (item.pk == target.pk and item.pk is not None)
+            def items_match(item, target):
+                return (item is target) or (item.pk == target.pk and item.pk is not None)
 
             for target in items_to_remove:
                 # filter items list in place: see http://stackoverflow.com/a/1208792/1853523

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import os
 import sys
 
 from django.conf import settings
@@ -27,4 +26,3 @@ def runtests():
 
 if __name__ == '__main__':
     runtests()
-

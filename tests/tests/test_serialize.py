@@ -129,7 +129,6 @@ class SerializeTest(TestCase):
         self.assertEqual(1, beatles.albums.all()[1].pk)
         self.assertEqual(3, beatles.albums.all()[2].pk)
 
-
     WAGTAIL_05_RELEASE_DATETIME = datetime.datetime(2014, 8, 1, 11, 1, 42)
 
     def test_serialise_with_naive_datetime(self):

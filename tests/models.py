@@ -46,6 +46,7 @@ class Album(models.Model):
 class TaggedPlace(TaggedItemBase):
     content_object = ParentalKey('Place', related_name='tagged_items')
 
+
 @python_2_unicode_compatible
 class Place(ClusterableModel):
     name = models.CharField(max_length=255)
@@ -59,12 +60,14 @@ class Restaurant(Place):
     serves_hot_dogs = models.BooleanField(default=False)
     proprietor = models.ForeignKey('Chef', null=True, blank=True, on_delete=models.SET_NULL, related_name='restaurants')
 
+
 @python_2_unicode_compatible
 class Dish(models.Model):
     name = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name
+
 
 @python_2_unicode_compatible
 class Wine(models.Model):
@@ -73,12 +76,14 @@ class Wine(models.Model):
     def __str__(self):
         return self.name
 
+
 @python_2_unicode_compatible
 class Chef(models.Model):
     name = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name
+
 
 @python_2_unicode_compatible
 class MenuItem(models.Model):
@@ -89,6 +94,7 @@ class MenuItem(models.Model):
 
     def __str__(self):
         return "%s - %f" % (self.dish, self.price)
+
 
 @python_2_unicode_compatible
 class Review(models.Model):

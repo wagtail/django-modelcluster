@@ -4,6 +4,7 @@ from django.test import TestCase
 from modelcluster.forms import transientmodelformset_factory, childformset_factory
 from tests.models import Band, BandMember, Album
 
+
 class TransientFormsetTest(TestCase):
     BandMembersFormset = transientmodelformset_factory(BandMember, exclude=['band'], extra=3, can_delete=True)
 

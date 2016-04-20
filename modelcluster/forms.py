@@ -34,12 +34,13 @@ class BaseTransientModelFormSet(BaseModelFormSet):
         elif self.initial_extra:
             # Set initial values for extra forms
             try:
-                kwargs['initial'] = self.initial_extra[i-self.initial_form_count()]
+                kwargs['initial'] = self.initial_extra[i - self.initial_form_count()]
             except IndexError:
                 pass
 
         # bypass BaseModelFormSet's own _construct_form
         return super(BaseModelFormSet, self)._construct_form(i, **kwargs)
+
 
 def transientmodelformset_factory(model, formset=BaseTransientModelFormSet, **kwargs):
     return modelformset_factory(model, formset=formset, **kwargs)
@@ -50,7 +51,7 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         if instance is None:
             self.instance = self.fk.rel.to()
         else:
-            self.instance=instance
+            self.instance = instance
 
         if django.VERSION >= (1, 8):
             self.rel_name = ForeignObjectRel(self.fk, self.fk.rel.to, related_name=self.fk.rel.related_name).get_accessor_name()
@@ -95,10 +96,12 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         return saved_instances
 
 
-def childformset_factory(parent_model, model, form=ModelForm,
+def childformset_factory(
+    parent_model, model, form=ModelForm,
     formset=BaseChildFormSet, fk_name=None, fields=None, exclude=None,
     extra=3, can_order=False, can_delete=True, max_num=None, validate_max=False,
-    formfield_callback=None, widgets=None, min_num=None, validate_min=False):
+    formfield_callback=None, widgets=None, min_num=None, validate_min=False
+):
 
     fk = _get_foreign_key(parent_model, model, fk_name=fk_name)
     # enforce a max_num=1 when the foreign key to the parent model is unique.
@@ -137,6 +140,7 @@ class ClusterFormOptions(ModelFormOptions):
         super(ClusterFormOptions, self).__init__(options=options)
         self.formsets = getattr(options, 'formsets', None)
         self.exclude_formsets = getattr(options, 'exclude_formsets', None)
+
 
 class ClusterFormMetaclass(ModelFormMetaclass):
     extra_form_count = 3

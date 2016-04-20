@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import json
 import datetime
 
-import django
 from django.db import models
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.fields import FieldDoesNotExist
@@ -33,6 +32,7 @@ def get_field_value(field, model):
     else:
         return getattr(model, field.get_attname())
 
+
 def get_serializable_data_for_fields(model):
     pk_field = model._meta.pk
     # If model is a child via multitable inheritance, use parent's pk
@@ -46,6 +46,7 @@ def get_serializable_data_for_fields(model):
             obj[field.name] = get_field_value(field, model)
 
     return obj
+
 
 def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
     pk_field = model._meta.pk

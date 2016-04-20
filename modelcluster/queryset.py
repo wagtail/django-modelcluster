@@ -4,6 +4,7 @@ from django.db.models import Model
 
 from modelcluster.utils import sort_by_fields
 
+
 # Constructor for test functions that determine whether an object passes some boolean condition
 def test_exact(model, attribute_name, value):
     field = model._meta.get_field(attribute_name)
@@ -27,6 +28,7 @@ def test_exact(model, attribute_name, value):
         # just a plain Python value = do a normal equality check
         return lambda obj: getattr(obj, attribute_name) == typed_value
 
+
 class FakeQuerySet(object):
     def __init__(self, model, results):
         self.model = model
@@ -36,8 +38,10 @@ class FakeQuerySet(object):
         return self
 
     def _get_filters(self, **kwargs):
-        filters = []  # a list of test functions; objects must pass all tests to be included
-            # in the filtered list
+        # a list of test functions; objects must pass all tests to be included
+        # in the filtered list
+        filters = []
+
         for key, val in kwargs.items():
             key_clauses = key.split('__')
             if len(key_clauses) != 1:

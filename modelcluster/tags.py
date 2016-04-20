@@ -1,6 +1,6 @@
 import warnings
 
-from modelcluster.contrib.taggit import *
+from modelcluster.contrib.taggit import *  # NOQA
 
 
 warnings.warn(

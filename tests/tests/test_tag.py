@@ -6,6 +6,7 @@ from modelcluster.forms import ClusterForm
 
 from tests.models import Place, TaggedPlace
 
+
 class TagTest(TestCase):
     def test_can_access_tags_on_unsaved_instance(self):
         mission_burrito = Place(name='Mission Burrito')

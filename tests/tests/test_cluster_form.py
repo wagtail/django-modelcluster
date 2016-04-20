@@ -160,6 +160,7 @@ class ClusterFormTest(TestCase):
 
         class BandFormWithFFC(ClusterForm):
             formfield_callback = formfield_for_dbfield
+
             class Meta:
                 model = Band
                 fields = ['name']
@@ -347,7 +348,7 @@ class ClusterFormTest(TestCase):
                 model = Band
                 fields = ['name']
 
-        please_please_me = Album(name='Please Please Me', release_date = datetime.date(1963, 3, 22))
+        please_please_me = Album(name='Please Please Me', release_date=datetime.date(1963, 3, 22))
         beatles = Band(name='The Beatles', albums=[please_please_me])
         beatles.save()
 
@@ -389,7 +390,7 @@ class ClusterFormTest(TestCase):
         }, instance=beatles)
 
         self.assertTrue(form.is_valid())
-        result = form.save(commit=False)
+        form.save(commit=False)
         self.assertEqual(0, beatles.albums.count())
         self.assertEqual(1, Band.objects.get(id=beatles.id).albums.count())
         beatles.save()

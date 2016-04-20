@@ -1,8 +1,5 @@
 from __future__ import unicode_literals
 
-import unittest
-
-import django
 from django.test import TestCase
 from django.db import IntegrityError
 
@@ -111,7 +108,6 @@ class ClusterTest(TestCase):
         fat_duck = Restaurant.objects.get(id=fat_duck.id)
         self.assertEqual(1, fat_duck.reviews.count())
         self.assertEqual(fat_duck.reviews.first().author, 'Michael Winner')
-
 
     def test_can_only_commit_on_saved_parent(self):
         beatles = Band(name='The Beatles', members=[

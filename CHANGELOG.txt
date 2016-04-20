@@ -3,7 +3,7 @@ Changelog
 
 2.0 (xx.xx.20xx)
 ~~~~~~~~~~~~~~~~
-* Removed Django 1.7 support
+* Removed Django 1.7 and Python 3.2 support
 
 1.1 (17.12.2015)
 ~~~~~~~~~~~~~~~~

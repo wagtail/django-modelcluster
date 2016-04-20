@@ -6,6 +6,7 @@ Changelog
 * Removed Django 1.7 and Python 3.2 support
 * Added system check to disallow related_name='+' on ParentalKey
 * Fix: System checks now correctly report a model name that cannot be resolved to a model
+* Fix: prefetch_related on a ClusterTaggableManager no longer fails (but doesn't prefetch either)
 
 1.1 (17.12.2015)
 ~~~~~~~~~~~~~~~~

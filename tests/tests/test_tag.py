@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from taggit.models import Tag
 from modelcluster.forms import ClusterForm
 
@@ -93,3 +93,19 @@ class TagTest(TestCase):
         self.assertTrue(Tag.objects.get(name='burrito') in mission_burrito.tags.all())
         self.assertTrue(Tag.objects.get(name='fajita') in mission_burrito.tags.all())
         self.assertFalse(Tag.objects.get(name='mexican') in mission_burrito.tags.all())
+
+    @override_settings(TAGGIT_CASE_INSENSITIVE=True)
+    def test_case_insensitive_tags(self):
+        mission_burrito = Place(name='Mission Burrito')
+        mission_burrito.tags.add('burrito')
+        mission_burrito.tags.add('Burrito')
+
+        self.assertEqual(1, mission_burrito.tags.count())
+
+    def test_integers(self):
+        """Adding an integer as a tag should raise a ValueError"""
+        mission_burrito = Place(name='Mission Burrito')
+        with self.assertRaisesRegexp(ValueError, (
+                r"Cannot add 1 \(<(type|class) 'int'>\). "
+                r"Expected <class 'django.db.models.base.ModelBase'> or str.")):
+            mission_burrito.tags.add(1)

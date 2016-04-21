@@ -6,6 +6,7 @@ Changelog
 * Removed Django 1.7 and Python 3.2 support
 * Added system check to disallow related_name='+' on ParentalKey
 * Added support for TAGGIT_CASE_INSENSITIVE on ClusterTaggableManager
+* Field values for serialization are now fetched via pre_save (which, in particular, ensures that file fields are committed to storage)
 * Fix: System checks now correctly report a model name that cannot be resolved to a model
 * Fix: prefetch_related on a ClusterTaggableManager no longer fails (but doesn't prefetch either)
 * Fix: Adding invalid types as tags now correctly reports a ValueError

@@ -113,3 +113,12 @@ class Log(ClusterableModel):
 
     def __str__(self):
         return "[%s] %s" % (self.time.isoformat(), self.data)
+
+
+@python_2_unicode_compatible
+class Document(ClusterableModel):
+    title = models.CharField(max_length=255)
+    file = models.FileField(upload_to='documents')
+
+    def __str__(self):
+        return self.title

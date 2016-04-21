@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 import os
+import shutil
 import sys
 
 from django.conf import settings
 from django.core.management import execute_from_command_line
 
+MODELCLUSTER_ROOT = os.path.dirname(__file__)
+MEDIA_ROOT = os.path.join(MODELCLUSTER_ROOT, 'test-media')
 
 DATABASES = {
     'default': {
@@ -38,12 +41,16 @@ if not settings.configured:
         USE_TZ=True,
         TIME_ZONE='America/Chicago',
         ROOT_URLCONF='tests.urls',
+        MEDIA_ROOT=MEDIA_ROOT,
     )
 
 
 def runtests():
     argv = sys.argv[:1] + ['test'] + sys.argv[1:]
-    execute_from_command_line(argv)
+    try:
+        execute_from_command_line(argv)
+    finally:
+        shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
 
 
 if __name__ == '__main__':

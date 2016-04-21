@@ -3,10 +3,12 @@ from __future__ import unicode_literals
 import json
 import datetime
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
+from django.utils.six import b
 
-from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, Review, Log
+from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, Review, Log, Document
 
 
 class SerializeTest(TestCase):
@@ -189,3 +191,12 @@ class SerializeTest(TestCase):
     def test_deserialise_with_null_datetime(self):
         log = Log.from_json('{"data": "Someone scanned a QR code", "time": null, "pk": null}')
         self.assertEqual(log.time, None)
+
+    def test_serialise_saves_file_fields(self):
+        doc = Document(title='Hello')
+        doc.file = SimpleUploadedFile('hello.txt', b('Hello world'))
+
+        doc_json = doc.to_json()
+        new_doc = Document.from_json(doc_json)
+
+        self.assertEqual(new_doc.file.read(), b('Hello world'))

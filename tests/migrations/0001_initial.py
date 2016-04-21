@@ -123,6 +123,17 @@ class Migration(migrations.Migration):
             },
             bases=('tests.place',),
         ),
+        migrations.CreateModel(
+            name='Document',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('title', models.CharField(max_length=255)),
+                ('file', models.FileField(upload_to='documents')),
+            ],
+            options={
+                'abstract': False,
+            },
+        ),
         migrations.AddField(
             model_name='taggedplace',
             name='content_object',

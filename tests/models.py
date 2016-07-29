@@ -6,7 +6,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from taggit.models import TaggedItemBase
 
-from modelcluster.fields import ParentalKey
+from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from modelcluster.models import ClusterableModel
 
 
@@ -122,3 +122,29 @@ class Document(ClusterableModel):
 
     def __str__(self):
         return self.title
+
+
+@python_2_unicode_compatible
+class Article(ClusterableModel):
+    title = models.CharField(max_length=255)
+    authors = ParentalManyToManyField('Author', related_name='articles_by_author')
+    categories = ParentalManyToManyField('Category', related_name='articles_by_category')
+
+    def __str__(self):
+        return self.title
+
+
+@python_2_unicode_compatible
+class Author(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+
+@python_2_unicode_compatible
+class Category(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name

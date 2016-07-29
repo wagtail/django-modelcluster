@@ -169,4 +169,27 @@ class Migration(migrations.Migration):
             name='restaurant',
             field=modelcluster.fields.ParentalKey(related_name='menu_items', to='tests.Restaurant'),
         ),
+        migrations.CreateModel(
+            name='Author',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('name', models.CharField(max_length=255)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Category',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('name', models.CharField(max_length=255)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Article',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+                ('title', models.CharField(max_length=255)),
+                ('authors', models.ManyToManyField('Author', related_name="articles_by_author")),
+                ('categories', models.ManyToManyField('Category', related_name="articles_by_cateory")),
+            ],
+        ),
     ]

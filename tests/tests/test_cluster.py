@@ -3,7 +3,8 @@ from __future__ import unicode_literals
 from django.test import TestCase
 from django.db import IntegrityError
 
-from tests.models import Band, BandMember, Restaurant, Review, Album
+from tests.models import Band, BandMember, Restaurant, Review, Album, \
+    Article, Author, Category
 
 
 class ClusterTest(TestCase):
@@ -278,3 +279,59 @@ class ClusterTest(TestCase):
         self.assertEqual(error.id, 'fields.E300')
         self.assertEqual(error.obj, Instrument.banana.field)
         self.assertEqual(error.msg, "Field defines a relation with model 'Banana', which is either not installed, or is abstract.")
+
+    def test_parentalm2mfield(self):
+        article = Article(title="Test Title")
+        author_1 = Author(name="Author 1")
+        author_2 = Author(name="Author 2")
+        article.authors = [author_1, author_2]
+        category_1 = Category(name="Category 1")
+        category_2 = Category(name="Category 2")
+        article.categories = [category_1, category_2]
+        self.assertEqual(['Author 1', 'Author 2'],
+                         [author.name for author in article.authors.all()])
+        self.assertEqual(article.authors.count(), 2)
+
+        author_3 = Author(name="Author 3")
+        article.authors.add(author_3)
+        self.assertEqual(['Author 1', 'Author 2', 'Author 3'],
+                         [author.name for author in article.authors.all()])
+        self.assertEqual(article.authors.count(), 3)
+
+        article.authors.remove(author_3)
+        self.assertEqual(['Author 1', 'Author 2'],
+                         [author.name for author in article.authors.all()])
+        self.assertEqual(article.authors.count(), 2)
+
+        article.authors.clear()
+        self.assertEqual([],
+                         [author.name for author in article.authors.all()])
+        self.assertEqual(article.authors.count(), 0)
+
+        article.authors = [author_1, author_2]
+        article.save()
+        article = Article.objects.get(title="Test Title")
+        self.assertEqual(['Author 1', 'Author 2'],
+                         [author.name for author in article.authors.all()])
+        self.assertEqual(article.authors.count(), 2)
+
+    def test_reverse_m2m_field(self):
+        article = Article(title="Test Title")
+        author_1 = Author(name="Author 1")
+        author_2 = Author(name="Author 2")
+        article.authors = [author_1, author_2]
+        category_1 = Category(name="Category 1")
+        category_2 = Category(name="Category 2")
+        article.categories = [category_1, category_2]
+        article.save()
+        author_1 = Author.objects.get(name="Author 1")
+        self.assertEqual(author_1.articles_by_author.all().count(), 1)
+        self.assertEqual(author_1.articles_by_author.get(),
+                         Article.objects.filter(title="Test Title").get())
+        article_2 = Article(title="Test Title 2")
+        article_2.authors = [author_1]
+        article_2.save()
+        author_1 = Author.objects.get(name="Author 1")
+        self.assertEqual(author_1.articles_by_author.all().count(), 2)
+        self.assertEqual(list(author_1.articles_by_author.values_list('title', flat=True)),
+                         ['Test Title', 'Test Title 2'])

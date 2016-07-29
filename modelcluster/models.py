@@ -66,7 +66,7 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
             continue
 
         if field.rel and isinstance(field.rel, models.ManyToManyRel):
-            raise Exception('m2m relations not supported yet')
+            pass
         elif field.rel and isinstance(field.rel, models.ManyToOneRel):
             if field_value is None:
                 kwargs[field.attname] = None
@@ -133,6 +133,10 @@ def get_all_child_relations(model):
         except AttributeError:
             pass
 
+        for field in model._meta.get_fields():
+            if field.many_to_many and field not in relations:
+                relations.append(field)
+
         model._meta._child_relations_cache = relations
         return relations
 
@@ -186,7 +190,10 @@ class ClusterableModel(models.Model):
         super(ClusterableModel, self).save(update_fields=real_update_fields, **kwargs)
 
         for relation in relations_to_commit:
-            getattr(self, relation).commit()
+            try:
+                getattr(self, relation).commit()
+            except AttributeError:
+                pass
 
     def serializable_data(self):
         obj = get_serializable_data_for_fields(self)
@@ -199,7 +206,18 @@ class ClusterableModel(models.Model):
             if hasattr(rel.related_model, 'serializable_data'):
                 obj[rel_name] = [child.serializable_data() for child in children]
             else:
-                obj[rel_name] = [get_serializable_data_for_fields(child) for child in children]
+                if rel.many_to_many:
+                    pk_values = []
+                    for child in children:
+                        pk_field = child._meta.pk
+                        # If model is a child via multitable inheritance, use parent's pk
+                        while pk_field.rel and pk_field.rel.parent_link:
+                            pk_field = pk_field.rel.to._meta.pk
+
+                        pk_values.append(get_field_value(pk_field, child))
+                    obj[rel_name] = pk_values
+                else:
+                    obj[rel_name] = [get_serializable_data_for_fields(child) for child in children]
 
         return obj
 
@@ -233,16 +251,19 @@ class ClusterableModel(models.Model):
                 continue
 
             related_model = rel.related_model
-            if hasattr(related_model, 'from_serializable_data'):
-                children = [
-                    related_model.from_serializable_data(child_data, check_fks=check_fks, strict_fks=True)
-                    for child_data in child_data_list
-                ]
+            if rel.many_to_many:
+                children = related_model._default_manager.filter(pk__in=child_data_list)
             else:
-                children = [
-                    model_from_serializable_data(related_model, child_data, check_fks=check_fks, strict_fks=True)
-                    for child_data in child_data_list
-                ]
+                if hasattr(related_model, 'from_serializable_data'):
+                    children = [
+                        related_model.from_serializable_data(child_data, check_fks=check_fks, strict_fks=True)
+                        for child_data in child_data_list
+                    ]
+                else:
+                    children = [
+                        model_from_serializable_data(related_model, child_data, check_fks=check_fks, strict_fks=True)
+                        for child_data in child_data_list
+                    ]
 
             children = filter(lambda child: child is not None, children)
 

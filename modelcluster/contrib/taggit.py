@@ -3,10 +3,15 @@ from __future__ import absolute_import
 
 from django.conf import settings
 from django.utils import six
+from taggit import VERSION as TAGGIT_VERSION
 from taggit.managers import TaggableManager, _TaggableManager
 from taggit.utils import require_instance_manager
 
 from modelcluster.queryset import FakeQuerySet
+
+
+if TAGGIT_VERSION < (0, 20, 0):
+    raise Exception("modelcluster.contrib.taggit requires django-taggit version 0.20 or above")
 
 
 class _ClusterTaggableManager(_TaggableManager):
@@ -112,14 +117,9 @@ class ClusterTaggableManager(TaggableManager):
     def __get__(self, instance, model):
         # override TaggableManager's requirement for instance to have a primary key
         # before we can access its tags
-        try:
-            manager = _ClusterTaggableManager(
-                through=self.through, model=model, instance=instance, prefetch_cache_name=self.name
-            )
-        except TypeError:  # fallback for django-taggit pre 0.11
-            manager = _ClusterTaggableManager(
-                through=self.through, model=model, instance=instance
-            )
+        manager = _ClusterTaggableManager(
+            through=self.through, model=model, instance=instance, prefetch_cache_name=self.name
+        )
 
         return manager
 

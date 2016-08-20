@@ -288,31 +288,41 @@ class ClusterTest(TestCase):
         category_1 = Category(name="Category 1")
         category_2 = Category(name="Category 2")
         article.categories = [category_1, category_2]
-        self.assertEqual(['Author 1', 'Author 2'],
-                         [author.name for author in article.authors.all()])
+        self.assertEqual(
+            ['Author 1', 'Author 2'],
+            [author.name for author in article.authors.all().order_by('name')]
+        )
         self.assertEqual(article.authors.count(), 2)
 
         author_3 = Author(name="Author 3")
         article.authors.add(author_3)
-        self.assertEqual(['Author 1', 'Author 2', 'Author 3'],
-                         [author.name for author in article.authors.all()])
+        self.assertEqual(
+            ['Author 1', 'Author 2', 'Author 3'],
+            [author.name for author in article.authors.all().order_by('name')]
+        )
         self.assertEqual(article.authors.count(), 3)
 
         article.authors.remove(author_3)
-        self.assertEqual(['Author 1', 'Author 2'],
-                         [author.name for author in article.authors.all()])
+        self.assertEqual(
+            ['Author 1', 'Author 2'],
+            [author.name for author in article.authors.all().order_by('name')]
+        )
         self.assertEqual(article.authors.count(), 2)
 
         article.authors.clear()
-        self.assertEqual([],
-                         [author.name for author in article.authors.all()])
+        self.assertEqual(
+            [],
+            [author.name for author in article.authors.all().order_by('name')]
+        )
         self.assertEqual(article.authors.count(), 0)
 
         article.authors = [author_1, author_2]
         article.save()
         article = Article.objects.get(title="Test Title")
-        self.assertEqual(['Author 1', 'Author 2'],
-                         [author.name for author in article.authors.all()])
+        self.assertEqual(
+            ['Author 1', 'Author 2'],
+            [author.name for author in article.authors.all().order_by('name')]
+        )
         self.assertEqual(article.authors.count(), 2)
 
     def test_reverse_m2m_field(self):

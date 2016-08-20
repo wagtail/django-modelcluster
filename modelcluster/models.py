@@ -11,6 +11,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.conf import settings
 from django.utils import timezone
 
+from modelcluster.contrib.taggit import ClusterTaggableManager
+
 
 def get_field_value(field, model):
     if field.rel is None:
@@ -135,6 +137,8 @@ def get_all_child_relations(model):
 
         for field in model._meta.get_fields():
             if field.many_to_many and field not in relations:
+                if isinstance(field, ClusterTaggableManager):
+                    continue
                 relations.append(field)
 
         model._meta._child_relations_cache = relations
@@ -190,10 +194,7 @@ class ClusterableModel(models.Model):
         super(ClusterableModel, self).save(update_fields=real_update_fields, **kwargs)
 
         for relation in relations_to_commit:
-            try:
-                getattr(self, relation).commit()
-            except AttributeError:
-                pass
+            getattr(self, relation).commit()
 
     def serializable_data(self):
         obj = get_serializable_data_for_fields(self)

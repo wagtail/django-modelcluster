@@ -177,15 +177,12 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                 except AttributeError:  # thrown if opts.widgets is None
                     widgets = None
 
-                try:
-                    kwargs = {
-                        'extra': cls.extra_form_count,
-                        'formfield_callback': formfield_callback,
-                        'fk_name': rel.field.name,
+                kwargs = {
+                    'extra': cls.extra_form_count,
+                    'formfield_callback': formfield_callback,
+                    'fk_name': rel.field.name,
                         'widgets': widgets
-                    }
-                except AttributeError:
-                    continue
+                }
 
                 # see if opts.formsets looks like a dict; if so, allow the value
                 # to override kwargs

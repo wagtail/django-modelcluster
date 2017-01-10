@@ -7,10 +7,11 @@ from django.db.models.fields.related import ForeignKey, ManyToManyField
 from django.utils.functional import cached_property
 
 try:
-    from django.db.models.fields.related import ReverseManyToOneDescriptor
+    from django.db.models.fields.related import ReverseManyToOneDescriptor, ManyToManyDescriptor
 except ImportError:
     # Django 1.8 and below
-    from django.db.models.fields.related import ForeignRelatedObjectsDescriptor as ReverseManyToOneDescriptor
+    from django.db.models.fields.related import ForeignRelatedObjectsDescriptor as ReverseManyToOneDescriptor, \
+        ReverseManyRelatedObjectsDescriptor as ManyToManyDescriptor
 
 
 from modelcluster.utils import sort_by_fields
@@ -262,5 +263,86 @@ class ParentalKey(ForeignKey):
         return errors
 
 
+def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
+    relation_name = rel.field.name
+    rel_model = rel.related_model
+    superclass = rel_model._default_manager.__class__
+
+    class DeferringManyRelatedManager(superclass):
+        def __init__(self, instance=None):
+            super(DeferringManyRelatedManager, self).__init__()
+
+            self.instance = instance
+
+        def get_object_list(self):
+            """
+            return the mutable list that forms the current in-memory state of
+            this relation. If there is no such list (i.e. the manager is returning
+            querysets from the live database instead), one is created, populating it
+            with the live database state
+            """
+            try:
+                cluster_related_objects = self.instance._cluster_related_objects
+            except AttributeError:
+                cluster_related_objects = {}
+                self.instance._cluster_related_objects = cluster_related_objects
+
+            try:
+                object_list = cluster_related_objects[relation_name]
+            except KeyError:
+                object_list = list(self.get_live_queryset())
+                cluster_related_objects[relation_name] = object_list
+
+            return object_list
+
+        def clear(self):
+            """
+            Clear the stored object set, without affecting the database
+            """
+            try:
+                cluster_related_objects = self.instance._cluster_related_objects
+            except AttributeError:
+                cluster_related_objects = {}
+                self.instance._cluster_related_objects = cluster_related_objects
+
+            cluster_related_objects[relation_name] = []
+
+    return DeferringManyRelatedManager
+
+
+class ParentalManyToManyDescriptor(ManyToManyDescriptor):
+    def __get__(self, instance, instance_type=None):
+        if instance is None:
+            return self
+
+        return self.child_object_manager_cls(instance)
+
+    def __set__(self, instance, value):
+        manager = self.__get__(instance)
+        manager.clear()
+        manager.add(*value)
+
+    @cached_property
+    def child_object_manager_cls(self):
+        rel = self.rel
+        # TODO: may need Django 1.8 fallback:
+        # try:
+        #     rel = self.rel
+        # except AttributeError:
+        #     # Django 1.8 and below
+        #     rel = self.related
+
+        return create_deferring_forward_many_to_many_manager(rel, self.related_manager_cls)
+
+
 class ParentalManyToManyField(ManyToManyField):
-    pass
+    related_accessor_class = ParentalManyToManyDescriptor
+
+    def contribute_to_class(self, cls, name, **kwargs):
+        # ManyToManyField does not (as of Django 1.10) respect related_accessor_class,
+        # but hard-codes ManyToManyDescriptor instead:
+        # https://github.com/django/django/blob/6157cd6da1b27716e8f3d1ed692a6e33d970ae46/django/db/models/fields/related.py#L1538
+        # So, we'll let the original contribute_to_class do its thing, and then overwrite
+        # the accessor...
+        super(ParentalManyToManyField, self).contribute_to_class(cls, name, **kwargs)
+        setattr(cls, self.name, self.related_accessor_class(self.rel))

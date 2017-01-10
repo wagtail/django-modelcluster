@@ -3,31 +3,40 @@ language: python
 # Use container-based infrastructure
 sudo: false
 
-language: python
-python:
-  - "2.7"
-  - "3.3"
-  - "3.4"
-  - "3.5"
-
 matrix:
   include:
    - env: TOXENV=py27-dj18-sqlite
+     python: 2.7
    - env: TOXENV=py33-dj18-sqlite
+     python: 3.3
    - env: TOXENV=py34-dj18-sqlite
+     python: 3.4
    - env: TOXENV=py27-dj19-sqlite
+     python: 2.7
    - env: TOXENV=py34-dj19-sqlite
+     python: 3.4
    - env: TOXENV=py27-dj110-sqlite
+     python: 2.7
    - env: TOXENV=py34-dj110-sqlite
+     python: 3.4
    - env: TOXENV=py35-dj110-sqlite
+     python: 3.5
    - env: TOXENV=py27-dj18-postgres
+     python: 2.7
    - env: TOXENV=py33-dj18-postgres
+     python: 3.3
    - env: TOXENV=py34-dj18-postgres
+     python: 3.4
    - env: TOXENV=py27-dj19-postgres
+     python: 2.7
    - env: TOXENV=py34-dj19-postgres
+     python: 3.4
    - env: TOXENV=py27-dj110-postgres
+     python: 2.7
    - env: TOXENV=py34-dj110-postgres
+     python: 3.4
    - env: TOXENV=py35-dj110-postgres
+     python: 3.5
 
 install:
   - pip install tox

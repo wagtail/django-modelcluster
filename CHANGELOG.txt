@@ -1,6 +1,10 @@
 Changelog
 =========
 
+3.0 (xx.xx.xxxx)
+~~~~~~~~~~~~~~~~
+* Added compatibility with django-taggit 0.20 and dropped support for earlier versions
+
 2.0 (22.04.2016)
 ~~~~~~~~~~~~~~~~
 * Removed Django 1.7 and Python 3.2 support

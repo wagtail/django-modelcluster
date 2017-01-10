@@ -274,6 +274,29 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
 
             self.instance = instance
 
+        def get_live_queryset(self):
+            """
+            return the original manager's queryset, which reflects the live database
+            """
+            return original_manager_cls(self.instance).get_queryset()
+
+        def get_queryset(self):
+            """
+            return the current object set with any updates applied,
+            wrapped up in a FakeQuerySet if it doesn't match the database state
+            """
+            try:
+                results = self.instance._cluster_related_objects[relation_name]
+            except (AttributeError, KeyError):
+                if self.instance.pk:
+                    return self.get_live_queryset()
+                else:
+                    # the standard M2M manager fails on unsaved instances,
+                    # so bypass it and return an empty queryset
+                    return rel_model.objects.none()
+
+            return FakeQuerySet(rel_model, results)
+
         def get_object_list(self):
             """
             return the mutable list that forms the current in-memory state of
@@ -295,6 +318,35 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
 
             return object_list
 
+        def add(self, *new_items):
+            """
+            Add the passed items to the stored object set, but do not commit them
+            to the database
+            """
+            items = self.get_object_list()
+
+            for target in new_items:
+                if target.pk is None:
+                    raise ValueError('"%r" needs to have a primary key value before '
+                        'it can be added to a parental many-to-many relation.' % target)
+                item_matched = False
+                for i, item in enumerate(items):
+                    if item == target:
+                        # Replace the matched item with the new one. This ensures that any
+                        # modifications to that item's fields take effect within the recordset -
+                        # i.e. we can perform a virtual UPDATE to an object in the list
+                        # by calling add(updated_object). Which is semantically a bit dubious,
+                        # but it does the job...
+                        items[i] = target
+                        item_matched = True
+                        break
+                if not item_matched:
+                    items.append(target)
+
+            # Sort list
+            if rel_model._meta.ordering and len(items) > 1:
+                sort_by_fields(items, rel_model._meta.ordering)
+
         def clear(self):
             """
             Clear the stored object set, without affecting the database
@@ -306,6 +358,43 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
                 self.instance._cluster_related_objects = cluster_related_objects
 
             cluster_related_objects[relation_name] = []
+
+        def remove(self, *items_to_remove):
+            """
+            Remove the passed items from the stored object set, but do not commit the change
+            to the database
+            """
+            items = self.get_object_list()
+
+            # filter items list in place: see http://stackoverflow.com/a/1208792/1853523
+            items[:] = [item for item in items if item not in items_to_remove]
+
+        def commit(self):
+            """
+            Apply any changes made to the stored object set to the database.
+            """
+            if not self.instance.pk:
+                raise IntegrityError("Cannot commit relation %r on an unsaved model" % relation_name)
+
+            try:
+                final_items = self.instance._cluster_related_objects[relation_name]
+            except (AttributeError, KeyError):
+                # _cluster_related_objects entry never created => no changes to make
+                return
+
+            original_manager = original_manager_cls(self.instance)
+            live_items = list(original_manager.get_queryset())
+
+            items_to_remove = [item for item in live_items if item not in final_items]
+            items_to_add = [item for item in final_items if item not in live_items]
+
+            if items_to_remove:
+                original_manager.remove(*items_to_remove)
+            if items_to_add:
+                original_manager.add(*items_to_add)
+
+            # purge the _cluster_related_objects entry, so we switch back to live SQL
+            del self.instance._cluster_related_objects[relation_name]
 
     return DeferringManyRelatedManager
 

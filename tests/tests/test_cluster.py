@@ -1,11 +1,14 @@
 from __future__ import unicode_literals
 
+import unittest
+
 from django.test import TestCase
 from django.db import IntegrityError
 
 from modelcluster.models import get_all_child_relations
 
-from tests.models import Band, BandMember, Restaurant, Review, Album
+from tests.models import Band, BandMember, Restaurant, Review, Album, \
+    Article, Author, Category
 
 
 class ClusterTest(TestCase):
@@ -287,4 +290,92 @@ class GetAllChildRelationsTest(TestCase):
         self.assertEqual(
             set([rel.name for rel in get_all_child_relations(Restaurant)]),
             set(['tagged_items', 'reviews', 'menu_items'])
+        )
+
+
+class ParentalM2MTest(TestCase):
+    def setUp(self):
+        self.article = Article(title="Test Title")
+        self.author_1 = Author.objects.create(name="Author 1")
+        self.author_2 = Author.objects.create(name="Author 2")
+        self.article.authors = [self.author_1, self.author_2]
+        self.category_1 = Category.objects.create(name="Category 1")
+        self.category_2 = Category.objects.create(name="Category 2")
+        self.article.categories = [self.category_1, self.category_2]
+
+    def test_parentalm2mfield(self):
+        # Article should not exist in the database yet
+        self.assertFalse(Article.objects.filter(title='Test Title').exists())
+
+        # Test lookup on parental M2M relation
+        self.assertEqual(
+            ['Author 1', 'Author 2'],
+            [author.name for author in self.article.authors.order_by('name')]
+        )
+        self.assertEqual(self.article.authors.count(), 2)
+
+        # Test adding to the relation
+        author_3 = Author.objects.create(name="Author 3")
+        self.article.authors.add(author_3)
+        self.assertEqual(
+            ['Author 1', 'Author 2', 'Author 3'],
+            [author.name for author in self.article.authors.all().order_by('name')]
+        )
+        self.assertEqual(self.article.authors.count(), 3)
+
+        # Test removing from the relation
+        self.article.authors.remove(author_3)
+        self.assertEqual(
+            ['Author 1', 'Author 2'],
+            [author.name for author in self.article.authors.order_by('name')]
+        )
+        self.assertEqual(self.article.authors.count(), 2)
+
+        # Test clearing the relation
+        self.article.authors.clear()
+        self.assertEqual(
+            [],
+            [author.name for author in self.article.authors.order_by('name')]
+        )
+        self.assertEqual(self.article.authors.count(), 0)
+
+        # Test saving to / restoring from DB
+        self.article.authors = [self.author_1, self.author_2]
+        self.article.save()
+        self.article = Article.objects.get(title="Test Title")
+        self.assertEqual(
+            ['Author 1', 'Author 2'],
+            [author.name for author in self.article.authors.order_by('name')]
+        )
+        self.assertEqual(self.article.authors.count(), 2)
+
+    @unittest.expectedFailure
+    def test_constructor(self):
+        # Test passing values for M2M relations as kwargs to the constructor
+        article2 = Article(title="Test article 2",
+            authors=[self.author_1],
+            categories=[self.category_2],
+        )
+        self.assertEqual(
+            ['Author 1'],
+            [author.name for author in article2.authors.order_by('name')]
+        )
+        self.assertEqual(article2.authors.count(), 1)
+
+    def test_reverse_m2m_field(self):
+        # article is unsaved, so should not be returned by the reverse relation on author
+        self.assertEqual(self.author_1.articles_by_author.count(), 0)
+
+        self.article.save()
+        # should now be able to look up on the reverse relation
+        self.assertEqual(self.author_1.articles_by_author.count(), 1)
+        self.assertEqual(self.author_1.articles_by_author.get(), self.article)
+
+        article_2 = Article(title="Test Title 2")
+        article_2.authors = [self.author_1]
+        article_2.save()
+        self.assertEqual(self.author_1.articles_by_author.all().count(), 2)
+        self.assertEqual(
+            list(self.author_1.articles_by_author.order_by('title').values_list('title', flat=True)),
+            ['Test Title', 'Test Title 2']
         )

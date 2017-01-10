@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import django
 from django.core import checks
 from django.db import IntegrityError, router
-from django.db.models.fields.related import ForeignKey
+from django.db.models.fields.related import ForeignKey, ManyToManyField
 from django.utils.functional import cached_property
 
 try:
@@ -260,3 +260,7 @@ class ParentalKey(ForeignKey):
             )
 
         return errors
+
+
+class ParentalManyToManyField(ManyToManyField):
+    pass

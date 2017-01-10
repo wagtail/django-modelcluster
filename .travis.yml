@@ -3,6 +3,12 @@ language: python
 # Use container-based infrastructure
 sudo: false
 
+python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+
 matrix:
   include:
    - env: TOXENV=py27-dj18-sqlite

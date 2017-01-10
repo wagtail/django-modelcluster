@@ -108,18 +108,10 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             """
             items = self.get_object_list()
 
-            # Rule for checking whether an item in the list matches one of our targets.
-            # We can't do this with a simple 'in' check due to https://code.djangoproject.com/ticket/18864 -
-            # instead, we consider them to match IF:
-            # - they are exactly the same Python object (by reference), or
-            # - they have a non-null primary key that matches
-            def items_match(item, target):
-                return (item is target) or (item.pk == target.pk and item.pk is not None)
-
             for target in new_items:
                 item_matched = False
                 for i, item in enumerate(items):
-                    if items_match(item, target):
+                    if item == target:
                         # Replace the matched item with the new one. This ensures that any
                         # modifications to that item's fields take effect within the recordset -
                         # i.e. we can perform a virtual UPDATE to an object in the list
@@ -145,17 +137,8 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             """
             items = self.get_object_list()
 
-            # Rule for checking whether an item in the list matches one of our targets.
-            # We can't do this with a simple 'in' check due to https://code.djangoproject.com/ticket/18864 -
-            # instead, we consider them to match IF:
-            # - they are exactly the same Python object (by reference), or
-            # - they have a non-null primary key that matches
-            def items_match(item, target):
-                return (item is target) or (item.pk == target.pk and item.pk is not None)
-
-            for target in items_to_remove:
-                # filter items list in place: see http://stackoverflow.com/a/1208792/1853523
-                items[:] = [item for item in items if not items_match(item, target)]
+            # filter items list in place: see http://stackoverflow.com/a/1208792/1853523
+            items[:] = [item for item in items if item not in items_to_remove]
 
         def create(self, **kwargs):
             items = self.get_object_list()

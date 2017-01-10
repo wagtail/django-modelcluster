@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import json
 import datetime
 
+import django
 from django.db import models
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.fields import FieldDoesNotExist
@@ -10,6 +11,8 @@ from django.utils.encoding import is_protected_type
 from django.core.serializers.json import DjangoJSONEncoder
 from django.conf import settings
 from django.utils import timezone
+
+from modelcluster.fields import ParentalKey
 
 
 def get_field_value(field, model):
@@ -118,23 +121,16 @@ def get_all_child_relations(model):
     Return a list of RelatedObject records for child relations of the given model,
     including ones attached to ancestors of the model
     """
-    try:
-        return model._meta._child_relations_cache
-    except AttributeError:
-        relations = []
-        for parent in model._meta.get_parent_list():
-            try:
-                relations.extend(parent._meta.child_relations)
-            except AttributeError:
-                pass
-
-        try:
-            relations.extend(model._meta.child_relations)
-        except AttributeError:
-            pass
-
-        model._meta._child_relations_cache = relations
-        return relations
+    if django.VERSION >= (1, 9):
+        return [
+            field for field in model._meta.get_fields()
+            if isinstance(field.remote_field, ParentalKey)
+        ]
+    else:
+        return [
+            field for field in model._meta.get_fields()
+            if isinstance(field, ForeignObjectRel) and isinstance(field.field, ParentalKey)
+        ]
 
 
 class ClusterableModel(models.Model):

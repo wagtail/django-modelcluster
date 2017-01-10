@@ -4,6 +4,7 @@ Changelog
 3.0 (xx.xx.xxxx)
 ~~~~~~~~~~~~~~~~
 * Added compatibility with django-taggit 0.20 and dropped support for earlier versions
+* Deprecated the Model._meta.child_relations property (get_all_child_relations should be used instead)
 
 2.0 (22.04.2016)
 ~~~~~~~~~~~~~~~~

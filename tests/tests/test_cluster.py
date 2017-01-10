@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 from django.test import TestCase
 from django.db import IntegrityError
 
+from modelcluster.models import get_all_child_relations
+
 from tests.models import Band, BandMember, Restaurant, Review, Album
 
 
@@ -278,3 +280,11 @@ class ClusterTest(TestCase):
         self.assertEqual(error.id, 'fields.E300')
         self.assertEqual(error.obj, Instrument.banana.field)
         self.assertEqual(error.msg, "Field defines a relation with model 'Banana', which is either not installed, or is abstract.")
+
+
+class GetAllChildRelationsTest(TestCase):
+    def test_get_all_child_relations(self):
+        self.assertEqual(
+            set([rel.name for rel in get_all_child_relations(Restaurant)]),
+            set(['tagged_items', 'reviews', 'menu_items'])
+        )

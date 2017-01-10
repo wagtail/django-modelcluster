@@ -3,14 +3,15 @@ from __future__ import unicode_literals
 import django
 from django.core import checks
 from django.db import IntegrityError, router
-from django.db.models.fields.related import ForeignKey
+from django.db.models.fields.related import ForeignKey, ManyToManyField
 from django.utils.functional import cached_property
 
 try:
-    from django.db.models.fields.related import ReverseManyToOneDescriptor
+    from django.db.models.fields.related import ReverseManyToOneDescriptor, ManyToManyDescriptor
 except ImportError:
     # Django 1.8 and below
-    from django.db.models.fields.related import ForeignRelatedObjectsDescriptor as ReverseManyToOneDescriptor
+    from django.db.models.fields.related import ForeignRelatedObjectsDescriptor as ReverseManyToOneDescriptor, \
+        ReverseManyRelatedObjectsDescriptor as ManyToManyDescriptor
 
 
 from modelcluster.utils import sort_by_fields
@@ -269,3 +270,203 @@ class ParentalKey(ForeignKey):
             )
 
         return errors
+
+
+def create_deferring_many_related_manager(related, original_manager_cls):
+    """Creates a manager that subclasses 'superclass' (which is a Manager)
+    and adds behavior for many-to-many related objects."""
+    relation_name = related.get_accessor_name()
+    rel_field = related.field
+    rel_model = related.related_model
+    superclass = rel_model._default_manager.__class__
+
+    class DeferringManyRelatedManager(superclass):
+        def __init__(self, instance):
+            super(DeferringManyRelatedManager, self).__init__()
+            self.model = rel_model
+            self.instance = instance
+
+        def get_live_queryset(self):
+            kwargs = {"instance": self.instance}
+            if django.VERSION < (1, 9):
+                kwargs.update({
+                    "model": rel_field.rel.to,
+                    "query_field_name": rel_field.related_query_name(),
+                    "symmetrical": rel_field.rel.symmetrical,
+                    "source_field_name": rel_field.m2m_field_name(),
+                    "target_field_name": rel_field.m2m_reverse_field_name(),
+                    "reverse": False,
+                    "through": rel_field.rel.through,
+                    "prefetch_cache_name": rel_field.name
+                })
+            try:
+                return original_manager_cls(**kwargs).get_queryset()
+            except ValueError:
+                return FakeQuerySet(related.related_model, [])
+
+        def get_queryset(self):
+            try:
+                results = self.instance._cluster_related_objects[relation_name]
+            except (AttributeError, KeyError):
+                return self.get_live_queryset()
+
+            return FakeQuerySet(related.related_model, results)
+
+        def get_prefetch_queryset(self, instances, queryset=None):
+            if queryset is None:
+                db = self._db or router.db_for_read(self.model, instance=instances[0])
+                queryset = super(DeferringManyRelatedManager, self).get_queryset().using(db)
+
+            rel_obj_attr = rel_field.get_local_related_value
+            instance_attr = rel_field.get_foreign_related_value
+            instances_dict = dict((instance_attr(inst), inst) for inst in instances)
+
+            query = {'%s__in' % rel_field.name: instances}
+            qs = queryset.filter(**query)
+            # Since we just bypassed this class' get_queryset(), we must manage
+            # the reverse relation manually.
+            for rel_obj in qs:
+                instance = instances_dict[rel_obj_attr(rel_obj)]
+                setattr(rel_obj, rel_field.name, instance)
+            cache_name = rel_field.related_query_name()
+            return qs, rel_obj_attr, instance_attr, False, cache_name
+
+        def get_object_list(self):
+            try:
+                cluster_related_objects = self.instance._cluster_related_objects
+            except AttributeError:
+                cluster_related_objects = {}
+                self.instance._cluster_related_objects = cluster_related_objects
+
+            try:
+                object_list = cluster_related_objects[relation_name]
+            except KeyError:
+                object_list = list(self.get_live_queryset())
+                cluster_related_objects[relation_name] = object_list
+
+            return object_list
+
+        def add(self, *new_items):
+            items = self.get_object_list()
+
+            def items_match(item, target):
+                return (item is target) or (item.pk == target.pk and item.pk is not None)
+
+            for target in new_items:
+                item_matched = False
+                for i, item in enumerate(items):
+                    if items_match(item, target):
+                        items[i] = target
+                        item_matched = True
+                        break
+                if not item_matched:
+                    items.append(target)
+
+                setattr(target, related.field.name, self.instance)
+
+            if rel_model._meta.ordering and len(items) > 1:
+                sort_by_fields(items, rel_model._meta.ordering)
+
+        def remove(self, *items_to_remove):
+            items = self.get_object_list()
+
+            def items_match(item, target):
+                return (item is target) or (item.pk == target.pk and item.pk is not None)
+
+            for target in items_to_remove:
+                items[:] = [item for item in items if not items_match(item, target)]
+
+        def clear(self):
+            try:
+                cluster_related_objects = self.instance._cluster_related_objects
+            except AttributeError:
+                cluster_related_objects = {}
+                self.instance._cluster_related_objects = cluster_related_objects
+
+            cluster_related_objects[relation_name] = []
+
+        def create(self, **kwargs):
+            items = self.get_object_list()
+            new_item = related.related_model(**kwargs)
+            items.append(new_item)
+            return new_item
+
+        def commit(self):
+            if not self.instance.pk:
+                raise IntegrityError("Cannot commit relation %r on an unsaved model" % relation_name)
+
+            try:
+                final_items = self.instance._cluster_related_objects[relation_name]
+            except (AttributeError, KeyError):
+                return
+
+            kwargs = {"instance": self.instance}
+            if django.VERSION < (1, 9):
+                kwargs.update({
+                    "model": rel_field.rel.to,
+                    "query_field_name": rel_field.related_query_name(),
+                    "symmetrical": rel_field.rel.symmetrical,
+                    "source_field_name": rel_field.m2m_field_name(),
+                    "target_field_name": rel_field.m2m_reverse_field_name(),
+                    "reverse": False,
+                    "through": rel_field.rel.through,
+                    "prefetch_cache_name": rel_field.name
+                })
+            original_manager = original_manager_cls(**kwargs)
+
+            live_items = list(original_manager.get_queryset())
+            for item in live_items:
+                if item not in final_items:
+                    original_manager.remove(item)
+
+            for item in final_items:
+                item.save()
+                original_manager.add(item)
+
+            del self.instance._cluster_related_objects[relation_name]
+
+    return DeferringManyRelatedManager
+
+
+class ParentalManyToManyDescriptor(ManyToManyDescriptor):
+    @cached_property
+    def related_m2m_manager_cls(self):
+        if django.VERSION < (1, 9):
+            self.field = self.field.field
+        return create_deferring_many_related_manager(
+            self.field.rel,
+            self.related_manager_cls
+        )
+
+    def __get__(self, instance, instance_type=None):
+        if instance is None:
+            return self
+
+        return self.related_m2m_manager_cls(instance)
+
+    def __set__(self, instance, value):
+        manager = self.__get__(instance)
+        manager.clear()
+        manager.add(*value)
+
+
+class ParentalManyToManyField(ManyToManyField):
+    related_accessor_class = ParentalManyToManyDescriptor
+
+    def contribute_to_class(self, cls, name, **kwargs):
+        super(ParentalManyToManyField, self).contribute_to_class(cls, name, **kwargs)
+        setattr(cls, self.name, ParentalManyToManyDescriptor(self.rel))
+
+    def get_accessor_name(self):
+        return self.name
+
+    def get_searchable_content(self, value):
+        searchable_content = []
+        for val in value:
+            searchable_content.append(val.pk)
+            return searchable_content
+
+    def value_from_object(self, obj):
+        qs = getattr(obj, self.attname).get_queryset()
+        qs._result_cache = None
+        return qs

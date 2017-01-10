@@ -181,7 +181,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                     'extra': cls.extra_form_count,
                     'formfield_callback': formfield_callback,
                     'fk_name': rel.field.name,
-                    'widgets': widgets
+                        'widgets': widgets
                 }
 
                 # see if opts.formsets looks like a dict; if so, allow the value

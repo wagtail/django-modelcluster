@@ -7,7 +7,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 
-from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, Review, Log, Document
+from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, \
+    Review, Log, Document, Article, Author, Category
 
 
 class SerializeTest(TestCase):
@@ -19,6 +20,20 @@ class SerializeTest(TestCase):
 
         expected = {'pk': None, 'albums': [], 'name': 'The Beatles', 'members': [{'pk': None, 'name': 'John Lennon', 'band': None}, {'pk': None, 'name': 'Paul McCartney', 'band': None}]}
         self.assertEqual(expected, beatles.serializable_data())
+
+    def test_serialize_m2m(self):
+        george_orwell = Author.objects.create(name='George Orwell')
+        charles_dickens = Author.objects.create(name='Charles Dickens')
+
+        article = Article(
+            title='Down and Out in Paris and London',
+            authors=[george_orwell, charles_dickens],
+        )
+
+        article_serialised = article.serializable_data()
+        self.assertEqual(article_serialised['title'], 'Down and Out in Paris and London')
+        self.assertIn(george_orwell.pk, article_serialised['authors'])
+        self.assertEqual(article_serialised['categories'], [])
 
     def test_serialize_json_with_dates(self):
         beatles = Band(name='The Beatles', members=[
@@ -48,6 +63,25 @@ class SerializeTest(TestCase):
         self.assertEqual('The Beatles', beatles.name)
         self.assertEqual(2, beatles.members.count())
         self.assertEqual(BandMember, beatles.members.all()[0].__class__)
+
+        authors = {}
+        categories = {}
+        for ii in range(1, 6):
+            authors[ii] = Author.objects.create(name="Author " + str(ii))
+            categories[ii] = Category.objects.create(name="Category " + str(ii))
+
+        article = Article.from_serializable_data({
+            'pk': 1,
+            'title': 'Article Title 1',
+            'authors': [authors[1].pk, authors[2].pk],
+            'categories': [categories[2].pk, categories[3].pk, categories[4].pk]
+        })
+        self.assertEqual(article.id, 1)
+        self.assertEqual(article.title, 'Article Title 1')
+        self.assertEqual(article.authors.count(), 2)
+        self.assertEqual([author.name for author in article.authors.all()],
+                         ['Author 1', 'Author 2'])
+        self.assertEqual(article.categories.count(), 3)
 
     def test_deserialize_json(self):
         beatles = Band.from_json('{"pk": 9, "albums": [], "name": "The Beatles", "members": [{"pk": null, "name": "John Lennon", "band": null}, {"pk": null, "name": "Paul McCartney", "band": null}]}')

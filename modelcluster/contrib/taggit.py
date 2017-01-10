@@ -95,3 +95,6 @@ class ClusterTaggableManager(TaggableManager):
         # the live database
         rel_name = self.through._meta.get_field('content_object').rel.get_accessor_name()
         return getattr(instance, rel_name).all()
+
+    def get_accessor_name(self):
+        return self.name

@@ -16,7 +16,6 @@ except ImportError:
 from modelcluster.utils import sort_by_fields
 
 from modelcluster.queryset import FakeQuerySet
-from modelcluster.models import ClusterableModel
 
 
 def create_deferring_foreign_related_manager(related, original_manager_cls):
@@ -228,17 +227,9 @@ class ParentalKey(ForeignKey):
     # This check was moved to the save() method in Django 1.8.4
     allow_unsaved_instance_assignment = True
 
-    def contribute_to_related_class(self, cls, related):
-        super(ParentalKey, self).contribute_to_related_class(cls, related)
-
-        # store this as a child field in meta. NB child_relations only contains relations
-        # defined to this specific model, not its superclasses
-        try:
-            cls._meta.child_relations.append(related)
-        except AttributeError:
-            cls._meta.child_relations = [related]
-
     def check(self, **kwargs):
+        from modelcluster.models import ClusterableModel
+
         errors = super(ParentalKey, self).check(**kwargs)
 
         # Check that the destination model is a subclass of ClusterableModel.

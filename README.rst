@@ -59,8 +59,10 @@ For more examples, see the unit tests.
 
 Introspection
 -------------
-If you need to find out which child relations exist on a parent model - to create a deep copy of the model and all its children, say - django-modelcluster defines a ``child_relations`` property on the model's ``_meta`` object. However, this only includes relations that are defined to that specific model class, not any of its superclasses. To retrieve the complete list of relations, accounting for superclasses, use the ``modelcluster.models.get_all_child_relations`` function::
+If you need to find out which child relations exist on a parent model - to create a deep copy of the model and all its children, say - use the ``modelcluster.models.get_all_child_relations`` function::
 
  >>> from modelcluster.models import get_all_child_relations
  >>> get_all_child_relations(Band)
  [<RelatedObject: tests:bandmember related to band>, <RelatedObject: tests:album related to band>]
+
+This includes relations that are defined on any superclasses of the parent model.

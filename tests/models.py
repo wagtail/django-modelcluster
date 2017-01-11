@@ -141,6 +141,9 @@ class Author(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ['name']
+
 
 @python_2_unicode_compatible
 class Category(models.Model):

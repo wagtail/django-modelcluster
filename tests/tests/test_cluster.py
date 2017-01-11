@@ -303,6 +303,12 @@ class ParentalM2MTest(TestCase):
         self.category_2 = Category.objects.create(name="Category 2")
         self.article.categories = [self.category_1, self.category_2]
 
+    def test_uninitialised_m2m_relation(self):
+        # Reading an m2m relation of a newly created object should return an empty queryset
+        new_article = Article(title="Test title")
+        self.assertEqual([], list(new_article.authors.all()))
+        self.assertEqual(new_article.authors.count(), 0)
+
     def test_parentalm2mfield(self):
         # Article should not exist in the database yet
         self.assertFalse(Article.objects.filter(title='Test Title').exists())
@@ -360,6 +366,23 @@ class ParentalM2MTest(TestCase):
             [author.name for author in article2.authors.order_by('name')]
         )
         self.assertEqual(article2.authors.count(), 1)
+
+    def test_ordering(self):
+        # our fake querysets should respect the ordering defined on the target model
+        bela_bartok = Author.objects.create(name='Bela Bartok')
+        graham_greene = Author.objects.create(name='Graham Greene')
+        janis_joplin = Author.objects.create(name='Janis Joplin')
+        simon_sharma = Author.objects.create(name='Simon Sharma')
+        william_wordsworth = Author.objects.create(name='William Wordsworth')
+
+        article3 = Article(title="Test article 3")
+        article3.authors = [
+            janis_joplin, william_wordsworth, bela_bartok, simon_sharma, graham_greene
+        ]
+        self.assertEqual(
+            list(article3.authors.all()),
+            [bela_bartok, graham_greene, janis_joplin, simon_sharma, william_wordsworth]
+        )
 
     def test_reverse_m2m_field(self):
         # article is unsaved, so should not be returned by the reverse relation on author

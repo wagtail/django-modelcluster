@@ -265,7 +265,7 @@ class ParentalKey(ForeignKey):
 
 def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
     relation_name = rel.field.name
-    rel_model = rel.related_model
+    rel_model = rel.model
     superclass = rel_model._default_manager.__class__
 
     class DeferringManyRelatedManager(superclass):
@@ -274,11 +274,28 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
 
             self.instance = instance
 
+        def get_original_manager(self):
+            if django.VERSION >= (1, 9):
+                return original_manager_cls(self.instance)
+            else:
+                field = rel.field
+                return original_manager_cls(
+                    model=rel.to,
+                    query_field_name=field.related_query_name(),
+                    prefetch_cache_name=field.name,
+                    instance=self.instance,
+                    symmetrical=rel.symmetrical,
+                    source_field_name=field.m2m_field_name(),
+                    target_field_name=field.m2m_reverse_field_name(),
+                    reverse=False,
+                    through=rel.through,
+                )
+
         def get_live_queryset(self):
             """
             return the original manager's queryset, which reflects the live database
             """
-            return original_manager_cls(self.instance).get_queryset()
+            return self.get_original_manager().get_queryset()
 
         def get_queryset(self):
             """
@@ -382,7 +399,7 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
                 # _cluster_related_objects entry never created => no changes to make
                 return
 
-            original_manager = original_manager_cls(self.instance)
+            original_manager = self.get_original_manager()
             live_items = list(original_manager.get_queryset())
 
             items_to_remove = [item for item in live_items if item not in final_items]
@@ -413,13 +430,10 @@ class ParentalManyToManyDescriptor(ManyToManyDescriptor):
 
     @cached_property
     def child_object_manager_cls(self):
-        rel = self.rel
-        # TODO: may need Django 1.8 fallback:
-        # try:
-        #     rel = self.rel
-        # except AttributeError:
-        #     # Django 1.8 and below
-        #     rel = self.related
+        if django.VERSION >= (1, 9):
+            rel = self.rel
+        else:
+            rel = self.field.rel
 
         return create_deferring_forward_many_to_many_manager(rel, self.related_manager_cls)
 
@@ -434,4 +448,9 @@ class ParentalManyToManyField(ManyToManyField):
         # So, we'll let the original contribute_to_class do its thing, and then overwrite
         # the accessor...
         super(ParentalManyToManyField, self).contribute_to_class(cls, name, **kwargs)
-        setattr(cls, self.name, self.related_accessor_class(self.rel))
+
+        if django.VERSION >= (1, 9):
+            setattr(cls, self.name, self.related_accessor_class(self.rel))
+        else:
+            # in Django 1.8, the accessor is constructed with the field (self) rather than the 'rel'
+            setattr(cls, self.name, self.related_accessor_class(self))

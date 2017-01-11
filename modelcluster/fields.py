@@ -38,6 +38,16 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             self.model = rel_model
             self.instance = instance
 
+        def _get_cluster_related_objects(self):
+            # Helper to retrieve the instance's _cluster_related_objects dict,
+            # creating it if it does not already exist
+            try:
+                return self.instance._cluster_related_objects
+            except AttributeError:
+                cluster_related_objects = {}
+                self.instance._cluster_related_objects = cluster_related_objects
+                return cluster_related_objects
+
         def get_live_query_set(self):
             # deprecated; renamed to get_live_queryset to match the move from
             # get_query_set to get_queryset in Django 1.6
@@ -87,11 +97,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             querysets from the live database instead), one is created, populating it
             with the live database state
             """
-            try:
-                cluster_related_objects = self.instance._cluster_related_objects
-            except AttributeError:
-                cluster_related_objects = {}
-                self.instance._cluster_related_objects = cluster_related_objects
+            cluster_related_objects = self._get_cluster_related_objects()
 
             try:
                 object_list = cluster_related_objects[relation_name]
@@ -158,11 +164,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             # 2) if we need to sort it, we can do so without mutating the original
             objs = list(objs)
 
-            try:
-                cluster_related_objects = self.instance._cluster_related_objects
-            except AttributeError:
-                cluster_related_objects = {}
-                self.instance._cluster_related_objects = cluster_related_objects
+            cluster_related_objects = self._get_cluster_related_objects()
 
             for obj in objs:
                 # update the foreign key on the added item to point back to the parent instance
@@ -312,6 +314,16 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
             """
             return self.get_original_manager().get_queryset()
 
+        def _get_cluster_related_objects(self):
+            # Helper to retrieve the instance's _cluster_related_objects dict,
+            # creating it if it does not already exist
+            try:
+                return self.instance._cluster_related_objects
+            except AttributeError:
+                cluster_related_objects = {}
+                self.instance._cluster_related_objects = cluster_related_objects
+                return cluster_related_objects
+
         def get_queryset(self):
             """
             return the current object set with any updates applied,
@@ -336,11 +348,7 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
             querysets from the live database instead), one is created, populating it
             with the live database state
             """
-            try:
-                cluster_related_objects = self.instance._cluster_related_objects
-            except AttributeError:
-                cluster_related_objects = {}
-                self.instance._cluster_related_objects = cluster_related_objects
+            cluster_related_objects = self._get_cluster_related_objects()
 
             try:
                 object_list = cluster_related_objects[relation_name]
@@ -391,11 +399,7 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
             # 2) if we need to sort it, we can do so without mutating the original
             objs = list(objs)
 
-            try:
-                cluster_related_objects = self.instance._cluster_related_objects
-            except AttributeError:
-                cluster_related_objects = {}
-                self.instance._cluster_related_objects = cluster_related_objects
+            cluster_related_objects = self._get_cluster_related_objects()
 
             # Clone and sort the 'objs' list, if necessary
             if rel_model._meta.ordering and len(objs) > 1:

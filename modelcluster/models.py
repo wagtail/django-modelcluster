@@ -12,7 +12,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.conf import settings
 from django.utils import timezone
 
-from modelcluster.fields import ParentalKey
+from modelcluster.fields import ParentalKey, ParentalManyToManyField
 
 
 def get_field_value(field, model):
@@ -133,6 +133,17 @@ def get_all_child_relations(model):
         ]
 
 
+def get_all_child_m2m_relations(model):
+    """
+    Return a list of ParentalManyToManyFields on the given model,
+    including ones attached to ancestors of the model
+    """
+    return [
+        field for field in model._meta.get_fields()
+        if isinstance(field, ParentalManyToManyField)
+    ]
+
+
 class ClusterableModel(models.Model):
     def __init__(self, *args, **kwargs):
         """
@@ -165,17 +176,21 @@ class ClusterableModel(models.Model):
         Save the model and commit all child relations.
         """
         child_relation_names = [rel.get_accessor_name() for rel in get_all_child_relations(self)]
+        child_m2m_field_names = [field.name for field in get_all_child_m2m_relations(self)]
 
         update_fields = kwargs.pop('update_fields', None)
         if update_fields is None:
             real_update_fields = None
             relations_to_commit = child_relation_names
+            m2m_fields_to_commit = child_m2m_field_names
         else:
             real_update_fields = []
             relations_to_commit = []
             for field in update_fields:
                 if field in child_relation_names:
                     relations_to_commit.append(field)
+                elif field in child_m2m_field_names:
+                    m2m_fields_to_commit.append(field)
                 else:
                     real_update_fields.append(field)
 
@@ -183,6 +198,9 @@ class ClusterableModel(models.Model):
 
         for relation in relations_to_commit:
             getattr(self, relation).commit()
+
+        for field in m2m_fields_to_commit:
+            getattr(self, field).commit()
 
     def serializable_data(self):
         obj = get_serializable_data_for_fields(self)

@@ -73,7 +73,9 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
             continue
 
         if field.rel and isinstance(field.rel, models.ManyToManyRel):
-            raise Exception('m2m relations not supported yet')
+            related_objects = field.rel.to._default_manager.filter(pk__in=field_value)
+            kwargs[field.attname] = list(related_objects)
+
         elif field.rel and isinstance(field.rel, models.ManyToOneRel):
             if field_value is None:
                 kwargs[field.attname] = None

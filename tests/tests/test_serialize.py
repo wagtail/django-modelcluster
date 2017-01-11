@@ -64,6 +64,28 @@ class SerializeTest(TestCase):
         self.assertEqual(2, beatles.members.count())
         self.assertEqual(BandMember, beatles.members.all()[0].__class__)
 
+    def test_deserialize_m2m(self):
+        authors = {}
+        categories = {}
+        for i in range(1, 6):
+            authors[i] = Author.objects.create(name="Author %d" % i)
+            categories[i] = Category.objects.create(name="Category %d" % i)
+
+        article = Article.from_serializable_data({
+            'pk': 1,
+            'title': 'Article Title 1',
+            'authors': [authors[1].pk, authors[2].pk],
+            'categories': [categories[2].pk, categories[3].pk, categories[4].pk]
+        })
+        self.assertEqual(article.id, 1)
+        self.assertEqual(article.title, 'Article Title 1')
+        self.assertEqual(article.authors.count(), 2)
+        self.assertEqual(
+            [author.name for author in article.authors.order_by('name')],
+            ['Author 1', 'Author 2']
+        )
+        self.assertEqual(article.categories.count(), 3)
+
     def test_deserialize_json(self):
         beatles = Band.from_json('{"pk": 9, "albums": [], "name": "The Beatles", "members": [{"pk": null, "name": "John Lennon", "band": null}, {"pk": null, "name": "Paul McCartney", "band": null}]}')
         self.assertEqual(9, beatles.id)

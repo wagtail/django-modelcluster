@@ -349,7 +349,6 @@ class ParentalM2MTest(TestCase):
         )
         self.assertEqual(self.article.authors.count(), 2)
 
-    @unittest.expectedFailure
     def test_constructor(self):
         # Test passing values for M2M relations as kwargs to the constructor
         article2 = Article(title="Test article 2",

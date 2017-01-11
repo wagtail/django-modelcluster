@@ -150,15 +150,14 @@ class ClusterableModel(models.Model):
         Extend the standard model constructor to allow child object lists to be passed in
         via kwargs
         """
-        child_relation_names = [rel.get_accessor_name() for rel in get_all_child_relations(self)]
+        child_relation_names = (
+            [rel.get_accessor_name() for rel in get_all_child_relations(self)] +
+            [field.name for field in get_all_child_m2m_relations(self)]
+        )
 
-        is_passing_child_relations = False
-        for rel_name in child_relation_names:
-            if rel_name in kwargs:
-                is_passing_child_relations = True
-                break
-
-        if is_passing_child_relations:
+        if any(name in kwargs for name in child_relation_names):
+            # One or more child relation values is being passed in the constructor; need to
+            # separate these from the standard field kwargs to be passed to 'super'
             kwargs_for_super = kwargs.copy()
             relation_assignments = {}
             for rel_name in child_relation_names:

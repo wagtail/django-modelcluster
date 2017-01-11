@@ -7,7 +7,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 
-from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, Review, Log, Document
+from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, \
+    Review, Log, Document, Article, Author, Category
 
 
 class SerializeTest(TestCase):
@@ -19,6 +20,20 @@ class SerializeTest(TestCase):
 
         expected = {'pk': None, 'albums': [], 'name': 'The Beatles', 'members': [{'pk': None, 'name': 'John Lennon', 'band': None}, {'pk': None, 'name': 'Paul McCartney', 'band': None}]}
         self.assertEqual(expected, beatles.serializable_data())
+
+    def test_serialize_m2m(self):
+        george_orwell = Author.objects.create(name='George Orwell')
+        charles_dickens = Author.objects.create(name='Charles Dickens')
+
+        article = Article(
+            title='Down and Out in Paris and London',
+            authors=[george_orwell, charles_dickens],
+        )
+
+        article_serialised = article.serializable_data()
+        self.assertEqual(article_serialised['title'], 'Down and Out in Paris and London')
+        self.assertIn(george_orwell.pk, article_serialised['authors'])
+        self.assertEqual(article_serialised['categories'], [])
 
     def test_serialize_json_with_dates(self):
         beatles = Band(name='The Beatles', members=[

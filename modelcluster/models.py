@@ -37,6 +37,10 @@ def get_field_value(field, model):
 
 
 def get_serializable_data_for_fields(model):
+    """
+    Return a serialised version of the model's fields which exist as local database
+    columns (i.e. excluding m2m and incoming foreign key relations)
+    """
     pk_field = model._meta.pk
     # If model is a child via multitable inheritance, use parent's pk
     while pk_field.rel and pk_field.rel.parent_link:
@@ -203,9 +207,8 @@ class ClusterableModel(models.Model):
 
     def serializable_data(self):
         obj = get_serializable_data_for_fields(self)
-        child_relations = get_all_child_relations(self)
 
-        for rel in child_relations:
+        for rel in get_all_child_relations(self):
             rel_name = rel.get_accessor_name()
             children = getattr(self, rel_name).all()
 
@@ -213,6 +216,10 @@ class ClusterableModel(models.Model):
                 obj[rel_name] = [child.serializable_data() for child in children]
             else:
                 obj[rel_name] = [get_serializable_data_for_fields(child) for child in children]
+
+        for field in get_all_child_m2m_relations(self):
+            children = getattr(self, field.name).all()
+            obj[field.name] = [child.pk for child in children]
 
         return obj
 

@@ -3,6 +3,7 @@ Changelog
 
 3.0 (xx.xx.xxxx)
 ~~~~~~~~~~~~~~~~
+* Added support for many-to-many relations (Thejaswi Puthraya, Matt Westcott)
 * Added compatibility with django-taggit 0.20 and dropped support for earlier versions
 * Deprecated the Model._meta.child_relations property (get_all_child_relations should be used instead)
 

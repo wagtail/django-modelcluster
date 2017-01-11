@@ -124,6 +124,29 @@ class ClusterTest(TestCase):
         beatles.save()
         beatles.members.commit()
 
+    def test_save_with_update_fields(self):
+        beatles = Band(name='The Beatles', members=[
+            BandMember(name='John Lennon'),
+            BandMember(name='Paul McCartney'),
+        ], albums=[
+            Album(name='Please Please Me', sort_order=1),
+            Album(name='With The Beatles', sort_order=2),
+            Album(name='Abbey Road', sort_order=3),
+        ])
+
+        beatles.save()
+
+        # modify both relations, but only commit the change to members
+        beatles.members.clear()
+        beatles.albums.clear()
+        beatles.name = 'The Rutles'
+        beatles.save(update_fields=['name', 'members'])
+
+        updated_beatles = Band.objects.get(pk=beatles.pk)
+        self.assertEqual(updated_beatles.name, 'The Rutles')
+        self.assertEqual(updated_beatles.members.count(), 0)
+        self.assertEqual(updated_beatles.albums.count(), 3)
+
     def test_queryset_filtering(self):
         beatles = Band(name='The Beatles', members=[
             BandMember(id=1, name='John Lennon'),
@@ -383,6 +406,20 @@ class ParentalM2MTest(TestCase):
             list(article3.authors.all()),
             [bela_bartok, graham_greene, janis_joplin, simon_sharma, william_wordsworth]
         )
+
+    def test_save_m2m_with_update_fields(self):
+        self.article.save()
+
+        # modify both relations, but only commit the change to authors
+        self.article.authors.clear()
+        self.article.categories.clear()
+        self.article.title = 'Updated title'
+        self.article.save(update_fields=['title', 'authors'])
+
+        self.updated_article = Article.objects.get(pk=self.article.pk)
+        self.assertEqual(self.updated_article.title, 'Updated title')
+        self.assertEqual(self.updated_article.authors.count(), 0)
+        self.assertEqual(self.updated_article.categories.count(), 2)
 
     def test_reverse_m2m_field(self):
         # article is unsaved, so should not be returned by the reverse relation on author

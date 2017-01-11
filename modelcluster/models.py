@@ -191,6 +191,7 @@ class ClusterableModel(models.Model):
         else:
             real_update_fields = []
             relations_to_commit = []
+            m2m_fields_to_commit = []
             for field in update_fields:
                 if field in child_relation_names:
                     relations_to_commit.append(field)

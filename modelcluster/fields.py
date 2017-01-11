@@ -150,13 +150,29 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             """
             Clear the stored object set, without affecting the database
             """
+            self.set([])
+
+        def set(self, objs, bulk=True, clear=False):
+            # cast objs to a list so that:
+            # 1) we can call len() on it (which we can't do on, say, a queryset)
+            # 2) if we need to sort it, we can do so without mutating the original
+            objs = list(objs)
+
             try:
                 cluster_related_objects = self.instance._cluster_related_objects
             except AttributeError:
                 cluster_related_objects = {}
                 self.instance._cluster_related_objects = cluster_related_objects
 
-            cluster_related_objects[relation_name] = []
+            for obj in objs:
+                # update the foreign key on the added item to point back to the parent instance
+                setattr(obj, related.field.name, self.instance)
+
+            # Clone and sort the 'objs' list, if necessary
+            if rel_model._meta.ordering and len(objs) > 1:
+                sort_by_fields(objs, rel_model._meta.ordering)
+
+            cluster_related_objects[relation_name] = objs
 
         def commit(self):
             """
@@ -206,8 +222,7 @@ class ChildObjectsDescriptor(ReverseManyToOneDescriptor):
 
     def __set__(self, instance, value):
         manager = self.__get__(instance)
-        manager.clear()
-        manager.add(*value)
+        manager.set(value)
 
     @cached_property
     def child_object_manager_cls(self):
@@ -368,13 +383,25 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
             """
             Clear the stored object set, without affecting the database
             """
+            self.set([])
+
+        def set(self, objs, bulk=True, clear=False):
+            # cast objs to a list so that:
+            # 1) we can call len() on it (which we can't do on, say, a queryset)
+            # 2) if we need to sort it, we can do so without mutating the original
+            objs = list(objs)
+
             try:
                 cluster_related_objects = self.instance._cluster_related_objects
             except AttributeError:
                 cluster_related_objects = {}
                 self.instance._cluster_related_objects = cluster_related_objects
 
-            cluster_related_objects[relation_name] = []
+            # Clone and sort the 'objs' list, if necessary
+            if rel_model._meta.ordering and len(objs) > 1:
+                sort_by_fields(objs, rel_model._meta.ordering)
+
+            cluster_related_objects[relation_name] = objs
 
         def remove(self, *items_to_remove):
             """
@@ -425,8 +452,7 @@ class ParentalManyToManyDescriptor(ManyToManyDescriptor):
 
     def __set__(self, instance, value):
         manager = self.__get__(instance)
-        manager.clear()
-        manager.add(*value)
+        manager.set(value)
 
     @cached_property
     def child_object_manager_cls(self):

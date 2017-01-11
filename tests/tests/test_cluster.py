@@ -92,6 +92,10 @@ class ClusterTest(TestCase):
         self.assertEqual(2, beatles.members.count())
         self.assertEqual('George Harrison', george.name)
 
+        beatles.members.set([john])
+        self.assertEqual(1, beatles.members.count())
+        self.assertEqual(john, beatles.members.all()[0])
+
     def test_can_pass_child_relations_as_constructor_kwargs(self):
         beatles = Band(name='The Beatles', members=[
             BandMember(name='John Lennon'),
@@ -367,6 +371,14 @@ class ParentalM2MTest(TestCase):
             [author.name for author in self.article.authors.order_by('name')]
         )
         self.assertEqual(self.article.authors.count(), 0)
+
+        # Test the 'set' operation
+        self.article.authors.set([self.author_2])
+        self.assertEqual(self.article.authors.count(), 1)
+        self.assertEqual(
+            ['Author 2'],
+            [author.name for author in self.article.authors.order_by('name')]
+        )
 
         # Test saving to / restoring from DB
         self.article.authors = [self.author_1, self.author_2]

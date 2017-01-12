@@ -223,9 +223,12 @@ class ClusterForm(with_metaclass(ClusterFormMetaclass, ModelForm)):
     def save(self, commit=True):
         instance = super(ClusterForm, self).save(commit=commit)
 
-        # ensure save_m2m is called even if commit = false. We don't fully support m2m fields yet,
-        # but if they perform save_form_data in a way that happens to play well with ClusterableModel
-        # (as taggit's manager does), we want that to take effect immediately, not just on db save
+        # In Django's standard form handling, passing commit=False means that m2m relations will
+        # not be written to the model immediately (because it can't do that without writing to
+        # the database); instead, that operation is placed in a save_m2m() method to be called later.
+
+        # Since ParentalManyToManyField _does_ provide a way to write back to the relation without
+        # writing to the database, we'll reverse this behaviour by calling save_m2m immediately.
         if not commit:
             self.save_m2m()
 

@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.org/torchbox/django-modelcluster.png?branch=master
-    :target: https://travis-ci.org/torchbox/django-modelcluster
+.. image:: https://travis-ci.org/wagtail/django-modelcluster.png?branch=master
+    :target: https://travis-ci.org/wagtail/django-modelcluster
 
 django-modelcluster
 ===================

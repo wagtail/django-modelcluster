@@ -288,7 +288,7 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
     class DeferringManyRelatedManager(superclass):
         def __init__(self, instance=None):
             super(DeferringManyRelatedManager, self).__init__()
-
+            self.model = rel_model
             self.instance = instance
 
         def get_original_manager(self):

@@ -336,6 +336,9 @@ class ParentalM2MTest(TestCase):
         self.assertEqual([], list(new_article.authors.all()))
         self.assertEqual(new_article.authors.count(), 0)
 
+        # the manager should have a 'model' property pointing to the target model
+        self.assertEqual(Author, new_article.authors.model)
+
     def test_parentalm2mfield(self):
         # Article should not exist in the database yet
         self.assertFalse(Article.objects.filter(title='Test Title').exists())
@@ -346,6 +349,9 @@ class ParentalM2MTest(TestCase):
             [author.name for author in self.article.authors.order_by('name')]
         )
         self.assertEqual(self.article.authors.count(), 2)
+
+        # the manager should have a 'model' property pointing to the target model
+        self.assertEqual(Author, self.article.authors.model)
 
         # Test adding to the relation
         author_3 = Author.objects.create(name="Author 3")

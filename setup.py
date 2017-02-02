@@ -18,6 +18,9 @@ setup(
     install_requires=[
         "pytz>=2015.2",
     ],
+    extras_require={
+         'taggit': ['django-taggit>=0.20'],
+    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',

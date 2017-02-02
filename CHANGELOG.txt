@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+~~~~~~~~~~
+* Added the ability to install the optional dependency `django-taggit`
+  using `pip install django-modelcluster[taggit]`
+
 3.0.1 (02.02.2017)
 ~~~~~~~~~~~~~~~~~~
 * Fix: Added _result_cache property on FakeQuerySet (necessary for model forms with ParentalManyToManyFields to work correctly on Django 1.8-1.9)

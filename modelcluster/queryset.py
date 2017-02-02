@@ -132,6 +132,18 @@ class FakeQuerySet(object):
         sort_by_fields(results, fields)
         return FakeQuerySet(self.model, results)
 
+    # a standard QuerySet will store the results in _result_cache on running the query;
+    # this is effectively the same as self.results on a FakeQuerySet, and so we'll make
+    # _result_cache an alias of self.results for the benefit of Django internals that
+    # exploit it
+    def _get_result_cache(self):
+        return self.results
+
+    def _set_result_cache(self, val):
+        self.results = list(val)
+
+    _result_cache = property(_get_result_cache, _set_result_cache)
+
     def __getitem__(self, k):
         return self.results[k]
 

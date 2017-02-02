@@ -3,9 +3,9 @@ from __future__ import unicode_literals
 from django.utils.six import text_type
 
 from django.test import TestCase
-from tests.models import Band, BandMember, Album, Restaurant
+from tests.models import Band, BandMember, Album, Restaurant, Article, Author, Category
 from modelcluster.forms import ClusterForm
-from django.forms import Textarea, CharField
+from django.forms import Textarea, CharField, ModelForm
 from django.forms.widgets import TextInput
 
 import datetime
@@ -497,3 +497,28 @@ class ClusterFormTest(TestCase):
 
         self.assertIn(text_type(form.media['js']), 'test.js')
         self.assertIn(text_type(form.media['css']), 'test.css')
+
+
+class FormWithM2MTest(TestCase):
+    def test_render_form_with_m2m(self):
+        class ArticleForm(ModelForm):
+            class Meta:
+                model = Article
+                fields = ['title', 'authors', 'categories']
+
+        author1 = Author.objects.create(name='James Joyce')
+        author2 = Author.objects.create(name='Charles Dickens')
+        article = Article.objects.create(
+            title='Test article',
+            authors=[author1]
+        )
+
+        form = ArticleForm(instance=article)
+        html = form.as_p()
+        self.assertIn('Test article', html)
+
+        article.authors.add(author2)
+
+        form = ArticleForm(instance=article)
+        html = form.as_p()
+        self.assertIn('Test article', html)

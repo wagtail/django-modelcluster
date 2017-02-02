@@ -1,6 +1,10 @@
 Changelog
 =========
 
+3.0.1 (02.02.2017)
+~~~~~~~~~~~~~~~~~~
+* Fix: Added _result_cache property on FakeQuerySet (necessary for model forms with ParentalManyToManyFields to work correctly on Django 1.8-1.9)
+
 3.0 (02.02.2017)
 ~~~~~~~~~~~~~~~~
 * Added support for many-to-many relations (Thejaswi Puthraya, Matt Westcott)

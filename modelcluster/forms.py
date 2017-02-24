@@ -16,6 +16,8 @@ from modelcluster.models import get_all_child_relations
 class BaseTransientModelFormSet(BaseModelFormSet):
     """ A ModelFormSet that doesn't assume that all its initial data instances exist in the db """
     def _construct_form(self, i, **kwargs):
+        # Need to override _construct_form to avoid calling to_python on an empty string PK value
+
         if self.is_bound and i < self.initial_form_count():
             pk_key = "%s-%s" % (self.add_prefix(i), self.model._meta.pk.name)
             pk = self.data[pk_key]
@@ -37,6 +39,33 @@ class BaseTransientModelFormSet(BaseModelFormSet):
 
         # bypass BaseModelFormSet's own _construct_form
         return super(BaseModelFormSet, self)._construct_form(i, **kwargs)
+
+    def save_existing_objects(self, commit=True):
+        # Need to override _construct_form so that it doesn't skip over initial forms whose instance
+        # has a blank PK (which is taken as an indication that the form was constructed with an
+        # instance not present in our queryset)
+
+        self.changed_objects = []
+        self.deleted_objects = []
+        if not self.initial_forms:
+            return []
+
+        saved_instances = []
+        forms_to_delete = self.deleted_forms
+        for form in self.initial_forms:
+            obj = form.instance
+            if form in forms_to_delete:
+                if obj.pk is None:
+                    # no action to be taken to delete an object which isn't in the database
+                    continue
+                self.deleted_objects.append(obj)
+                self.delete_existing(obj, commit=commit)
+            elif form.has_changed():
+                self.changed_objects.append((obj, form.changed_data))
+                saved_instances.append(self.save_existing(form, obj, commit=commit))
+                if not commit:
+                    self.saved_forms.append(form)
+        return saved_instances
 
 
 def transientmodelformset_factory(model, formset=BaseTransientModelFormSet, **kwargs):

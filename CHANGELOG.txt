@@ -1,8 +1,9 @@
 Changelog
 =========
 
-Unreleased
-~~~~~~~~~~
+3.1 (xx.xx.xxxx)
+~~~~~~~~~~~~~~~~
+* Django 1.11 compatibility
 * Added the ability to install the optional dependency `django-taggit`
   using `pip install django-modelcluster[taggit]`
 

@@ -17,16 +17,18 @@ class BaseTransientModelFormSet(BaseModelFormSet):
     """ A ModelFormSet that doesn't assume that all its initial data instances exist in the db """
     def _construct_form(self, i, **kwargs):
         if self.is_bound and i < self.initial_form_count():
-            pk_name = self.model._meta.pk.name
-            pk_key = "%s-%s" % (self.add_prefix(i), pk_name)
-            pk_val = self.data[pk_key]
-            if pk_val:
-                kwargs['instance'] = self.queryset.get(**{pk_name: pk_val})
-            else:
+            pk_key = "%s-%s" % (self.add_prefix(i), self.model._meta.pk.name)
+            pk = self.data[pk_key]
+            if pk == '':
                 kwargs['instance'] = self.model()
-        elif i < self.initial_form_count():
+            else:
+                pk_field = self.model._meta.pk
+                to_python = self._get_to_python(pk_field)
+                pk = to_python(pk)
+                kwargs['instance'] = self._existing_object(pk)
+        if i < self.initial_form_count() and 'instance' not in kwargs:
             kwargs['instance'] = self.get_queryset()[i]
-        elif self.initial_extra:
+        if i >= self.initial_form_count() and self.initial_extra:
             # Set initial values for extra forms
             try:
                 kwargs['initial'] = self.initial_extra[i - self.initial_form_count()]

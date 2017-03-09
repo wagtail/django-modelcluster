@@ -163,4 +163,4 @@ class Gallery(ClusterableModel):
 
 class GalleryImage(models.Model):
     gallery = ParentalKey(Gallery, related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField()
+    image = models.FileField()

@@ -266,6 +266,13 @@ class ClusterForm(with_metaclass(ClusterFormMetaclass, ModelForm)):
             or any(formset.is_multipart() for formset in self.formsets.values())
         )
 
+    @property
+    def media(self):
+        media = super(ClusterForm, self).media
+        for formset in self.formsets.values():
+            media = media + formset.media
+        return media
+
     def save(self, commit=True):
         instance = super(ClusterForm, self).save(commit=commit)
 

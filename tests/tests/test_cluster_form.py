@@ -6,7 +6,7 @@ from django.test import TestCase
 from tests.models import Band, BandMember, Album, Restaurant, Article, Author, Document, Gallery
 from modelcluster.forms import ClusterForm
 from django.forms import Textarea, CharField, ModelForm
-from django.forms.widgets import TextInput
+from django.forms.widgets import TextInput, FileInput
 
 import datetime
 
@@ -500,6 +500,38 @@ class ClusterFormTest(TestCase):
 
         self.assertIn('test.js', text_type(form.media['js']))
         self.assertIn('test.css', text_type(form.media['css']))
+
+    def test_widgets_with_media_on_child_form(self):
+        """
+        The media property of ClusterForm should pick up media defined on child forms too
+        """
+        class FancyTextInput(TextInput):
+            class Media:
+                js = ['fancy-text-input.js']
+
+        class FancyFileUploader(FileInput):
+            class Media:
+                js = ['fancy-file-uploader.js']
+
+        class FormWithWidgetMedia(ClusterForm):
+            class Meta:
+                model = Gallery
+                fields = ['title']
+                widgets = {
+                    'title': FancyTextInput,
+                }
+
+                formsets = {
+                    'images': {
+                        'fields': ['image'],
+                        'widgets': {'image': FancyFileUploader}
+                    }
+                }
+
+        form = FormWithWidgetMedia()
+
+        self.assertIn('fancy-text-input.js', text_type(form.media['js']))
+        self.assertIn('fancy-file-uploader.js', text_type(form.media['js']))
 
     def test_is_multipart_on_parent_form(self):
         """

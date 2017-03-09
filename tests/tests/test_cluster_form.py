@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.utils.six import text_type
 
 from django.test import TestCase
-from tests.models import Band, BandMember, Album, Restaurant, Article, Author, Category
+from tests.models import Band, BandMember, Album, Restaurant, Article, Author, Document, Gallery
 from modelcluster.forms import ClusterForm
 from django.forms import Textarea, CharField, ModelForm
 from django.forms.widgets import TextInput
@@ -497,6 +497,42 @@ class ClusterFormTest(TestCase):
 
         self.assertIn(text_type(form.media['js']), 'test.js')
         self.assertIn(text_type(form.media['css']), 'test.css')
+
+    def test_is_multipart_on_parent_form(self):
+        """
+        is_multipart should be True if a field requiring multipart submission
+        exists on the parent form
+        """
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                formsets = ['members']
+                fields = ['name']
+
+        class DocumentForm(ClusterForm):
+            class Meta:
+                model = Document
+                fields = ['title', 'file']
+
+        band_form = BandForm()
+        self.assertFalse(band_form.is_multipart())
+
+        document_form = DocumentForm()
+        self.assertTrue(document_form.is_multipart())
+
+    def test_is_multipart_on_child_form(self):
+        """
+        is_multipart should be True if a field requiring multipart submission
+        exists on the child form
+        """
+        class GalleryForm(ClusterForm):
+            class Meta:
+                model = Gallery
+                formsets = ['images']
+                fields = ['title']
+
+        gallery_form = GalleryForm()
+        self.assertTrue(gallery_form.is_multipart())
 
 
 class FormWithM2MTest(TestCase):

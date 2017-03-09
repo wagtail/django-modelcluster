@@ -492,11 +492,14 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Restaurant
                 fields = ['name', 'tags', 'serves_hot_dogs', 'proprietor']
+                widgets = {
+                    'name': WidgetWithMedia
+                }
 
         form = FormWithWidgetMedia()
 
-        self.assertIn(text_type(form.media['js']), 'test.js')
-        self.assertIn(text_type(form.media['css']), 'test.css')
+        self.assertIn('test.js', text_type(form.media['js']))
+        self.assertIn('test.css', text_type(form.media['css']))
 
     def test_is_multipart_on_parent_form(self):
         """

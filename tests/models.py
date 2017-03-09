@@ -151,3 +151,16 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+
+@python_2_unicode_compatible
+class Gallery(ClusterableModel):
+    title = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.title
+
+
+class GalleryImage(models.Model):
+    gallery = ParentalKey(Gallery, related_name='images', on_delete=models.CASCADE)
+    image = models.ImageField()

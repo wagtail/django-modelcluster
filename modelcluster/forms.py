@@ -260,6 +260,12 @@ class ClusterForm(with_metaclass(ClusterFormMetaclass, ModelForm)):
         formsets_are_valid = all([formset.is_valid() for formset in self.formsets.values()])
         return form_is_valid and formsets_are_valid
 
+    def is_multipart(self):
+        return (
+            super(ClusterForm, self).is_multipart()
+            or any(formset.is_multipart() for formset in self.formsets.values())
+        )
+
     def save(self, commit=True):
         instance = super(ClusterForm, self).save(commit=commit)
 

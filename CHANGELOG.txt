@@ -6,6 +6,8 @@ Changelog
 * Django 1.11 compatibility
 * Added the ability to install the optional dependency `django-taggit`
   using `pip install django-modelcluster[taggit]`
+* Fix: ClusterForm.is_multipart() now returns True when a child form requires multipart submission
+* Fix: ClusterForm.media now includes media defined on child forms
 
 3.0.1 (02.02.2017)
 ~~~~~~~~~~~~~~~~~~

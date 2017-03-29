@@ -1,4 +1,4 @@
-.. image:: https://travis-ci.org/wagtail/django-modelcluster.png?branch=master
+.. image:: https://travis-ci.org/wagtail/django-modelcluster.svg?branch=master
     :target: https://travis-ci.org/wagtail/django-modelcluster
 
 django-modelcluster

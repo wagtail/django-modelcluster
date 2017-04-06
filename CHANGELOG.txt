@@ -4,6 +4,7 @@ Changelog
 3.1 (06.04.2017)
 ~~~~~~~~~~~~~~~~
 * Django 1.11 compatibility
+* Python 3.6 compatibility
 * Added the ability to install the optional dependency `django-taggit`
   using `pip install django-modelcluster[taggit]`
 * Fix: ClusterForm.save(commit=True) now correctly writes ParentalManyToManyField relations back to the database rather than requiring a separate model.save() step

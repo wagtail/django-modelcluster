@@ -456,3 +456,15 @@ class ParentalM2MTest(TestCase):
             list(self.author_1.articles_by_author.order_by('title').values_list('title', flat=True)),
             ['Test Title', 'Test Title 2']
         )
+
+    def test_value_from_object(self):
+        authors_field = Article._meta.get_field('authors')
+        self.assertEqual(
+            set(authors_field.value_from_object(self.article)),
+            set([self.author_1, self.author_2])
+        )
+        self.article.save()
+        self.assertEqual(
+            set(authors_field.value_from_object(self.article)),
+            set([self.author_1, self.author_2])
+        )

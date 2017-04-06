@@ -25,6 +25,8 @@ matrix:
      python: 2.7
    - env: TOXENV=py35-dj111-sqlite
      python: 3.5
+   - env: TOXENV=py36-dj111-sqlite
+     python: 3.6
    - env: TOXENV=py27-dj18-postgres
      python: 2.7
    - env: TOXENV=py33-dj18-postgres
@@ -45,6 +47,8 @@ matrix:
      python: 2.7
    - env: TOXENV=py35-dj111-postgres
      python: 3.5
+   - env: TOXENV=py36-dj111-postgres
+     python: 3.6
 
 install:
   - pip install tox

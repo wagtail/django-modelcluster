@@ -274,16 +274,22 @@ class ClusterForm(with_metaclass(ClusterFormMetaclass, ModelForm)):
         return media
 
     def save(self, commit=True):
-        instance = super(ClusterForm, self).save(commit=commit)
+        # call ModelForm.save() with commit=False so that we can fix up the behaviour for
+        # M2M fields before saving
+        instance = super(ClusterForm, self).save(commit=False)
 
-        # In Django's standard form handling, passing commit=False means that m2m relations will
-        # not be written to the model immediately (because it can't do that without writing to
-        # the database); instead, that operation is placed in a save_m2m() method to be called later.
+        # Always call save_m2m(), even for commit=False. The M2M field types allowed in a
+        # ClusterForm (ParentalManyToManyField and ClusterTaggableManager) are designed to
+        # update the local instance when written, rather than updating the database directly,
+        # and this happens on save_m2m.
+        #
+        # To actually save to the database, we need an explicit 'commit' step, which happens on
+        # instance.save(). We therefore ensure that save_m2m() happens first, so that the
+        # updated relation data exists on the local in-memory instance at the point of saving.
+        self.save_m2m()
 
-        # Since ParentalManyToManyField _does_ provide a way to write back to the relation without
-        # writing to the database, we'll reverse this behaviour by calling save_m2m immediately.
-        if not commit:
-            self.save_m2m()
+        if commit:
+            instance.save()
 
         for formset in self.formsets.values():
             formset.instance = instance

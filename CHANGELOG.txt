@@ -6,6 +6,7 @@ Changelog
 * Django 1.11 compatibility
 * Added the ability to install the optional dependency `django-taggit`
   using `pip install django-modelcluster[taggit]`
+* Fix: ClusterForm.save(commit=True) now correctly writes ParentalManyToManyField relations back to the database rather than requiring a separate model.save() step
 * Fix: ClusterForm.is_multipart() now returns True when a child form requires multipart submission
 * Fix: ClusterForm.media now includes media defined on child forms
 

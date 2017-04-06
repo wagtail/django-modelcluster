@@ -571,25 +571,76 @@ class ClusterFormTest(TestCase):
 
 
 class FormWithM2MTest(TestCase):
-    def test_render_form_with_m2m(self):
-        class ArticleForm(ModelForm):
-            class Meta:
-                model = Article
-                fields = ['title', 'authors', 'categories']
+    def setUp(self):
+        self.james_joyce = Author.objects.create(name='James Joyce')
+        self.charles_dickens = Author.objects.create(name='Charles Dickens')
 
-        author1 = Author.objects.create(name='James Joyce')
-        author2 = Author.objects.create(name='Charles Dickens')
-        article = Article.objects.create(
+        self.article = Article.objects.create(
             title='Test article',
-            authors=[author1]
+            authors=[self.james_joyce],
         )
 
-        form = ArticleForm(instance=article)
+    def test_render_form_with_m2m(self):
+        class ArticleForm(ClusterForm):
+            class Meta:
+                model = Article
+                fields = ['title', 'authors']
+
+        form = ArticleForm(instance=self.article)
         html = form.as_p()
         self.assertIn('Test article', html)
 
-        article.authors.add(author2)
+        self.article.authors.add(self.charles_dickens)
 
-        form = ArticleForm(instance=article)
+        form = ArticleForm(instance=self.article)
         html = form.as_p()
         self.assertIn('Test article', html)
+
+    def test_save_form_with_m2m(self):
+        class ArticleForm(ClusterForm):
+            class Meta:
+                model = Article
+                fields = ['title', 'authors']
+
+        form = ArticleForm({
+            'title': 'Updated test article',
+            'authors': [self.charles_dickens.id]
+        }, instance=self.article)
+        self.assertTrue(form.is_valid())
+        form.save()
+
+        # changes should take effect on both the in-memory instance and the database
+        self.assertEqual(self.article.title, 'Updated test article')
+        self.assertEqual(list(self.article.authors.all()), [self.charles_dickens])
+
+        updated_article = Article.objects.get(pk=self.article.pk)
+        self.assertEqual(updated_article.title, 'Updated test article')
+        self.assertEqual(list(updated_article.authors.all()), [self.charles_dickens])
+
+    def test_save_form_uncommitted_with_m2m(self):
+        class ArticleForm(ClusterForm):
+            class Meta:
+                model = Article
+                fields = ['title', 'authors']
+
+        form = ArticleForm({
+            'title': 'Updated test article',
+            'authors': [self.charles_dickens.id],
+        }, instance=self.article)
+        self.assertTrue(form.is_valid())
+        form.save(commit=False)
+
+        # the in-memory instance should have 'title' and 'authors' updated,
+        self.assertEqual(self.article.title, 'Updated test article')
+        self.assertEqual(list(self.article.authors.all()), [self.charles_dickens])
+
+        # the database record should be unchanged
+        db_article = Article.objects.get(pk=self.article.pk)
+        self.assertEqual(db_article.title, 'Test article')
+        self.assertEqual(list(db_article.authors.all()), [self.james_joyce])
+
+        # model.save commits the record to the db
+        self.article.save()
+        db_article = Article.objects.get(pk=self.article.pk)
+        self.assertEqual(db_article.title, 'Updated test article')
+        self.assertEqual(list(db_article.authors.all()), [self.charles_dickens])

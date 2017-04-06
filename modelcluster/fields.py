@@ -484,3 +484,9 @@ class ParentalManyToManyField(ManyToManyField):
         else:
             # in Django 1.8, the accessor is constructed with the field (self) rather than the 'rel'
             setattr(cls, self.name, self.related_accessor_class(self))
+
+    def value_from_object(self, obj):
+        # In Django >=1.10, ManyToManyField.value_from_object special-cases objects with no PK,
+        # returning an empty list on the basis that unsaved objects can't have related objects.
+        # Remove that special case.
+        return getattr(obj, self.attname).all()

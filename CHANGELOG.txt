@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.1 (xx.xx.xxxx)
+3.1 (06.04.2017)
 ~~~~~~~~~~~~~~~~
 * Django 1.11 compatibility
 * Added the ability to install the optional dependency `django-taggit`

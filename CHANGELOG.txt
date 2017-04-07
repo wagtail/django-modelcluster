@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.1 (06.04.2017)
+3.1 (07.04.2017)
 ~~~~~~~~~~~~~~~~
 * Django 1.11 compatibility
 * Python 3.6 compatibility

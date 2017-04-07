@@ -6,7 +6,7 @@ from django.test import TestCase, override_settings
 from taggit.models import Tag
 from modelcluster.forms import ClusterForm
 
-from tests.models import Place, TaggedPlace
+from tests.models import NonClusterPlace, Place, TaggedPlace
 
 
 class TagTest(TestCase):
@@ -93,6 +93,44 @@ class TagTest(TestCase):
         self.assertTrue(Tag.objects.get(name='burrito') in mission_burrito.tags.all())
         self.assertTrue(Tag.objects.get(name='fajita') in mission_burrito.tags.all())
         self.assertFalse(Tag.objects.get(name='mexican') in mission_burrito.tags.all())
+
+    def test_create_with_tags(self):
+        class PlaceForm(ClusterForm):
+            class Meta:
+                model = Place
+                exclude_formsets = ['tagged_items', 'reviews']
+                fields = ['name', 'tags']
+
+        form = PlaceForm({
+            'name': "Mission Burrito",
+            'tags': "burrito, fajita"
+        }, instance=Place())
+        self.assertTrue(form.is_valid())
+        mission_burrito = form.save()
+        reloaded_mission_burrito = Place.objects.get(pk=mission_burrito.pk)
+        self.assertEqual(
+            set(reloaded_mission_burrito.tags.all()),
+            set([Tag.objects.get(name='burrito'), Tag.objects.get(name='fajita')])
+        )
+
+    def test_create_with_tags_with_plain_taggable_manager(self):
+        class PlaceForm(ClusterForm):
+            class Meta:
+                model = NonClusterPlace
+                exclude_formsets = ['tagged_items', 'reviews']
+                fields = ['name', 'tags']
+
+        form = PlaceForm({
+            'name': "Mission Burrito",
+            'tags': "burrito, fajita"
+        }, instance=NonClusterPlace())
+        self.assertTrue(form.is_valid())
+        mission_burrito = form.save()
+        reloaded_mission_burrito = NonClusterPlace.objects.get(pk=mission_burrito.pk)
+        self.assertEqual(
+            set(reloaded_mission_burrito.tags.all()),
+            set([Tag.objects.get(name='burrito'), Tag.objects.get(name='fajita')])
+        )
 
     @override_settings(TAGGIT_CASE_INSENSITIVE=True)
     def test_case_insensitive_tags(self):

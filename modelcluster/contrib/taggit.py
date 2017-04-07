@@ -80,6 +80,8 @@ class _ClusterTaggableManager(_TaggableManager):
 
 
 class ClusterTaggableManager(TaggableManager):
+    _need_commit_after_assignment = True
+
     def __get__(self, instance, model):
         # override TaggableManager's requirement for instance to have a primary key
         # before we can access its tags

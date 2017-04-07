@@ -274,22 +274,43 @@ class ClusterForm(with_metaclass(ClusterFormMetaclass, ModelForm)):
         return media
 
     def save(self, commit=True):
-        # call ModelForm.save() with commit=False so that we can fix up the behaviour for
-        # M2M fields before saving
-        instance = super(ClusterForm, self).save(commit=False)
+        # do we have any fields that expect us to call save_m2m immediately?
+        save_m2m_now = False
+        exclude = self._meta.exclude
+        fields = self._meta.fields
 
-        # Always call save_m2m(), even for commit=False. The M2M field types allowed in a
-        # ClusterForm (ParentalManyToManyField and ClusterTaggableManager) are designed to
-        # update the local instance when written, rather than updating the database directly,
-        # and this happens on save_m2m.
-        #
-        # To actually save to the database, we need an explicit 'commit' step, which happens on
-        # instance.save(). We therefore ensure that save_m2m() happens first, so that the
-        # updated relation data exists on the local in-memory instance at the point of saving.
-        self.save_m2m()
+        for f in self.instance._meta.get_fields():
+            if fields and f.name not in fields:
+                continue
+            if exclude and f.name in exclude:
+                continue
+            if getattr(f, '_need_commit_after_assignment', False):
+                save_m2m_now = True
+                break
 
-        if commit:
-            instance.save()
+        instance = super(ClusterForm, self).save(commit=(commit and not save_m2m_now))
+
+        # The M2M-like fields designed for use with ClusterForm (currently
+        # ParentalManyToManyField and ClusterTaggableManager) will manage their own in-memory
+        # relations, and not immediately write to the database when we assign to them.
+        # For these fields (identified by the _need_commit_after_assignment
+        # flag), save_m2m() is a safe operation that does not affect the database and is thus
+        # valid for commit=False. In the commit=True case, committing to the database happens
+        # in the subsequent instance.save (so this needs to happen after save_m2m to ensure
+        # we have the updated relation data in place).
+
+        # For annoying legacy reasons we sometimes need to accommodate 'classic' M2M fields
+        # (particularly taggit.TaggableManager) within ClusterForm. These fields
+        # generally do require our instance to exist in the database at the point we call
+        # save_m2m() - for this reason, we only proceed with the customisation described above
+        # (i.e. postpone the instance.save() operation until after save_m2m) if there's a
+        # _need_commit_after_assignment field on the form that demands it.
+
+        if save_m2m_now:
+            self.save_m2m()
+
+            if commit:
+                instance.save()
 
         for formset in self.formsets.values():
             formset.instance = instance

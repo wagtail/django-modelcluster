@@ -470,6 +470,7 @@ class ParentalManyToManyDescriptor(ManyToManyDescriptor):
 
 class ParentalManyToManyField(ManyToManyField):
     related_accessor_class = ParentalManyToManyDescriptor
+    _need_commit_after_assignment = True
 
     def contribute_to_class(self, cls, name, **kwargs):
         # ManyToManyField does not (as of Django 1.10) respect related_accessor_class,

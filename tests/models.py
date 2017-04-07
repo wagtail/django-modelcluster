@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
 from modelcluster.contrib.taggit import ClusterTaggableManager
+from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
@@ -59,6 +60,24 @@ class Place(ClusterableModel):
 class Restaurant(Place):
     serves_hot_dogs = models.BooleanField(default=False)
     proprietor = models.ForeignKey('Chef', null=True, blank=True, on_delete=models.SET_NULL, related_name='restaurants')
+
+
+class TaggedNonClusterPlace(TaggedItemBase):
+    content_object = models.ForeignKey('NonClusterPlace', related_name='tagged_items')
+
+
+@python_2_unicode_compatible
+class NonClusterPlace(models.Model):
+    """
+    For backwards compatibility we need ClusterModel to work with
+    plain TaggableManagers (as opposed to ClusterTaggableManager), albeit
+    without the in-memory relation behaviour
+    """
+    name = models.CharField(max_length=255)
+    tags = TaggableManager(through=TaggedNonClusterPlace, blank=True)
+
+    def __str__(self):
+        return self.name
 
 
 @python_2_unicode_compatible

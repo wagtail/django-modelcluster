@@ -626,6 +626,7 @@ class FormWithM2MTest(TestCase):
             class Meta:
                 model = Article
                 fields = ['title', 'authors']
+                formsets = []
 
         form = ArticleForm({
             'title': 'Updated test article',
@@ -647,6 +648,7 @@ class FormWithM2MTest(TestCase):
             class Meta:
                 model = Article
                 fields = ['title', 'authors']
+                formsets = []
 
         form = ArticleForm({
             'title': 'Updated test article',

@@ -124,6 +124,7 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         manager.add(*saved_instances)
         manager.remove(*self.deleted_objects)
 
+        self.save_m2m()  # ensures any parental-m2m fields are saved.
         if commit:
             manager.commit()
 

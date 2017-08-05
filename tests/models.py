@@ -144,7 +144,13 @@ class Document(ClusterableModel):
 
 
 @python_2_unicode_compatible
+class NewsPaper(ClusterableModel):
+    title = models.CharField(max_length=255)
+
+
+@python_2_unicode_compatible
 class Article(ClusterableModel):
+    paper = ParentalKey(NewsPaper, blank=True, null=True)
     title = models.CharField(max_length=255)
     authors = ParentalManyToManyField('Author', related_name='articles_by_author')
     categories = ParentalManyToManyField('Category', related_name='articles_by_category')

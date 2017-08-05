@@ -126,7 +126,7 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         if commit:
             manager.commit()
             for instance in saved_instances:
-                instance.save()
+                instance.save() # ensures any parental-m2m fields are saved.
 
         return saved_instances
 
@@ -317,6 +317,5 @@ class ClusterForm(with_metaclass(ClusterFormMetaclass, ModelForm)):
 
         for formset in self.formsets.values():
             formset.instance = instance
-
             formset.save(commit=commit)
         return instance

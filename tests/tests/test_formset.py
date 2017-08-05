@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.test import TestCase
 from modelcluster.forms import transientmodelformset_factory, childformset_factory
-from tests.models import Band, BandMember, Album
+from tests.models import NewsPaper, Article, Author, Band, BandMember, Album
 
 
 class TransientFormsetTest(TestCase):
@@ -336,6 +336,59 @@ class ChildFormsetTest(TestCase):
             'form-1-id': '',
         })
         self.assertTrue(band_members_formset.is_valid())
+
+
+class ChildFormsetWithM2MTest(TestCase):
+
+    def setUp(self):
+        self.james_joyce = Author.objects.create(name='James Joyce')
+        self.charles_dickens = Author.objects.create(name='Charles Dickens')
+
+        self.paper = NewsPaper.objects.create(title='the daily record')
+        self.article = Article.objects.create(
+            paper=self.paper,
+            title='Test article',
+            authors=[self.james_joyce],
+        )
+        ArticleFormset = childformset_factory(NewsPaper, Article, exclude=['categories'], extra=3)
+        self.formset = ArticleFormset({
+            'form-TOTAL_FORMS': 1,
+            'form-INITIAL_FORMS': 1,
+            'form-MAX_NUM_FORMS': 10,
+
+            'form-0-id': self.article.id,
+            'form-0-title': self.article.title,
+            'form-0-authors': [self.james_joyce.id, self.charles_dickens.id],
+        }, instance=self.paper)
+
+
+    def test_save_with_commit_false(self):
+        self.assertTrue(self.formset.is_valid())
+        self.formset.save(commit=False)
+
+        # in memory
+        self.assertIn(self.james_joyce, self.article.authors.all())
+        self.assertIn(self.charles_dickens, self.article.authors.all())
+
+        # in db
+        db_article = Article.objects.get(id-self.article.id)
+        self.assertNotIn(self.james_joyce, db_article.authors.all())
+        self.assertNotIn(self.charles_dickens, db_article.authors.all())
+
+
+    def test_save_with_commit_true(self):
+        self.assertTrue(self.formset.is_valid())
+        self.formset.save(commit=True)
+
+        # in memory
+        self.assertIn(self.james_joyce, self.article.authors.all())
+        self.assertIn(self.charles_dickens, self.article.authors.all())
+
+        # in db
+        db_article = Article.objects.get(id-self.article.id)
+        self.assertIn(self.james_joyce, db_article.authors.all())
+        self.assertIn(self.charles_dickens, db_article.authors.all())
+
 
 
 class OrderedFormsetTest(TestCase):

@@ -364,11 +364,11 @@ class ChildFormsetWithM2MTest(TestCase):
 
     def test_save_with_commit_false(self):
         self.assertTrue(self.formset.is_valid())
-        self.formset.save(commit=False)
+        saved_articles = self.formset.save(commit=False)
+        updated_article = saved_articles[0]
 
-        # in memory
-        self.assertIn(self.james_joyce, self.article.authors.all())
-        self.assertIn(self.charles_dickens, self.article.authors.all())
+        self.assertIn(self.james_joyce, updated_article.authors.all())
+        self.assertIn(self.charles_dickens, updated_article.authors.all())
 
         # in db
         db_article = Article.objects.get(id=self.article.id)
@@ -378,7 +378,8 @@ class ChildFormsetWithM2MTest(TestCase):
 
     def test_save_with_commit_true(self):
         self.assertTrue(self.formset.is_valid())
-        self.formset.save(commit=True)
+        saved_articles = self.formset.save(commit=True)
+        updated_article = saved_articles[0]
 
         # in db
         db_article = Article.objects.get(id=self.article.id)
@@ -386,8 +387,8 @@ class ChildFormsetWithM2MTest(TestCase):
         self.assertIn(self.charles_dickens, db_article.authors.all())
 
         # in memory
-        self.assertIn(self.james_joyce, self.article.authors.all())
-        self.assertIn(self.charles_dickens, self.article.authors.all())
+        self.assertIn(self.james_joyce, updated_article.authors.all())
+        self.assertIn(self.charles_dickens, updated_article.authors.all())
 
 
 

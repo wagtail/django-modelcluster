@@ -100,8 +100,7 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         # self.changed_objects, self.deleted_objects and self.new_objects;
         # use these to perform the appropriate updates on the relation's manager.
         saved_instances = super(BaseChildFormSet, self).save(commit=False)
-        if not commit:
-            self.save_m2m()
+        self.save_m2m()
 
         manager = getattr(self.instance, self.rel_name)
 
@@ -126,6 +125,8 @@ class BaseChildFormSet(BaseTransientModelFormSet):
 
         if commit:
             manager.commit()
+            for instance in saved_instances:
+                instance.save()
 
         return saved_instances
 
@@ -316,5 +317,6 @@ class ClusterForm(with_metaclass(ClusterFormMetaclass, ModelForm)):
 
         for formset in self.formsets.values():
             formset.instance = instance
+
             formset.save(commit=commit)
         return instance

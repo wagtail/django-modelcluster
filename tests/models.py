@@ -147,6 +147,9 @@ class Document(ClusterableModel):
 class NewsPaper(ClusterableModel):
     title = models.CharField(max_length=255)
 
+    def __str__(self):
+        return self.title
+
 
 @python_2_unicode_compatible
 class Article(ClusterableModel):

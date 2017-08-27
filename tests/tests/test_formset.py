@@ -367,6 +367,7 @@ class ChildFormsetWithM2MTest(TestCase):
         saved_articles = self.formset.save(commit=False)
         updated_article = saved_articles[0]
 
+        # in memory
         self.assertIn(self.james_joyce, updated_article.authors.all())
         self.assertIn(self.charles_dickens, updated_article.authors.all())
 

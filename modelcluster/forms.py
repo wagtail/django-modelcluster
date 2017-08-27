@@ -100,7 +100,6 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         # self.changed_objects, self.deleted_objects and self.new_objects;
         # use these to perform the appropriate updates on the relation's manager.
         saved_instances = super(BaseChildFormSet, self).save(commit=False)
-        self.save_m2m()
 
         manager = getattr(self.instance, self.rel_name)
 
@@ -123,10 +122,9 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         manager.add(*saved_instances)
         manager.remove(*self.deleted_objects)
 
+        self.save_m2m()  # ensures any parental-m2m fields are saved.
         if commit:
             manager.commit()
-            for instance in saved_instances:
-                instance.save() # ensures any parental-m2m fields are saved.
 
         return saved_instances
 

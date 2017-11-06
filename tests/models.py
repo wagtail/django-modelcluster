@@ -27,6 +27,9 @@ class BandMember(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        unique_together = ['band', 'name']
+
 
 @python_2_unicode_compatible
 class Album(models.Model):

@@ -5,7 +5,7 @@ from django.utils.six import text_type
 from django.test import TestCase
 from tests.models import Band, BandMember, Album, Restaurant, Article, Author, Document, Gallery
 from modelcluster.forms import ClusterForm
-from django.forms import Textarea, CharField, ModelForm
+from django.forms import Textarea, CharField
 from django.forms.widgets import TextInput, FileInput
 
 import datetime
@@ -568,6 +568,31 @@ class ClusterFormTest(TestCase):
 
         gallery_form = GalleryForm()
         self.assertTrue(gallery_form.is_multipart())
+
+    def test_unique_together(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+
+        form = BandForm({
+            'name': "The Beatles",
+
+            'members-TOTAL_FORMS': 2,
+            'members-INITIAL_FORMS': 0,
+            'members-MAX_NUM_FORMS': 1000,
+
+            'members-0-name': 'John Lennon',
+            'members-0-id': '',
+
+            'members-1-name': 'John Lennon',
+            'members-1-id': '',
+
+            'albums-TOTAL_FORMS': 0,
+            'albums-INITIAL_FORMS': 0,
+            'albums-MAX_NUM_FORMS': 1000,
+        })
+        self.assertFalse(form.is_valid())
 
 
 class FormWithM2MTest(TestCase):

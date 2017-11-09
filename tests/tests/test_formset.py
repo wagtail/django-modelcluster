@@ -350,7 +350,7 @@ class ChildFormsetWithM2MTest(TestCase):
             title='Test article',
             authors=[self.james_joyce],
         )
-        ArticleFormset = childformset_factory(NewsPaper, Article, exclude=['categories'], extra=3)
+        ArticleFormset = childformset_factory(NewsPaper, Article, exclude=['categories', 'tags'], extra=3)
         self.formset = ArticleFormset({
             'form-TOTAL_FORMS': 1,
             'form-INITIAL_FORMS': 1,
@@ -359,6 +359,17 @@ class ChildFormsetWithM2MTest(TestCase):
             'form-0-id': self.article.id,
             'form-0-title': self.article.title,
             'form-0-authors': [self.james_joyce.id, self.charles_dickens.id],
+        }, instance=self.paper)
+
+        ArticleTagsFormset = childformset_factory(NewsPaper, Article, exclude=['categories', 'authors'], extra=3)
+        self.tags_formset = ArticleTagsFormset({
+            'form-TOTAL_FORMS': 1,
+            'form-INITIAL_FORMS': 1,
+            'form-MAX_NUM_FORMS': 10,
+
+            'form-0-id': self.article.id,
+            'form-0-title': self.article.title,
+            'form-0-tags': ['tag1', 'tagtwo'],
         }, instance=self.paper)
 
 
@@ -391,6 +402,35 @@ class ChildFormsetWithM2MTest(TestCase):
         self.assertIn(self.james_joyce, updated_article.authors.all())
         self.assertIn(self.charles_dickens, updated_article.authors.all())
 
+
+    def test_tags_save_with_commit_false(self):
+        self.assertTrue(self.tags_formset.is_valid())
+        saved_articles = self.tags_formset.save(commit=False)
+        updated_article = saved_articles[0]
+
+        # in memory
+        self.assertIn('tag1', [t.slug for t in updated_article.tags.all()])
+        self.assertIn('tagtwo', [t.slug for t in updated_article.tags.all()])
+
+        # in db
+        db_article = Article.objects.get(id=self.article.id)
+        self.assertNotIn('tag1', [t.slug for t in db_article.tags.all()])
+        self.assertNotIn('tagtwo', [t.slug for t in db_article.tags.all()])
+
+
+    def test_tags_save_with_commit_true(self):
+        self.assertTrue(self.tags_formset.is_valid())
+        saved_articles = self.tags_formset.save(commit=True)
+        updated_article = saved_articles[0]
+
+        # in db
+        db_article = Article.objects.get(id=self.article.id)
+        self.assertIn('tag1', [t.slug for t in db_article.tags.all()])
+        self.assertIn('tagtwo', [t.slug for t in db_article.tags.all()])
+
+        # in memory
+        self.assertIn('tag1', [t.slug for t in updated_article.tags.all()])
+        self.assertIn('tagtwo', [t.slug for t in updated_article.tags.all()])
 
 
 class OrderedFormsetTest(TestCase):

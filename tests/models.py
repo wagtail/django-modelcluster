@@ -144,10 +144,24 @@ class Document(ClusterableModel):
 
 
 @python_2_unicode_compatible
+class NewsPaper(ClusterableModel):
+    title = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.title
+
+
+class TaggedArticle(TaggedItemBase):
+    content_object = ParentalKey('Article', related_name='tagged_items')
+
+
+@python_2_unicode_compatible
 class Article(ClusterableModel):
+    paper = ParentalKey(NewsPaper, blank=True, null=True)
     title = models.CharField(max_length=255)
     authors = ParentalManyToManyField('Author', related_name='articles_by_author')
     categories = ParentalManyToManyField('Category', related_name='articles_by_category')
+    tags = ClusterTaggableManager(through=TaggedArticle, blank=True)
 
     def __str__(self):
         return self.title

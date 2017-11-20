@@ -66,6 +66,11 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
 
             return FakeQuerySet(related.related_model, results)
 
+        def _apply_rel_filters(self, queryset):
+            # Implemented as empty for compatibility sake
+            # But there is probably a better implementation of this function
+            return queryset._next_is_sticky()
+
         def get_prefetch_queryset(self, instances, queryset=None):
             if queryset is None:
                 db = self._db or router.db_for_read(self.model, instance=instances[0])
@@ -83,7 +88,10 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
                 instance = instances_dict[rel_obj_attr(rel_obj)]
                 setattr(rel_obj, rel_field.name, instance)
             cache_name = rel_field.related_query_name()
-            return qs, rel_obj_attr, instance_attr, False, cache_name
+            if django.VERSION >= (2, 0):
+                return qs, rel_obj_attr, instance_attr, False, cache_name, False
+            else:
+                return qs, rel_obj_attr, instance_attr, False, cache_name
 
         def get_object_list(self):
             """

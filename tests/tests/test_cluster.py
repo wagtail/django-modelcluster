@@ -242,7 +242,7 @@ class ClusterTest(TestCase):
 
         class Instrument(models.Model):
             # Oops, BandMember is not a Clusterable model
-            member = ParentalKey(BandMember)
+            member = ParentalKey(BandMember, on_delete=models.CASCADE)
 
             class Meta:
                 # Prevent Django from thinking this is in the database
@@ -268,7 +268,7 @@ class ClusterTest(TestCase):
 
         class Instrument(models.Model):
             # Oops, related_name='+' is not allowed
-            band = ParentalKey(Band, related_name='+')
+            band = ParentalKey(Band, related_name='+', on_delete=models.CASCADE)
 
             class Meta:
                 # Prevent Django from thinking this is in the database
@@ -293,7 +293,7 @@ class ClusterTest(TestCase):
         from modelcluster.fields import ParentalKey
 
         class Instrument(models.Model):
-            banana = ParentalKey('Banana')
+            banana = ParentalKey('Banana', on_delete=models.CASCADE)
 
             class Meta:
                 # Prevent Django from thinking this is in the database

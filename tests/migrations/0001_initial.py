@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=255)),
-                ('band', modelcluster.fields.ParentalKey(related_name='members', to='tests.Band')),
+                ('band', modelcluster.fields.ParentalKey(related_name='members', to='tests.Band', on_delete=django.db.models.deletion.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -74,7 +74,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('price', models.DecimalField(max_digits=6, decimal_places=2)),
-                ('dish', models.ForeignKey(related_name='+', to='tests.Dish')),
+                ('dish', models.ForeignKey(related_name='+', to='tests.Dish', on_delete=django.db.models.deletion.CASCADE)),
             ],
         ),
         migrations.CreateModel(
@@ -114,7 +114,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Restaurant',
             fields=[
-                ('place_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='tests.Place')),
+                ('place_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='tests.Place', on_delete=django.db.models.deletion.CASCADE)),
                 ('serves_hot_dogs', models.BooleanField(default=False)),
                 ('proprietor', models.ForeignKey(related_name='restaurants', on_delete=django.db.models.deletion.SET_NULL, blank=True, to='tests.Chef', null=True)),
             ],
@@ -137,17 +137,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='taggedplace',
             name='content_object',
-            field=modelcluster.fields.ParentalKey(related_name='tagged_items', to='tests.Place'),
+            field=modelcluster.fields.ParentalKey(related_name='tagged_items', to='tests.Place', on_delete=django.db.models.deletion.CASCADE),
         ),
         migrations.AddField(
             model_name='taggedplace',
             name='tag',
-            field=models.ForeignKey(related_name='tests_taggedplace_items', to='taggit.Tag'),
+            field=models.ForeignKey(related_name='tests_taggedplace_items', to='taggit.Tag', on_delete=django.db.models.deletion.CASCADE),
         ),
         migrations.AddField(
             model_name='review',
             name='place',
-            field=modelcluster.fields.ParentalKey(related_name='reviews', to='tests.Place'),
+            field=modelcluster.fields.ParentalKey(related_name='reviews', to='tests.Place', on_delete=django.db.models.deletion.CASCADE),
         ),
         migrations.AddField(
             model_name='place',
@@ -162,11 +162,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='album',
             name='band',
-            field=modelcluster.fields.ParentalKey(related_name='albums', to='tests.Band'),
+            field=modelcluster.fields.ParentalKey(related_name='albums', to='tests.Band', on_delete=django.db.models.deletion.CASCADE),
         ),
         migrations.AddField(
             model_name='menuitem',
             name='restaurant',
-            field=modelcluster.fields.ParentalKey(related_name='menu_items', to='tests.Restaurant'),
+            field=modelcluster.fields.ParentalKey(related_name='menu_items', to='tests.Restaurant', on_delete=django.db.models.deletion.CASCADE),
         ),
     ]

@@ -20,7 +20,7 @@ class _ClusterTaggableManager(_TaggableManager):
         DeferringRelatedManager which allows writing related objects without committing them
         to the database.
         """
-        rel_name = self.through._meta.get_field('content_object').rel.get_accessor_name()
+        rel_name = self.through._meta.get_field('content_object').remote_field.get_accessor_name()
         return getattr(self.instance, rel_name)
 
     def get_queryset(self, extra_filters=None):
@@ -95,5 +95,5 @@ class ClusterTaggableManager(TaggableManager):
         # retrieve the queryset via the related manager on the content object,
         # to accommodate the possibility of this having uncommitted changes relative to
         # the live database
-        rel_name = self.through._meta.get_field('content_object').rel.get_accessor_name()
+        rel_name = self.through._meta.get_field('content_object').remote_field.get_accessor_name()
         return getattr(instance, rel_name).all()

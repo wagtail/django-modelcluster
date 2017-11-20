@@ -254,12 +254,12 @@ class ParentalKey(ForeignKey):
         # If self.rel.to is a string at this point, it means that Django has been unable
         # to resolve it as a model name; if so, skip this test so that Django's own
         # system checks can report the appropriate error
-        if isinstance(self.rel.to, type) and not issubclass(self.rel.to, ClusterableModel):
+        if isinstance(self.remote_field.model, type) and not issubclass(self.remote_field.model, ClusterableModel):
             errors.append(
                 checks.Error(
                     'ParentalKey must point to a subclass of ClusterableModel.',
                     hint='Change {model_name} into a ClusterableModel or use a ForeignKey instead.'.format(
-                        model_name=self.rel.to._meta.app_label + '.' + self.rel.to.__name__,
+                        model_name=self.remote_field.model._meta.app_label + '.' + self.remote_field.model.__name__,
                     ),
                     obj=self,
                     id='modelcluster.E001',
@@ -267,7 +267,7 @@ class ParentalKey(ForeignKey):
             )
 
         # ParentalKeys must have an accessor name (#49)
-        if self.rel.get_accessor_name() == '+':
+        if self.remote_field.get_accessor_name() == '+':
             errors.append(
                 checks.Error(
                     "related_name='+' is not allowed on ParentalKey fields",

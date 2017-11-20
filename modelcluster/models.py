@@ -16,7 +16,7 @@ from modelcluster.fields import ParentalKey, ParentalManyToManyField
 
 
 def get_field_value(field, model):
-    if field.rel is None:
+    if field.remote_field is None:
         value = field.pre_save(model, add=model.pk is None)
 
         # Make datetimes timezone aware
@@ -43,8 +43,8 @@ def get_serializable_data_for_fields(model):
     """
     pk_field = model._meta.pk
     # If model is a child via multitable inheritance, use parent's pk
-    while pk_field.rel and pk_field.rel.parent_link:
-        pk_field = pk_field.rel.to._meta.pk
+    while pk_field.remote_field and pk_field.remote_field.parent_link:
+        pk_field = pk_field.remote_field.model._meta.pk
 
     obj = {'pk': get_field_value(pk_field, model)}
 
@@ -58,8 +58,8 @@ def get_serializable_data_for_fields(model):
 def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
     pk_field = model._meta.pk
     # If model is a child via multitable inheritance, use parent's pk
-    while pk_field.rel and pk_field.rel.parent_link:
-        pk_field = pk_field.rel.to._meta.pk
+    while pk_field.remote_field and pk_field.remote_field.parent_link:
+        pk_field = pk_field.remote_field.model._meta.pk
 
     kwargs = {pk_field.attname: data['pk']}
     for field_name, field_value in data.items():
@@ -72,29 +72,29 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
         if isinstance(field, ForeignObjectRel):
             continue
 
-        if field.rel and isinstance(field.rel, models.ManyToManyRel):
-            related_objects = field.rel.to._default_manager.filter(pk__in=field_value)
+        if field.remote_field and isinstance(field.remote_field, models.ManyToManyRel):
+            related_objects = field.remote_field.model._default_manager.filter(pk__in=field_value)
             kwargs[field.attname] = list(related_objects)
 
-        elif field.rel and isinstance(field.rel, models.ManyToOneRel):
+        elif field.remote_field and isinstance(field.remote_field, models.ManyToOneRel):
             if field_value is None:
                 kwargs[field.attname] = None
             else:
-                clean_value = field.rel.to._meta.get_field(field.rel.field_name).to_python(field_value)
+                clean_value = field.remote_field.model._meta.get_field(field.remote_field.field_name).to_python(field_value)
                 kwargs[field.attname] = clean_value
                 if check_fks:
                     try:
-                        field.rel.to._default_manager.get(**{field.rel.field_name: clean_value})
-                    except field.rel.to.DoesNotExist:
-                        if field.rel.on_delete == models.DO_NOTHING:
+                        field.remote_field.model._default_manager.get(**{field.remote_field.field_name: clean_value})
+                    except field.remote_field.model.DoesNotExist:
+                        if field.remote_field.on_delete == models.DO_NOTHING:
                             pass
-                        elif field.rel.on_delete == models.CASCADE:
+                        elif field.remote_field.on_delete == models.CASCADE:
                             if strict_fks:
                                 return None
                             else:
                                 kwargs[field.attname] = None
 
-                        elif field.rel.on_delete == models.SET_NULL:
+                        elif field.remote_field.on_delete == models.SET_NULL:
                             kwargs[field.attname] = None
 
                         else:

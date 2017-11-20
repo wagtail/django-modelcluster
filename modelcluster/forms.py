@@ -84,11 +84,11 @@ def transientmodelformset_factory(model, formset=BaseTransientModelFormSet, **kw
 class BaseChildFormSet(BaseTransientModelFormSet):
     def __init__(self, data=None, files=None, instance=None, queryset=None, **kwargs):
         if instance is None:
-            self.instance = self.fk.rel.to()
+            self.instance = self.fk.remote_field.model()
         else:
             self.instance = instance
 
-        self.rel_name = ForeignObjectRel(self.fk, self.fk.rel.to, related_name=self.fk.rel.related_name).get_accessor_name()
+        self.rel_name = ForeignObjectRel(self.fk, self.fk.remote_field.model, related_name=self.fk.remote_field.related_name).get_accessor_name()
 
         if queryset is None:
             queryset = getattr(self.instance, self.rel_name).all()

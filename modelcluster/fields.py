@@ -463,7 +463,7 @@ class ParentalManyToManyField(ManyToManyField):
         # So, we'll let the original contribute_to_class do its thing, and then overwrite
         # the accessor...
         super(ParentalManyToManyField, self).contribute_to_class(cls, name, **kwargs)
-        setattr(cls, self.name, self.related_accessor_class(self.rel))
+        setattr(cls, self.name, self.related_accessor_class(self.remote_field))
 
     def value_from_object(self, obj):
         # In Django >=1.10, ManyToManyField.value_from_object special-cases objects with no PK,

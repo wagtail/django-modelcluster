@@ -6,12 +6,7 @@ from django.db import IntegrityError, router
 from django.db.models.fields.related import ForeignKey, ManyToManyField
 from django.utils.functional import cached_property
 
-try:
-    from django.db.models.fields.related import ReverseManyToOneDescriptor, ManyToManyDescriptor
-except ImportError:
-    # Django 1.8 and below
-    from django.db.models.fields.related import ForeignRelatedObjectsDescriptor as ReverseManyToOneDescriptor, \
-        ReverseManyRelatedObjectsDescriptor as ManyToManyDescriptor
+from django.db.models.fields.related import ReverseManyToOneDescriptor, ManyToManyDescriptor
 
 
 from modelcluster.utils import sort_by_fields
@@ -228,22 +223,11 @@ class ChildObjectsDescriptor(ReverseManyToOneDescriptor):
 
     @cached_property
     def child_object_manager_cls(self):
-        try:
-            rel = self.rel
-        except AttributeError:
-            # Django 1.8 and below
-            rel = self.related
-
-        return create_deferring_foreign_related_manager(rel, self.related_manager_cls)
+        return create_deferring_foreign_related_manager(self.rel, self.related_manager_cls)
 
 
 class ParentalKey(ForeignKey):
     related_accessor_class = ChildObjectsDescriptor
-
-    # Django 1.8 has a check to prevent unsaved instances being assigned to
-    # ForeignKeys. Disable it
-    # This check was moved to the save() method in Django 1.8.4
-    allow_unsaved_instance_assignment = True
 
     def check(self, **kwargs):
         from modelcluster.models import ClusterableModel
@@ -479,12 +463,7 @@ class ParentalManyToManyField(ManyToManyField):
         # So, we'll let the original contribute_to_class do its thing, and then overwrite
         # the accessor...
         super(ParentalManyToManyField, self).contribute_to_class(cls, name, **kwargs)
-
-        if django.VERSION >= (1, 9):
-            setattr(cls, self.name, self.related_accessor_class(self.rel))
-        else:
-            # in Django 1.8, the accessor is constructed with the field (self) rather than the 'rel'
-            setattr(cls, self.name, self.related_accessor_class(self))
+        setattr(cls, self.name, self.related_accessor_class(self.rel))
 
     def value_from_object(self, obj):
         # In Django >=1.10, ManyToManyField.value_from_object special-cases objects with no PK,

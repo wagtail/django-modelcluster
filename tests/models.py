@@ -63,7 +63,7 @@ class Restaurant(Place):
 
 
 class TaggedNonClusterPlace(TaggedItemBase):
-    content_object = models.ForeignKey('NonClusterPlace', related_name='tagged_items')
+    content_object = models.ForeignKey('NonClusterPlace', related_name='tagged_items', on_delete=models.CASCADE)
 
 
 @python_2_unicode_compatible
@@ -107,7 +107,7 @@ class Chef(models.Model):
 @python_2_unicode_compatible
 class MenuItem(models.Model):
     restaurant = ParentalKey('Restaurant', related_name='menu_items')
-    dish = models.ForeignKey('Dish', related_name='+')
+    dish = models.ForeignKey('Dish', related_name='+', on_delete=models.CASCADE)
     price = models.DecimalField(max_digits=6, decimal_places=2)
     recommended_wine = models.ForeignKey('Wine', null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
 

@@ -1,7 +1,7 @@
 Changelog
 =========
 
-4.0 (xx.xx.xxxx)
+4.0 (13.12.2017)
 ~~~~~~~~~~~~~~~~
 * Django 2.0 compatibility
 * Removed Django 1.8 and 1.9 support

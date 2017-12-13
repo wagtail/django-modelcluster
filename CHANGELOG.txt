@@ -4,7 +4,7 @@ Changelog
 4.0 (xx.xx.xxxx)
 ~~~~~~~~~~~~~~~~
 * Django 2.0 compatibility
-* Removed Django 1.8 support
+* Removed Django 1.8 and 1.9 support
 
 3.1 (07.04.2017)
 ~~~~~~~~~~~~~~~~

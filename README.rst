@@ -12,7 +12,7 @@ If you had a data model like this:
      name = models.CharField(max_length=255)
 
  class BandMember(models.Model):
-     band = models.ForeignKey('Band', related_name='members')
+     band = models.ForeignKey('Band', related_name='members', on_delete=models.CASCADE)
      name = models.CharField(max_length=255)
 
 
@@ -46,7 +46,7 @@ But what if you could? There are all sorts of scenarios where you might want to 
      name = models.CharField(max_length=255)
 
  class BandMember(models.Model):
-     band = ParentalKey('Band', related_name='members')
+     band = ParentalKey('Band', related_name='members', on_delete=models.CASCADE)
      name = models.CharField(max_length=255)
 
 

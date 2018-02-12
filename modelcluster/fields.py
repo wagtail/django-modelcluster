@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import django
 from django.core import checks
 from django.db import IntegrityError, router
+from django.db.models import CASCADE
 from django.db.models.fields.related import ForeignKey, ManyToManyField
 from django.utils.functional import cached_property
 
@@ -236,6 +237,10 @@ class ChildObjectsDescriptor(ReverseManyToOneDescriptor):
 
 class ParentalKey(ForeignKey):
     related_accessor_class = ChildObjectsDescriptor
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('on_delete', CASCADE)
+        super(ParentalKey, self).__init__(*args, **kwargs)
 
     def check(self, **kwargs):
         from modelcluster.models import ClusterableModel

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.1 (xx.xx.xxxx)
+~~~~~~~~~~~~~~~~
+* `on_delete` on ParentalKey now defaults to CASCADE if not specified
+
 4.0 (13.12.2017)
 ~~~~~~~~~~~~~~~~
 * Django 2.0 compatibility

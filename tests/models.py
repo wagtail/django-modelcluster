@@ -33,7 +33,7 @@ class BandMember(models.Model):
 
 @python_2_unicode_compatible
 class Album(models.Model):
-    band = ParentalKey('Band', related_name='albums', on_delete=models.CASCADE)
+    band = ParentalKey('Band', related_name='albums')
     name = models.CharField(max_length=255)
     release_date = models.DateField(null=True, blank=True)
     sort_order = models.IntegerField(null=True, blank=True, editable=False)

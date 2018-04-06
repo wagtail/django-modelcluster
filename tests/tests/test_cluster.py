@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-import unittest
-
 from django.test import TestCase
 from django.db import IntegrityError
 
@@ -127,6 +125,29 @@ class ClusterTest(TestCase):
 
         beatles.save()
         beatles.members.commit()
+
+    def test_integrity_error_with_none_pk(self):
+        beatles = Band(name='The Beatles', members=[
+            BandMember(name='John Lennon'),
+            BandMember(name='Paul McCartney'),
+        ])
+        beatles.save()
+        beatles.pk = None
+        self.assertRaises(IntegrityError, lambda: beatles.members.commit())
+        # this should work fine, as Django will end up cloning this entity
+        beatles.save()
+
+
+
+    def test_model_with_zero_pk(self):
+        beatles = Band(name='The Beatles', members=[
+            BandMember(name='John Lennon'),
+            BandMember(name='Paul McCartney'),
+        ])
+        beatles.save()
+        beatles.pk = 0
+        beatles.members.commit()
+        beatles.save()
 
     def test_save_with_update_fields(self):
         beatles = Band(name='The Beatles', members=[
@@ -398,7 +419,8 @@ class ParentalM2MTest(TestCase):
 
     def test_constructor(self):
         # Test passing values for M2M relations as kwargs to the constructor
-        article2 = Article(title="Test article 2",
+        article2 = Article(
+            title="Test article 2",
             authors=[self.author_1],
             categories=[self.category_2],
         )

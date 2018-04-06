@@ -186,7 +186,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             Any objects removed from the initial set will be deleted entirely
             from the database.
             """
-            if not self.instance.pk:
+            if self.instance.pk is None:
                 raise IntegrityError("Cannot commit relation %r on an unsaved model" % relation_name)
 
             try:

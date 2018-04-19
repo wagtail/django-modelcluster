@@ -125,17 +125,21 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
 def get_all_child_relations(model):
     """
     Return a list of RelatedObject records for child relations of the given model,
-    including ones attached to ancestors of the model
+    including ones attached to ancestors of the model.
+    Exclude the ones where ParentalKey is defined with serialize=False.
     """
+    def _check_rel(field):
+        return isinstance(field, ParentalKey) and field.serialize
+
     if django.VERSION >= (1, 9):
         return [
             field for field in model._meta.get_fields()
-            if isinstance(field.remote_field, ParentalKey)
+            if _check_rel(field.remote_field)
         ]
     else:
         return [
             field for field in model._meta.get_fields()
-            if isinstance(field, ForeignObjectRel) and isinstance(field.field, ParentalKey)
+            if isinstance(field, ForeignObjectRel) and _check_rel(field.field)
         ]
 
 

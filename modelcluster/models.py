@@ -221,8 +221,9 @@ class ClusterableModel(models.Model):
                 obj[rel_name] = [get_serializable_data_for_fields(child) for child in children]
 
         for field in get_all_child_m2m_relations(self):
-            children = getattr(self, field.name).all()
-            obj[field.name] = [child.pk for child in children]
+            if field.serialize:
+                children = getattr(self, field.name).all()
+                obj[field.name] = [child.pk for child in children]
 
         return obj
 

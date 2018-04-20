@@ -172,6 +172,8 @@ class Article(ClusterableModel):
     authors = ParentalManyToManyField('Author', related_name='articles_by_author')
     categories = ParentalManyToManyField('Category', related_name='articles_by_category')
     tags = ClusterTaggableManager(through=TaggedArticle, blank=True)
+    related_articles = ParentalManyToManyField('self', serialize=False, blank=True)
+    view_count = models.IntegerField(null=True, blank=True, serialize=False)
 
     def __str__(self):
         return self.title

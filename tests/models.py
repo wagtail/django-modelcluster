@@ -165,6 +165,9 @@ class Article(ClusterableModel):
     authors = ParentalManyToManyField('Author', related_name='articles_by_author')
     categories = ParentalManyToManyField('Category', related_name='articles_by_category')
     tags = ClusterTaggableManager(through=TaggedArticle, blank=True)
+    related_articles = ParentalManyToManyField('self', serialize=False, blank=True)
+    reviewer = ParentalKey('Reviewer', serialize=False, blank=True, null=True,
+                           related_name='reviews', on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.title
@@ -179,6 +182,14 @@ class Author(models.Model):
 
     class Meta:
         ordering = ['name']
+
+
+@python_2_unicode_compatible
+class Reviewer(ClusterableModel):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
 
 
 @python_2_unicode_compatible

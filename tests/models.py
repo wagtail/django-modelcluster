@@ -200,3 +200,38 @@ class Gallery(ClusterableModel):
 class GalleryImage(models.Model):
     gallery = ParentalKey(Gallery, related_name='images', on_delete=models.CASCADE)
     image = models.FileField()
+
+# Models for fakequeryset prefetch_related test
+
+class House(models.Model):
+    name = models.CharField(max_length=50)
+    address = models.CharField(max_length=255)
+    owner = models.ForeignKey('Person', models.SET_NULL, null=True)
+    main_room = models.OneToOneField('Room', models.SET_NULL, related_name='main_room_of', null=True)
+
+    class Meta:
+        ordering = ['id']
+
+
+class Room(models.Model):
+    name = models.CharField(max_length=50)
+
+    class Meta:
+        ordering = ['id']
+
+
+class Person(ClusterableModel):
+    name = models.CharField(max_length=50)
+    houses = ParentalManyToManyField(House, related_name='occupants')
+
+    @property
+    def primary_house(self):
+        # Assume business logic forces every person to have at least one house.
+        return sorted(self.houses.all(), key=lambda house: -house.rooms.count())[0]
+
+    @property
+    def all_houses(self):
+        return list(self.houses.all())
+
+    class Meta:
+        ordering = ['id']

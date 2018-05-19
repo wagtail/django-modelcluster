@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from django.db.models import Model
+from django.db.models import Model, prefetch_related_objects
 
 from modelcluster.utils import sort_by_fields
 
@@ -100,6 +100,10 @@ class FakeQuerySet(object):
 
     def select_related(self, *args):
         # has no meaningful effect on non-db querysets
+        return self
+
+    def prefetch_related(self, *args):
+        prefetch_related_objects(self.results, *args)
         return self
 
     def values_list(self, *fields, **kwargs):

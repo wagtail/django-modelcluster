@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import unittest
+import itertools
 
 from django.test import TestCase
 from django.db import IntegrityError
@@ -8,7 +9,7 @@ from django.db import IntegrityError
 from modelcluster.models import get_all_child_relations
 
 from tests.models import Band, BandMember, Restaurant, Review, Album, \
-    Article, Author, Category
+    Article, Author, Category, NewsPaper, Person, Room, House
 
 
 class ClusterTest(TestCase):
@@ -468,3 +469,36 @@ class ParentalM2MTest(TestCase):
             set(authors_field.value_from_object(self.article)),
             set([self.author_1, self.author_2])
         )
+
+
+class PrefetchRelatedTest(TestCase):
+    def test_fakequeryset_prefetch_related(self):
+        person1 = Person.objects.create(name='Joe')
+        person2 = Person.objects.create(name='Mary')
+
+        # Set main_room for each house before creating the next one for
+        # databases where supports_nullable_unique_constraints is False.
+
+        house1 = House.objects.create(name='House 1', address='123 Main St', owner=person1)
+        room1_1 = Room.objects.create(name='Dining room')
+        room1_2 = Room.objects.create(name='Lounge')
+        room1_3 = Room.objects.create(name='Kitchen')
+        house1.main_room = room1_1
+        house1.save()
+
+        house2 = House(name='House 2', address='45 Side St', owner=person1)
+        room2_1 = Room.objects.create(name='Eating room')
+        room2_2 = Room.objects.create(name='TV Room')
+        room2_3 = Room.objects.create(name='Bathroom')
+        house2.main_room = room2_1
+
+        person1.houses = itertools.chain(House.objects.all(), [house2])
+
+        houses = person1.houses.all()
+
+        with self.assertNumQueries(1):
+            qs = person1.houses.prefetch_related('main_room')
+
+        with self.assertNumQueries(0):
+            main_rooms = [ house.main_room for house in person1.houses.all() ]
+            self.assertEqual(len(main_rooms), 2)

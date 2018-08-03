@@ -7,24 +7,24 @@ from modelcluster.utils import sort_by_fields
 
 # Constructor for test functions that determine whether an object passes some boolean condition
 def test_exact(model, attribute_name, value):
-    field = model._meta.get_field(attribute_name)
-    # convert value to the correct python type for this field
-    typed_value = field.to_python(value)
-    if isinstance(typed_value, Model):
-        if typed_value.pk is None:
+    if isinstance(value, Model):
+        if value.pk is None:
             # comparing against an unsaved model, so objects need to match by reference
-            return lambda obj: getattr(obj, attribute_name) is typed_value
+            return lambda obj: getattr(obj, attribute_name) is value
         else:
             # comparing against a saved model; objects need to match by type and ID.
             # Additionally, where model inheritance is involved, we need to treat it as a
             # positive match if one is a subclass of the other
             def _test(obj):
                 other_value = getattr(obj, attribute_name)
-                if not (isinstance(typed_value, other_value.__class__) or isinstance(other_value, typed_value.__class__)):
+                if not (isinstance(value, other_value.__class__) or isinstance(other_value, value.__class__)):
                     return False
-                return typed_value.pk == other_value.pk
+                return value.pk == other_value.pk
             return _test
     else:
+        field = model._meta.get_field(attribute_name)
+        # convert value to the correct python type for this field
+        typed_value = field.to_python(value)
         # just a plain Python value = do a normal equality check
         return lambda obj: getattr(obj, attribute_name) == typed_value
 

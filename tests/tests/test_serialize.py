@@ -18,7 +18,10 @@ class SerializeTest(TestCase):
             BandMember(name='Paul McCartney'),
         ])
 
-        expected = {'pk': None, 'albums': [], 'name': 'The Beatles', 'members': [{'pk': None, 'name': 'John Lennon', 'band': None}, {'pk': None, 'name': 'Paul McCartney', 'band': None}]}
+        expected = {'pk': None, 'albums': [], 'name': 'The Beatles', 'members': [
+            {'pk': None, 'name': 'John Lennon', 'band': None, 'favourite_restaurant': None},
+            {'pk': None, 'name': 'Paul McCartney', 'band': None, 'favourite_restaurant': None}
+        ]}
         self.assertEqual(expected, beatles.serializable_data())
 
     def test_serialize_m2m(self):

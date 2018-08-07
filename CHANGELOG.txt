@@ -4,6 +4,7 @@ Changelog
 4.2 (xx.xx.xxxx)
 ~~~~~~~~~~~~~~~~
 * Django 2.1 compatibility
+* Implemented prefetch_related on FakeQuerySet (Haydn Greatnews)
 
 4.1 (12.02.2017)
 ~~~~~~~~~~~~~~~~

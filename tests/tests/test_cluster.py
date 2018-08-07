@@ -7,7 +7,7 @@ from django.db import IntegrityError
 
 from modelcluster.models import get_all_child_relations
 
-from tests.models import Band, BandMember, Restaurant, Review, Album, \
+from tests.models import Band, BandMember, Place, Restaurant, SeafoodRestaurant, Review, Album, \
     Article, Author, Category
 
 
@@ -174,6 +174,27 @@ class ClusterTest(TestCase):
 
         also_beatles = Band.objects.get(id=beatles.id)
         self.assertEqual(3, beatles.members.filter(band=also_beatles).count())
+
+    def test_queryset_filtering_on_models_with_inheritance(self):
+        strawberry_fields = Restaurant.objects.create(name='Strawberry Fields')
+        the_yellow_submarine = SeafoodRestaurant.objects.create(name='The Yellow Submarine')
+
+        john = BandMember(name='John Lennon', favourite_restaurant=strawberry_fields)
+        ringo = BandMember(name='Ringo Starr', favourite_restaurant=Restaurant.objects.get(name='The Yellow Submarine'))
+
+        beatles = Band(name='The Beatles', members=[john, ringo])
+
+        # queried instance is less specific
+        self.assertEqual(
+            list(beatles.members.filter(favourite_restaurant=Place.objects.get(name='Strawberry Fields'))),
+            [john]
+        )
+
+        # queried instance is more specific
+        self.assertEqual(
+            list(beatles.members.filter(favourite_restaurant=the_yellow_submarine)),
+            [ringo]
+        )
 
     def test_queryset_exclude_filtering(self):
         beatles = Band(name='The Beatles', members=[

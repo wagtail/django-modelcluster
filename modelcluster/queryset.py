@@ -17,7 +17,7 @@ def test_exact(model, attribute_name, value):
             # positive match if one is a subclass of the other
             def _test(obj):
                 other_value = getattr(obj, attribute_name)
-                if not (isinstance(value, other_value.__class__) or isinstance(other_value, typed_value.__class__)):
+                if not (isinstance(value, other_value.__class__) or isinstance(other_value, value.__class__)):
                     return False
                 return value.pk == other_value.pk
             return _test

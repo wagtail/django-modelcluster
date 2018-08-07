@@ -23,12 +23,15 @@ class Band(ClusterableModel):
 class BandMember(models.Model):
     band = ParentalKey('Band', related_name='members', on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
+    favourite_restaurant = models.ForeignKey('Restaurant', null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.name
 
     class Meta:
-        unique_together = ['band', 'name']
+        unique_together = [
+            ['band', 'name']
+        ]
 
 
 @python_2_unicode_compatible
@@ -63,6 +66,10 @@ class Place(ClusterableModel):
 class Restaurant(Place):
     serves_hot_dogs = models.BooleanField(default=False)
     proprietor = models.ForeignKey('Chef', null=True, blank=True, on_delete=models.SET_NULL, related_name='restaurants')
+
+
+class SeafoodRestaurant(Restaurant):
+    pass
 
 
 class TaggedNonClusterPlace(TaggedItemBase):

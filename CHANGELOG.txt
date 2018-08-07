@@ -5,6 +5,7 @@ Changelog
 ~~~~~~~~~~~~~~~~
 * Django 2.1 compatibility
 * Implemented prefetch_related on FakeQuerySet (Haydn Greatnews)
+* Fix: Saving a ClusterableModel with a primary key of 0 no longer throws an IntegrityError (A Lee)
 
 4.1 (12.02.2017)
 ~~~~~~~~~~~~~~~~

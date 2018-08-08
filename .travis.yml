@@ -26,10 +26,18 @@ matrix:
      python: 3.5
    - env: TOXENV=py36-dj20-sqlite
      python: 3.6
+   - env: TOXENV=py37-dj20-sqlite
+     python: 3.7
+     dist: xenial
+     sudo: true
    - env: TOXENV=py35-dj21-sqlite
      python: 3.5
    - env: TOXENV=py36-dj21-sqlite
      python: 3.6
+   - env: TOXENV=py37-dj21-sqlite
+     python: 3.7
+     dist: xenial
+     sudo: true
    - env: TOXENV=py27-dj110-postgres
      python: 2.7
    - env: TOXENV=py34-dj110-postgres
@@ -48,10 +56,18 @@ matrix:
      python: 3.5
    - env: TOXENV=py36-dj20-postgres
      python: 3.6
+   - env: TOXENV=py37-dj20-postgres
+     python: 3.7
+     dist: xenial
+     sudo: true
    - env: TOXENV=py35-dj21-postgres
      python: 3.5
    - env: TOXENV=py36-dj21-postgres
      python: 3.6
+   - env: TOXENV=py37-dj21-postgres
+     python: 3.7
+     dist: xenial
+     sudo: true
 
 install:
   - pip install tox

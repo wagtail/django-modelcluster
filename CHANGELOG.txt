@@ -4,6 +4,7 @@ Changelog
 4.2 (xx.xx.xxxx)
 ~~~~~~~~~~~~~~~~
 * Django 2.1 compatibility
+* Python 3.7 compatibility
 * Implemented prefetch_related on FakeQuerySet (Haydn Greatnews)
 * Fix: Saving a ClusterableModel with a primary key of 0 no longer throws an IntegrityError (A Lee)
 * Fix: Serialization now respects `serialize=False` on ParentalManyToManyFields (Tadas Dailyda)

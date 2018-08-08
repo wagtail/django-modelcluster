@@ -57,9 +57,11 @@ def get_serializable_data_for_fields(model):
 
 def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
     pk_field = model._meta.pk
+    pk_fields = [pk_field]
     # If model is a child via multitable inheritance, use parent's pk
     while pk_field.remote_field and pk_field.remote_field.parent_link:
         pk_field = pk_field.remote_field.model._meta.pk
+        pk_fields.append(pk_field)
 
     kwargs = {pk_field.attname: data['pk']}
     for field_name, field_value in data.items():
@@ -112,6 +114,25 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
 
             kwargs[field.name] = value
 
+    if data['pk'] is not None:
+        # If model has non-serializable fields (serialize=False), their data has to be
+        # restored from database if possible
+        restore_fields = []
+        # Collect non-serializable fields to be restored (excluding pk fields)
+        for field in model._meta.fields:
+            if field not in pk_fields and not field.serialize:
+                restore_fields.append(field.name)
+
+        if restore_fields:
+            try:
+                obj_from_db = model._default_manager.get(pk=data['pk'])
+                for field_name in restore_fields:
+                    kwargs[field_name] = getattr(obj_from_db, field_name)
+            except model.DoesNotExist:
+                # In this case model is being created with explicit pk
+                # so nothing can be restored
+                pass
+
     obj = model(**kwargs)
 
     if data['pk'] is not None:
@@ -122,31 +143,40 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
     return obj
 
 
-def get_all_child_relations(model):
+def _check_rel(field, field_type, only_serializable):
+    return isinstance(field, field_type) and (not only_serializable or field.serialize)
+
+
+def get_all_child_relations(model, only_serializable=False):
     """
     Return a list of RelatedObject records for child relations of the given model,
-    including ones attached to ancestors of the model
+    including ones attached to ancestors of the model.
+    When only_serializable is True, exclude the ones where ParentalKey is defined
+    with serialize=False.
     """
     if django.VERSION >= (1, 9):
         return [
             field for field in model._meta.get_fields()
-            if isinstance(field.remote_field, ParentalKey)
+            if _check_rel(field.remote_field, ParentalKey, only_serializable)
         ]
     else:
         return [
             field for field in model._meta.get_fields()
-            if isinstance(field, ForeignObjectRel) and isinstance(field.field, ParentalKey)
+            if isinstance(field, ForeignObjectRel) and
+                _check_rel(field.field, ParentalKey, only_serializable)
         ]
 
 
-def get_all_child_m2m_relations(model):
+def get_all_child_m2m_relations(model, only_serializable=False):
     """
     Return a list of ParentalManyToManyFields on the given model,
-    including ones attached to ancestors of the model
+    including ones attached to ancestors of the model.
+    When only_serializable is True, exclude the ones where ParentalManyToManyField
+    is defined with serialize=False.
     """
     return [
         field for field in model._meta.get_fields()
-        if isinstance(field, ParentalManyToManyField)
+        if _check_rel(field, ParentalManyToManyField, only_serializable)
     ]
 
 
@@ -211,7 +241,7 @@ class ClusterableModel(models.Model):
     def serializable_data(self):
         obj = get_serializable_data_for_fields(self)
 
-        for rel in get_all_child_relations(self):
+        for rel in get_all_child_relations(self, only_serializable=True):
             rel_name = rel.get_accessor_name()
             children = getattr(self, rel_name).all()
 
@@ -220,7 +250,7 @@ class ClusterableModel(models.Model):
             else:
                 obj[rel_name] = [get_serializable_data_for_fields(child) for child in children]
 
-        for field in get_all_child_m2m_relations(self):
+        for field in get_all_child_m2m_relations(self, only_serializable=True):
             children = getattr(self, field.name).all()
             obj[field.name] = [child.pk for child in children]
 

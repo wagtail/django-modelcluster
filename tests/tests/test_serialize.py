@@ -8,7 +8,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, \
-    Review, Log, Document, Article, Author, Category
+    Review, Log, Document, Article, Author, Category, Reviewer
 
 
 class SerializeTest(TestCase):
@@ -239,3 +239,36 @@ class SerializeTest(TestCase):
         new_doc = Document.from_json(doc_json)
 
         self.assertEqual(new_doc.file.read(), b'Hello world')
+
+    def test_ignored_relations(self):
+        balys_sruoga = Reviewer.objects.create(name='Balys Sruoga')
+        george_orwell = Author.objects.create(name='George Orwell')
+        charles_dickens = Author.objects.create(name='Charles Dickens')
+
+        rel_article = Article(
+            title='Round and round wherever',
+            authors=[george_orwell],
+        )
+        article = Article(
+            title='Down and Out in Paris and London',
+            authors=[george_orwell, charles_dickens],
+            reviewer=balys_sruoga,
+            related_articles=[rel_article],
+        )
+
+        article_serialised = article.serializable_data()
+        # check that reviewer and related_articles are not serialized (marked with serialize=False)
+        self.assertNotIn('reviewer', article_serialised)
+        self.assertNotIn('related_articles', article_serialised)
+
+        rel_article.save()
+        article.save()
+
+        article_json = article.to_json()
+        restored_article = Article.from_json(article_json)
+        restored_article.save()
+        restored_article = Article.objects.get(pk=restored_article.pk)
+        # check that reviewer and related_articles haven't been touched
+        self.assertEqual(balys_sruoga, restored_article.reviewer)
+        self.assertIn(rel_article, restored_article.related_articles.all())
+

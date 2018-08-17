@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import json
 import datetime
+from importlib import import_module
 
 import django
 from django.db import models
@@ -228,7 +229,22 @@ class ClusterableModel(models.Model):
         return obj
 
     def to_json(self):
-        return json.dumps(self.serializable_data(), cls=DjangoJSONEncoder)
+        """
+        Use the JSON Encoder specified in the settings module. 
+        If none has been specified, use DjangoJSONEncoder
+        """
+        encoder = DjangoJSONEncoder
+        custom_encoder_class = getattr(settings, 'DEFAULT_JSON_ENCODER', '') 
+
+        if '.' in custom_encoder_class:
+            module_name, class_name = custom_encoder_class.rsplit('.', 1)
+            try:
+                module = import_module(module_name)
+                encoder = getattr(module, class_name, encoder)
+            except ModuleNotFoundError:
+                pass
+
+        return json.dumps(self.serializable_data(), cls=encoder)
 
     @classmethod
     def from_serializable_data(cls, data, check_fks=True, strict_fks=False):

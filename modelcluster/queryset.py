@@ -29,8 +29,15 @@ def test_exact(model, attribute_name, value):
         return lambda obj: getattr(obj, attribute_name) == typed_value
 
 
+def test_iexact(model, attribute_name, value):
+    field = model._meta.get_field(attribute_name)
+    match_value = field.to_python(value).upper()
+    return lambda obj: getattr(obj, attribute_name).upper() == match_value
+
+
 FILTER_EXPRESSION_TOKENS = {
     'exact': test_exact,
+    'iexact': test_iexact,
 }
 
 

@@ -25,10 +25,15 @@ class ClusterTest(TestCase):
         # we should be able to query this relation using (some) queryset methods
         self.assertEqual(2, beatles.members.count())
         self.assertEqual('John Lennon', beatles.members.all()[0].name)
+
         self.assertEqual('Paul McCartney', beatles.members.filter(name='Paul McCartney')[0].name)
         self.assertEqual('Paul McCartney', beatles.members.filter(name__exact='Paul McCartney')[0].name)
+        self.assertEqual('Paul McCartney', beatles.members.filter(name__iexact='paul mccartNEY')[0].name)
+
         self.assertEqual('Paul McCartney', beatles.members.get(name='Paul McCartney').name)
         self.assertEqual('Paul McCartney', beatles.members.get(name__exact='Paul McCartney').name)
+        self.assertEqual('Paul McCartney', beatles.members.get(name__iexact='paul mccartNEY').name)
+
         self.assertRaises(BandMember.DoesNotExist, lambda: beatles.members.get(name='Reginald Dwight'))
         self.assertRaises(BandMember.MultipleObjectsReturned, lambda: beatles.members.get())
 
@@ -231,6 +236,9 @@ class ClusterTest(TestCase):
         self.assertEqual('John Lennon', beatles.members.exclude(name='Paul McCartney').first().name)
 
         self.assertEqual(1, beatles.members.exclude(name__exact='Paul McCartney').count())
+        self.assertEqual('John Lennon', beatles.members.exclude(name__exact='Paul McCartney').first().name)
+        self.assertEqual(1, beatles.members.exclude(name__iexact='paul mccartNEY').count())
+        self.assertEqual('John Lennon', beatles.members.exclude(name__iexact='paul mccartNEY').first().name)
 
     def test_prefetch_related(self):
         Band.objects.create(name='The Beatles', members=[

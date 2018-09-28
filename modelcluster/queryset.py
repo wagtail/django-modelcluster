@@ -29,6 +29,25 @@ def test_exact(model, attribute_name, value):
         return lambda obj: getattr(obj, attribute_name) == typed_value
 
 
+FILTER_EXPRESSION_TOKENS = {
+    'exact': test_exact,
+}
+
+
+def _build_test_function_from_filter(model, key_clauses, val):
+    # Translate a filter kwarg rule (e.g. foo__bar__exact=123) into a function which can
+    # take a model instance and return a boolean indicating whether it passes the rule
+    if len(key_clauses) == 1:
+        # key is a single clause; treat as an exact match test
+        return test_exact(model, key_clauses[0], val)
+    elif len(key_clauses) == 2 and key_clauses[1] in FILTER_EXPRESSION_TOKENS:
+        # second clause indicates the type of test
+        constructor = FILTER_EXPRESSION_TOKENS[key_clauses[1]]
+        return constructor(model, key_clauses[0], val)
+    else:
+        raise NotImplementedError("Filter expression not supported: %s" % '__'.join(key_clauses))
+
+
 class FakeQuerySet(object):
     def __init__(self, model, results):
         self.model = model
@@ -44,10 +63,9 @@ class FakeQuerySet(object):
 
         for key, val in kwargs.items():
             key_clauses = key.split('__')
-            if len(key_clauses) != 1:
-                raise NotImplementedError("Complex filters with double-underscore clauses are not implemented yet")
-
-            filters.append(test_exact(self.model, key_clauses[0], val))
+            filters.append(
+                _build_test_function_from_filter(self.model, key_clauses, val)
+            )
 
         return filters
 

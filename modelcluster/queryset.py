@@ -35,6 +35,18 @@ def test_iexact(model, attribute_name, value):
     return lambda obj: getattr(obj, attribute_name).upper() == match_value
 
 
+def test_contains(model, attribute_name, value):
+    field = model._meta.get_field(attribute_name)
+    match_value = field.to_python(value)
+    return lambda obj: match_value in getattr(obj, attribute_name)
+
+
+def test_icontains(model, attribute_name, value):
+    field = model._meta.get_field(attribute_name)
+    match_value = field.to_python(value).upper()
+    return lambda obj: match_value in getattr(obj, attribute_name).upper()
+
+
 def test_lt(model, attribute_name, value):
     field = model._meta.get_field(attribute_name)
     match_value = field.to_python(value)
@@ -62,6 +74,8 @@ def test_gte(model, attribute_name, value):
 FILTER_EXPRESSION_TOKENS = {
     'exact': test_exact,
     'iexact': test_iexact,
+    'contains': test_contains,
+    'icontains': test_icontains,
     'lt': test_lt,
     'lte': test_lte,
     'gt': test_gt,

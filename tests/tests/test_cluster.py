@@ -89,6 +89,9 @@ class ClusterTest(TestCase):
         self.assertEqual('Paul McCartney', beatles.members.get(name__endswith='ney').name)
         self.assertEqual('Paul McCartney', beatles.members.get(name__iendswith='Ney').name)
 
+        self.assertEqual('John Lennon', beatles.members.get(name__regex=r'n{2}').name)
+        self.assertEqual('John Lennon', beatles.members.get(name__iregex=r'N{2}').name)
+
         self.assertRaises(BandMember.DoesNotExist, lambda: beatles.members.get(name='Reginald Dwight'))
         self.assertRaises(BandMember.MultipleObjectsReturned, lambda: beatles.members.get())
 
@@ -364,6 +367,9 @@ class ClusterTest(TestCase):
 
         self.assertEqual(tmbg.albums.filter(name__isnull=True).count(), 1)
         self.assertEqual(tmbg.albums.filter(name__isnull=False).count(), 4)
+
+        self.assertEqual(tmbg.albums.get(name__regex=r'l..d').name, "Flood")
+        self.assertEqual(tmbg.albums.get(name__iregex=r'f..o').name, "Flood")
 
     def test_date_filters(self):
         tmbg = Band(name="They Might Be Giants", albums=[

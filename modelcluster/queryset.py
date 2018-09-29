@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import datetime
+import re
 
 from django.db.models import Model, prefetch_related_objects
 
@@ -294,6 +295,26 @@ def test_isnull(model, attribute_name, sense):
         return lambda obj: getattr(obj, attribute_name) is not None
 
 
+def test_regex(model, attribute_name, regex_string):
+    regex = re.compile(regex_string)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and regex.search(val)
+
+    return _test
+
+
+def test_iregex(model, attribute_name, regex_string):
+    regex = re.compile(regex_string, re.I)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and regex.search(val)
+
+    return _test
+
+
 FILTER_EXPRESSION_TOKENS = {
     'exact': test_exact,
     'iexact': test_iexact,
@@ -321,6 +342,8 @@ FILTER_EXPRESSION_TOKENS = {
     'minute': test_minute,
     'second': test_second,
     'isnull': test_isnull,
+    'regex': test_regex,
+    'iregex': test_iregex,
 }
 
 

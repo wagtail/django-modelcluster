@@ -31,46 +31,86 @@ def test_exact(model, attribute_name, value):
         return lambda obj: getattr(obj, attribute_name) == typed_value
 
 
-def test_iexact(model, attribute_name, value):
+def test_iexact(model, attribute_name, match_value):
     field = model._meta.get_field(attribute_name)
-    match_value = field.to_python(value).upper()
-    return lambda obj: getattr(obj, attribute_name).upper() == match_value
+    match_value = field.to_python(match_value)
+
+    if match_value is None:
+        return lambda obj: getattr(obj, attribute_name) is None
+    else:
+        match_value = match_value.upper()
+
+        def _test(obj):
+            val = getattr(obj, attribute_name)
+            return val is not None and val.upper() == match_value
+
+        return _test
 
 
 def test_contains(model, attribute_name, value):
     field = model._meta.get_field(attribute_name)
     match_value = field.to_python(value)
-    return lambda obj: match_value in getattr(obj, attribute_name)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and match_value in val
+
+    return _test
 
 
 def test_icontains(model, attribute_name, value):
     field = model._meta.get_field(attribute_name)
     match_value = field.to_python(value).upper()
-    return lambda obj: match_value in getattr(obj, attribute_name).upper()
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and match_value in val.upper()
+
+    return _test
 
 
 def test_lt(model, attribute_name, value):
     field = model._meta.get_field(attribute_name)
     match_value = field.to_python(value)
-    return lambda obj: getattr(obj, attribute_name) < match_value
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val < match_value
+
+    return _test
 
 
 def test_lte(model, attribute_name, value):
     field = model._meta.get_field(attribute_name)
     match_value = field.to_python(value)
-    return lambda obj: getattr(obj, attribute_name) <= match_value
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val <= match_value
+
+    return _test
 
 
 def test_gt(model, attribute_name, value):
     field = model._meta.get_field(attribute_name)
     match_value = field.to_python(value)
-    return lambda obj: getattr(obj, attribute_name) > match_value
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val > match_value
+
+    return _test
 
 
 def test_gte(model, attribute_name, value):
     field = model._meta.get_field(attribute_name)
     match_value = field.to_python(value)
-    return lambda obj: getattr(obj, attribute_name) >= match_value
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val >= match_value
+
+    return _test
 
 
 def test_in(model, attribute_name, value_list):
@@ -82,25 +122,45 @@ def test_in(model, attribute_name, value_list):
 def test_startswith(model, attribute_name, value):
     field = model._meta.get_field(attribute_name)
     match_value = field.to_python(value)
-    return lambda obj: getattr(obj, attribute_name).startswith(match_value)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val.startswith(match_value)
+
+    return _test
 
 
 def test_istartswith(model, attribute_name, value):
     field = model._meta.get_field(attribute_name)
     match_value = field.to_python(value).upper()
-    return lambda obj: getattr(obj, attribute_name).upper().startswith(match_value)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val.upper().startswith(match_value)
+
+    return _test
 
 
 def test_endswith(model, attribute_name, value):
     field = model._meta.get_field(attribute_name)
     match_value = field.to_python(value)
-    return lambda obj: getattr(obj, attribute_name).endswith(match_value)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val.endswith(match_value)
+
+    return _test
 
 
 def test_iendswith(model, attribute_name, value):
     field = model._meta.get_field(attribute_name)
     match_value = field.to_python(value).upper()
-    return lambda obj: getattr(obj, attribute_name).upper().endswith(match_value)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val.upper().endswith(match_value)
+
+    return _test
 
 
 def test_range(model, attribute_name, range_val):

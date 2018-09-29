@@ -1,14 +1,16 @@
 from __future__ import unicode_literals
 
+import datetime
 import itertools
 
 from django.test import TestCase
 from django.db import IntegrityError
 
 from modelcluster.models import get_all_child_relations
+from modelcluster.queryset import FakeQuerySet
 
 from tests.models import Band, BandMember, Place, Restaurant, SeafoodRestaurant, Review, Album, \
-    Article, Author, Category, Person, Room, House
+    Article, Author, Category, Person, Room, House, Log
 
 
 class ClusterTest(TestCase):
@@ -322,6 +324,27 @@ class ClusterTest(TestCase):
         self.assertEqual('John Lennon', beatles.members.exclude(name__endswith='ney').first().name)
         self.assertEqual(1, beatles.members.exclude(name__iendswith='Ney').count())
         self.assertEqual('John Lennon', beatles.members.exclude(name__iendswith='Ney').first().name)
+
+    def test_date_filters(self):
+        tmbg = Band(name="They Might Be Giants", albums=[
+            Album(name="Flood", release_date=datetime.date(1990, 1, 1)),
+            Album(name="John Henry", release_date=datetime.date(1994, 7, 21)),
+            Album(name="Factory Showroom", release_date=datetime.date(1996, 3, 30)),
+        ])
+
+        logs = FakeQuerySet(Log, [
+            Log(time=datetime.datetime(1979, 1, 1, 1, 1, 1), data="nobody died"),
+            Log(time=datetime.datetime(1980, 2, 2, 2, 2, 2), data="one person died"),
+        ])
+
+        self.assertEqual(
+            tmbg.albums.get(release_date__range=(datetime.date(1994, 1, 1), datetime.date(1994, 12, 31))).name,
+            "John Henry"
+        )
+        self.assertEqual(
+            logs.get(time__range=(datetime.datetime(1980, 1, 1, 1, 1, 1), datetime.datetime(1980, 12, 31, 23, 59, 59))).data,
+            "one person died"
+        )
 
     def test_prefetch_related(self):
         Band.objects.create(name='The Beatles', members=[

@@ -330,11 +330,13 @@ class ClusterTest(TestCase):
             Album(name="Flood", release_date=datetime.date(1990, 1, 1)),
             Album(name="John Henry", release_date=datetime.date(1994, 7, 21)),
             Album(name="Factory Showroom", release_date=datetime.date(1996, 3, 30)),
+            Album(name="The Complete Dial-A-Song", release_date=None),
         ])
 
         logs = FakeQuerySet(Log, [
             Log(time=datetime.datetime(1979, 7, 1, 1, 1, 1), data="nobody died"),
             Log(time=datetime.datetime(1980, 2, 2, 2, 2, 2), data="one person died"),
+            Log(time=None, data="nothing happened")
         ])
 
         self.assertEqual(

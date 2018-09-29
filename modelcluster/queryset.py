@@ -110,7 +110,7 @@ def test_range(model, attribute_name, range_val):
 
     def _test(obj):
         val = getattr(obj, attribute_name)
-        return (val >= start_val and val <= end_val)
+        return (val is not None and val >= start_val and val <= end_val)
 
     return _test
 
@@ -126,34 +126,64 @@ def test_date(model, attribute_name, match_value):
     return _test
 
 
-def test_year(model, attribute_name, value):
-    value_int = int(value)
-    return lambda obj: getattr(obj, attribute_name).year == value_int
+def test_year(model, attribute_name, match_value):
+    match_value = int(match_value)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val.year == match_value
+
+    return _test
 
 
-def test_month(model, attribute_name, value):
-    value_int = int(value)
-    return lambda obj: getattr(obj, attribute_name).month == value_int
+def test_month(model, attribute_name, match_value):
+    match_value = int(match_value)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val.month == match_value
+
+    return _test
 
 
-def test_day(model, attribute_name, value):
-    value_int = int(value)
-    return lambda obj: getattr(obj, attribute_name).day == value_int
+def test_day(model, attribute_name, match_value):
+    match_value = int(match_value)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val.day == match_value
+
+    return _test
 
 
-def test_week(model, attribute_name, value):
-    value_int = int(value)
-    return lambda obj: getattr(obj, attribute_name).isocalendar()[1] == value_int
+def test_week(model, attribute_name, match_value):
+    match_value = int(match_value)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val.isocalendar()[1] == match_value
+
+    return _test
 
 
-def test_week_day(model, attribute_name, value):
-    value_int = int(value)
-    return lambda obj: getattr(obj, attribute_name).isoweekday() % 7 + 1 == value_int
+def test_week_day(model, attribute_name, match_value):
+    match_value = int(match_value)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val.isoweekday() % 7 + 1 == match_value
+
+    return _test
 
 
-def test_quarter(model, attribute_name, value):
-    value_int = int(value)
-    return lambda obj: int((getattr(obj, attribute_name).month - 1) / 3) + 1 == value_int
+def test_quarter(model, attribute_name, match_value):
+    match_value = int(match_value)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and int((val.month - 1) / 3) + 1 == match_value
+
+    return _test
 
 
 def test_time(model, attribute_name, match_value):
@@ -167,19 +197,34 @@ def test_time(model, attribute_name, match_value):
     return _test
 
 
-def test_hour(model, attribute_name, value):
-    value_int = int(value)
-    return lambda obj: getattr(obj, attribute_name).hour == value_int
+def test_hour(model, attribute_name, match_value):
+    match_value = int(match_value)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val.hour == match_value
+
+    return _test
 
 
-def test_minute(model, attribute_name, value):
-    value_int = int(value)
-    return lambda obj: getattr(obj, attribute_name).minute == value_int
+def test_minute(model, attribute_name, match_value):
+    match_value = int(match_value)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val.minute == match_value
+
+    return _test
 
 
-def test_second(model, attribute_name, value):
-    value_int = int(value)
-    return lambda obj: getattr(obj, attribute_name).second == value_int
+def test_second(model, attribute_name, match_value):
+    match_value = int(match_value)
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return val is not None and val.second == match_value
+
+    return _test
 
 
 FILTER_EXPRESSION_TOKENS = {

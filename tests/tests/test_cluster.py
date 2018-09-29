@@ -60,6 +60,9 @@ class ClusterTest(TestCase):
         self.assertEqual(1, beatles.members.filter(name__icontains='carT').count())
         self.assertEqual('Paul McCartney', beatles.members.filter(name__icontains='carT')[0].name)
 
+        self.assertEqual(1, beatles.members.filter(name__in=['Paul McCartney', 'Linda McCartney']).count())
+        self.assertEqual('Paul McCartney', beatles.members.filter(name__in=['Paul McCartney', 'Linda McCartney'])[0].name)
+
         self.assertEqual('Paul McCartney', beatles.members.get(name='Paul McCartney').name)
         self.assertEqual('Paul McCartney', beatles.members.get(name__exact='Paul McCartney').name)
         self.assertEqual('Paul McCartney', beatles.members.get(name__iexact='paul mccartNEY').name)
@@ -69,6 +72,7 @@ class ClusterTest(TestCase):
         self.assertEqual('Paul McCartney', beatles.members.get(name__gte='Paul McCartney').name)
         self.assertEqual('Paul McCartney', beatles.members.get(name__contains='Cart').name)
         self.assertEqual('Paul McCartney', beatles.members.get(name__icontains='carT').name)
+        self.assertEqual('Paul McCartney', beatles.members.get(name__in=['Paul McCartney', 'Linda McCartney']).name)
 
         self.assertRaises(BandMember.DoesNotExist, lambda: beatles.members.get(name='Reginald Dwight'))
         self.assertRaises(BandMember.MultipleObjectsReturned, lambda: beatles.members.get())
@@ -293,6 +297,9 @@ class ClusterTest(TestCase):
         self.assertEqual('John Lennon', beatles.members.exclude(name__contains='Cart').first().name)
         self.assertEqual(1, beatles.members.exclude(name__icontains='carT').count())
         self.assertEqual('John Lennon', beatles.members.exclude(name__icontains='carT').first().name)
+
+        self.assertEqual(1, beatles.members.exclude(name__in=['Paul McCartney', 'Linda McCartney']).count())
+        self.assertEqual('John Lennon', beatles.members.exclude(name__in=['Paul McCartney', 'Linda McCartney'])[0].name)
 
     def test_prefetch_related(self):
         Band.objects.create(name='The Beatles', members=[

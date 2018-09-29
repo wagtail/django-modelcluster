@@ -151,6 +151,37 @@ def test_week_day(model, attribute_name, value):
     return lambda obj: getattr(obj, attribute_name).isoweekday() % 7 + 1 == value_int
 
 
+def test_quarter(model, attribute_name, value):
+    value_int = int(value)
+    return lambda obj: int((getattr(obj, attribute_name).month - 1) / 3) + 1 == value_int
+
+
+def test_time(model, attribute_name, match_value):
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        if isinstance(val, datetime.datetime):
+            return val.time() == match_value
+        else:
+            return val == match_value
+
+    return _test
+
+
+def test_hour(model, attribute_name, value):
+    value_int = int(value)
+    return lambda obj: getattr(obj, attribute_name).hour == value_int
+
+
+def test_minute(model, attribute_name, value):
+    value_int = int(value)
+    return lambda obj: getattr(obj, attribute_name).minute == value_int
+
+
+def test_second(model, attribute_name, value):
+    value_int = int(value)
+    return lambda obj: getattr(obj, attribute_name).second == value_int
+
+
 FILTER_EXPRESSION_TOKENS = {
     'exact': test_exact,
     'iexact': test_iexact,
@@ -172,6 +203,11 @@ FILTER_EXPRESSION_TOKENS = {
     'day': test_day,
     'week': test_week,
     'week_day': test_week_day,
+    'quarter': test_quarter,
+    'time': test_time,
+    'hour': test_hour,
+    'minute': test_minute,
+    'second': test_second,
 }
 
 

@@ -333,7 +333,7 @@ class ClusterTest(TestCase):
         ])
 
         logs = FakeQuerySet(Log, [
-            Log(time=datetime.datetime(1979, 1, 1, 1, 1, 1), data="nobody died"),
+            Log(time=datetime.datetime(1979, 7, 1, 1, 1, 1), data="nobody died"),
             Log(time=datetime.datetime(1980, 2, 2, 2, 2, 2), data="one person died"),
         ])
 
@@ -397,6 +397,35 @@ class ClusterTest(TestCase):
         )
         self.assertEqual(
             logs.get(time__week_day=7).data,
+            "one person died"
+        )
+
+        self.assertEqual(
+            tmbg.albums.get(release_date__quarter=3).name,
+            "John Henry"
+        )
+        self.assertEqual(
+            logs.get(time__quarter=1).data,
+            "one person died"
+        )
+
+        self.assertEqual(
+            logs.get(time__time=datetime.time(2, 2, 2)).data,
+            "one person died"
+        )
+
+        self.assertEqual(
+            logs.get(time__hour=2).data,
+            "one person died"
+        )
+
+        self.assertEqual(
+            logs.get(time__minute='2').data,
+            "one person died"
+        )
+
+        self.assertEqual(
+            logs.get(time__second=2).data,
             "one person died"
         )
 

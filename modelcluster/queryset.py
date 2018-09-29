@@ -77,6 +77,30 @@ def test_in(model, attribute_name, value_list):
     return lambda obj: getattr(obj, attribute_name) in match_values
 
 
+def test_startswith(model, attribute_name, value):
+    field = model._meta.get_field(attribute_name)
+    match_value = field.to_python(value)
+    return lambda obj: getattr(obj, attribute_name).startswith(match_value)
+
+
+def test_istartswith(model, attribute_name, value):
+    field = model._meta.get_field(attribute_name)
+    match_value = field.to_python(value).upper()
+    return lambda obj: getattr(obj, attribute_name).upper().startswith(match_value)
+
+
+def test_endswith(model, attribute_name, value):
+    field = model._meta.get_field(attribute_name)
+    match_value = field.to_python(value)
+    return lambda obj: getattr(obj, attribute_name).endswith(match_value)
+
+
+def test_iendswith(model, attribute_name, value):
+    field = model._meta.get_field(attribute_name)
+    match_value = field.to_python(value).upper()
+    return lambda obj: getattr(obj, attribute_name).upper().endswith(match_value)
+
+
 FILTER_EXPRESSION_TOKENS = {
     'exact': test_exact,
     'iexact': test_iexact,
@@ -87,6 +111,10 @@ FILTER_EXPRESSION_TOKENS = {
     'gt': test_gt,
     'gte': test_gte,
     'in': test_in,
+    'startswith': test_startswith,
+    'istartswith': test_istartswith,
+    'endswith': test_endswith,
+    'iendswith': test_iendswith,
 }
 
 

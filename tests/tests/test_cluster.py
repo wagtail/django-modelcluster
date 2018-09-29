@@ -63,6 +63,15 @@ class ClusterTest(TestCase):
         self.assertEqual(1, beatles.members.filter(name__in=['Paul McCartney', 'Linda McCartney']).count())
         self.assertEqual('Paul McCartney', beatles.members.filter(name__in=['Paul McCartney', 'Linda McCartney'])[0].name)
 
+        self.assertEqual(1, beatles.members.filter(name__startswith='Paul').count())
+        self.assertEqual('Paul McCartney', beatles.members.filter(name__startswith='Paul')[0].name)
+        self.assertEqual(1, beatles.members.filter(name__istartswith='pauL').count())
+        self.assertEqual('Paul McCartney', beatles.members.filter(name__istartswith='pauL')[0].name)
+        self.assertEqual(1, beatles.members.filter(name__endswith='ney').count())
+        self.assertEqual('Paul McCartney', beatles.members.filter(name__endswith='ney')[0].name)
+        self.assertEqual(1, beatles.members.filter(name__iendswith='Ney').count())
+        self.assertEqual('Paul McCartney', beatles.members.filter(name__iendswith='Ney')[0].name)
+
         self.assertEqual('Paul McCartney', beatles.members.get(name='Paul McCartney').name)
         self.assertEqual('Paul McCartney', beatles.members.get(name__exact='Paul McCartney').name)
         self.assertEqual('Paul McCartney', beatles.members.get(name__iexact='paul mccartNEY').name)
@@ -73,6 +82,10 @@ class ClusterTest(TestCase):
         self.assertEqual('Paul McCartney', beatles.members.get(name__contains='Cart').name)
         self.assertEqual('Paul McCartney', beatles.members.get(name__icontains='carT').name)
         self.assertEqual('Paul McCartney', beatles.members.get(name__in=['Paul McCartney', 'Linda McCartney']).name)
+        self.assertEqual('Paul McCartney', beatles.members.get(name__startswith='Paul').name)
+        self.assertEqual('Paul McCartney', beatles.members.get(name__istartswith='pauL').name)
+        self.assertEqual('Paul McCartney', beatles.members.get(name__endswith='ney').name)
+        self.assertEqual('Paul McCartney', beatles.members.get(name__iendswith='Ney').name)
 
         self.assertRaises(BandMember.DoesNotExist, lambda: beatles.members.get(name='Reginald Dwight'))
         self.assertRaises(BandMember.MultipleObjectsReturned, lambda: beatles.members.get())
@@ -300,6 +313,15 @@ class ClusterTest(TestCase):
 
         self.assertEqual(1, beatles.members.exclude(name__in=['Paul McCartney', 'Linda McCartney']).count())
         self.assertEqual('John Lennon', beatles.members.exclude(name__in=['Paul McCartney', 'Linda McCartney'])[0].name)
+
+        self.assertEqual(1, beatles.members.exclude(name__startswith='Paul').count())
+        self.assertEqual('John Lennon', beatles.members.exclude(name__startswith='Paul').first().name)
+        self.assertEqual(1, beatles.members.exclude(name__istartswith='pauL').count())
+        self.assertEqual('John Lennon', beatles.members.exclude(name__istartswith='pauL').first().name)
+        self.assertEqual(1, beatles.members.exclude(name__endswith='ney').count())
+        self.assertEqual('John Lennon', beatles.members.exclude(name__endswith='ney').first().name)
+        self.assertEqual(1, beatles.members.exclude(name__iendswith='Ney').count())
+        self.assertEqual('John Lennon', beatles.members.exclude(name__iendswith='Ney').first().name)
 
     def test_prefetch_related(self):
         Band.objects.create(name='The Beatles', members=[

@@ -71,6 +71,12 @@ def test_gte(model, attribute_name, value):
     return lambda obj: getattr(obj, attribute_name) >= match_value
 
 
+def test_in(model, attribute_name, value_list):
+    field = model._meta.get_field(attribute_name)
+    match_values = set(field.to_python(val) for val in value_list)
+    return lambda obj: getattr(obj, attribute_name) in match_values
+
+
 FILTER_EXPRESSION_TOKENS = {
     'exact': test_exact,
     'iexact': test_iexact,
@@ -80,6 +86,7 @@ FILTER_EXPRESSION_TOKENS = {
     'lte': test_lte,
     'gt': test_gt,
     'gte': test_gte,
+    'in': test_in,
 }
 
 

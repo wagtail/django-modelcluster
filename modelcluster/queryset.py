@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import datetime
+
 from django.db.models import Model, prefetch_related_objects
 
 from modelcluster.utils import sort_by_fields
@@ -113,6 +115,17 @@ def test_range(model, attribute_name, range_val):
     return _test
 
 
+def test_date(model, attribute_name, match_value):
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        if isinstance(val, datetime.datetime):
+            return val.date() == match_value
+        else:
+            return val == match_value
+
+    return _test
+
+
 FILTER_EXPRESSION_TOKENS = {
     'exact': test_exact,
     'iexact': test_iexact,
@@ -128,6 +141,7 @@ FILTER_EXPRESSION_TOKENS = {
     'endswith': test_endswith,
     'iendswith': test_iendswith,
     'range': test_range,
+    'date': test_date,
 }
 
 

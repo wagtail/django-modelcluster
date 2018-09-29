@@ -362,6 +362,9 @@ class ClusterTest(TestCase):
         self.assertEqual(tmbg.albums.get(name__in=["", "Mink Car"]).name, "")
         self.assertEqual(tmbg.albums.get(name__in=[None, "Mink Car"]).name, None)
 
+        self.assertEqual(tmbg.albums.filter(name__isnull=True).count(), 1)
+        self.assertEqual(tmbg.albums.filter(name__isnull=False).count(), 4)
+
     def test_date_filters(self):
         tmbg = Band(name="They Might Be Giants", albums=[
             Album(name="Flood", release_date=datetime.date(1990, 1, 1)),

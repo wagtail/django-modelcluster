@@ -41,10 +41,31 @@ def test_lt(model, attribute_name, value):
     return lambda obj: getattr(obj, attribute_name) < match_value
 
 
+def test_lte(model, attribute_name, value):
+    field = model._meta.get_field(attribute_name)
+    match_value = field.to_python(value)
+    return lambda obj: getattr(obj, attribute_name) <= match_value
+
+
+def test_gt(model, attribute_name, value):
+    field = model._meta.get_field(attribute_name)
+    match_value = field.to_python(value)
+    return lambda obj: getattr(obj, attribute_name) > match_value
+
+
+def test_gte(model, attribute_name, value):
+    field = model._meta.get_field(attribute_name)
+    match_value = field.to_python(value)
+    return lambda obj: getattr(obj, attribute_name) >= match_value
+
+
 FILTER_EXPRESSION_TOKENS = {
     'exact': test_exact,
     'iexact': test_iexact,
     'lt': test_lt,
+    'lte': test_lte,
+    'gt': test_gt,
+    'gte': test_gte,
 }
 
 

@@ -325,6 +325,43 @@ class ClusterTest(TestCase):
         self.assertEqual(1, beatles.members.exclude(name__iendswith='Ney').count())
         self.assertEqual('John Lennon', beatles.members.exclude(name__iendswith='Ney').first().name)
 
+    def test_queryset_filter_with_nulls(self):
+        tmbg = Band(name="They Might Be Giants", albums=[
+            Album(name="Flood", release_date=datetime.date(1990, 1, 1)),
+            Album(name="John Henry", release_date=datetime.date(1994, 7, 21)),
+            Album(name="Factory Showroom", release_date=datetime.date(1996, 3, 30)),
+            Album(name="", release_date=None),
+            Album(name=None, release_date=None),
+        ])
+
+        self.assertEqual(tmbg.albums.get(name="Flood").name, "Flood")
+        self.assertEqual(tmbg.albums.get(name="").name, "")
+        self.assertEqual(tmbg.albums.get(name=None).name, None)
+
+        self.assertEqual(tmbg.albums.get(name__exact="Flood").name, "Flood")
+        self.assertEqual(tmbg.albums.get(name__exact="").name, "")
+        self.assertEqual(tmbg.albums.get(name__exact=None).name, None)
+
+        self.assertEqual(tmbg.albums.get(name__iexact="flood").name, "Flood")
+        self.assertEqual(tmbg.albums.get(name__iexact="").name, "")
+        self.assertEqual(tmbg.albums.get(name__iexact=None).name, None)
+
+        self.assertEqual(tmbg.albums.get(name__contains="loo").name, "Flood")
+        self.assertEqual(tmbg.albums.get(name__icontains="LOO").name, "Flood")
+        self.assertEqual(tmbg.albums.get(name__startswith="Flo").name, "Flood")
+        self.assertEqual(tmbg.albums.get(name__istartswith="flO").name, "Flood")
+        self.assertEqual(tmbg.albums.get(name__endswith="ood").name, "Flood")
+        self.assertEqual(tmbg.albums.get(name__iendswith="Ood").name, "Flood")
+
+        self.assertEqual(tmbg.albums.get(name__lt="A").name, "")
+        self.assertEqual(tmbg.albums.get(name__lte="A").name, "")
+        self.assertEqual(tmbg.albums.get(name__gt="J").name, "John Henry")
+        self.assertEqual(tmbg.albums.get(name__gte="J").name, "John Henry")
+
+        self.assertEqual(tmbg.albums.get(name__in=["Flood", "Mink Car"]).name, "Flood")
+        self.assertEqual(tmbg.albums.get(name__in=["", "Mink Car"]).name, "")
+        self.assertEqual(tmbg.albums.get(name__in=[None, "Mink Car"]).name, None)
+
     def test_date_filters(self):
         tmbg = Band(name="They Might Be Giants", albums=[
             Album(name="Flood", release_date=datetime.date(1990, 1, 1)),

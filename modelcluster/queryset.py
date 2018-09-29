@@ -101,6 +101,18 @@ def test_iendswith(model, attribute_name, value):
     return lambda obj: getattr(obj, attribute_name).upper().endswith(match_value)
 
 
+def test_range(model, attribute_name, range_val):
+    field = model._meta.get_field(attribute_name)
+    start_val = field.to_python(range_val[0])
+    end_val = field.to_python(range_val[1])
+
+    def _test(obj):
+        val = getattr(obj, attribute_name)
+        return (val >= start_val and val <= end_val)
+
+    return _test
+
+
 FILTER_EXPRESSION_TOKENS = {
     'exact': test_exact,
     'iexact': test_iexact,
@@ -115,6 +127,7 @@ FILTER_EXPRESSION_TOKENS = {
     'istartswith': test_istartswith,
     'endswith': test_endswith,
     'iendswith': test_iendswith,
+    'range': test_range,
 }
 
 

@@ -287,6 +287,13 @@ def test_second(model, attribute_name, match_value):
     return _test
 
 
+def test_isnull(model, attribute_name, sense):
+    if sense:
+        return lambda obj: getattr(obj, attribute_name) is None
+    else:
+        return lambda obj: getattr(obj, attribute_name) is not None
+
+
 FILTER_EXPRESSION_TOKENS = {
     'exact': test_exact,
     'iexact': test_iexact,
@@ -313,6 +320,7 @@ FILTER_EXPRESSION_TOKENS = {
     'hour': test_hour,
     'minute': test_minute,
     'second': test_second,
+    'isnull': test_isnull,
 }
 
 

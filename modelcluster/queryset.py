@@ -126,6 +126,31 @@ def test_date(model, attribute_name, match_value):
     return _test
 
 
+def test_year(model, attribute_name, value):
+    value_int = int(value)
+    return lambda obj: getattr(obj, attribute_name).year == value_int
+
+
+def test_month(model, attribute_name, value):
+    value_int = int(value)
+    return lambda obj: getattr(obj, attribute_name).month == value_int
+
+
+def test_day(model, attribute_name, value):
+    value_int = int(value)
+    return lambda obj: getattr(obj, attribute_name).day == value_int
+
+
+def test_week(model, attribute_name, value):
+    value_int = int(value)
+    return lambda obj: getattr(obj, attribute_name).isocalendar()[1] == value_int
+
+
+def test_week_day(model, attribute_name, value):
+    value_int = int(value)
+    return lambda obj: getattr(obj, attribute_name).isoweekday() % 7 + 1 == value_int
+
+
 FILTER_EXPRESSION_TOKENS = {
     'exact': test_exact,
     'iexact': test_iexact,
@@ -142,6 +167,11 @@ FILTER_EXPRESSION_TOKENS = {
     'iendswith': test_iendswith,
     'range': test_range,
     'date': test_date,
+    'year': test_year,
+    'month': test_month,
+    'day': test_day,
+    'week': test_week,
+    'week_day': test_week_day,
 }
 
 

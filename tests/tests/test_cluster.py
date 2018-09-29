@@ -355,6 +355,51 @@ class ClusterTest(TestCase):
             "one person died"
         )
 
+        self.assertEqual(
+            tmbg.albums.get(release_date__year='1994').name,
+            "John Henry"
+        )
+        self.assertEqual(
+            logs.get(time__year=1980).data,
+            "one person died"
+        )
+
+        self.assertEqual(
+            tmbg.albums.get(release_date__month=7).name,
+            "John Henry"
+        )
+        self.assertEqual(
+            logs.get(time__month='2').data,
+            "one person died"
+        )
+
+        self.assertEqual(
+            tmbg.albums.get(release_date__day='21').name,
+            "John Henry"
+        )
+        self.assertEqual(
+            logs.get(time__day=2).data,
+            "one person died"
+        )
+
+        self.assertEqual(
+            tmbg.albums.get(release_date__week=29).name,
+            "John Henry"
+        )
+        self.assertEqual(
+            logs.get(time__week='5').data,
+            "one person died"
+        )
+
+        self.assertEqual(
+            tmbg.albums.get(release_date__week_day=5).name,
+            "John Henry"
+        )
+        self.assertEqual(
+            logs.get(time__week_day=7).data,
+            "one person died"
+        )
+
     def test_prefetch_related(self):
         Band.objects.create(name='The Beatles', members=[
             BandMember(id=1, name='John Lennon'),

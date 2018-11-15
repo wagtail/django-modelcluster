@@ -1,7 +1,7 @@
 Changelog
 =========
 
-4.3 (xx.xx.xxxx)
+4.3 (15.11.2018)
 ~~~~~~~~~~~~~~~~
 * Added support for filter lookup expressions such as `__lt`
 

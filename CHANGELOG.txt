@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.3 (xx.xx.xxxx)
+~~~~~~~~~~~~~~~~
+* Added support for filter lookup expressions such as `__lt`
+
 4.2 (08.08.2018)
 ~~~~~~~~~~~~~~~~
 * Django 2.1 compatibility

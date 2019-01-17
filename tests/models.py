@@ -35,10 +35,25 @@ class BandMember(models.Model):
 
 
 @python_2_unicode_compatible
-class Album(models.Model):
+class Album(ClusterableModel):
     band = ParentalKey('Band', related_name='albums')
     name = models.CharField(max_length=255)
     release_date = models.DateField(null=True, blank=True)
+    sort_order = models.IntegerField(null=True, blank=True, editable=False)
+
+    sort_order_field = 'sort_order'
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['sort_order']
+
+
+@python_2_unicode_compatible
+class Song(models.Model):
+    album = ParentalKey('Album', related_name='songs')
+    name = models.CharField(max_length=255)
     sort_order = models.IntegerField(null=True, blank=True, editable=False)
 
     sort_order_field = 'sort_order'

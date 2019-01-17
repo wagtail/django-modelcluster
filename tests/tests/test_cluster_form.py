@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
 
+import unittest
+
 from django.utils.six import text_type
 
 from django.test import TestCase
-from tests.models import Band, BandMember, Album, Restaurant, Article, Author, Document, Gallery
+from tests.models import Band, BandMember, Album, Restaurant, Article, Author, Document, Gallery, Song
 from modelcluster.forms import ClusterForm
 from django.forms import Textarea, CharField
 from django.forms.widgets import TextInput, FileInput
@@ -37,6 +39,7 @@ class ClusterFormTest(TestCase):
                 fields = ['name']
 
         form = BandForm()
+
         self.assertEqual(3, len(form.formsets['members'].forms))
 
     def test_incoming_form_data(self):
@@ -332,9 +335,17 @@ class ClusterFormTest(TestCase):
             'albums-0-id': '',
             'albums-0-ORDER': 2,
 
+            'albums-0-songs-TOTAL_FORMS': 0,
+            'albums-0-songs-INITIAL_FORMS': 0,
+            'albums-0-songs-MAX_NUM_FORMS': 1000,
+
             'albums-1-name': 'Please Please Me',
             'albums-1-id': '',
             'albums-1-ORDER': 1,
+
+            'albums-1-songs-TOTAL_FORMS': 0,
+            'albums-1-songs-INITIAL_FORMS': 0,
+            'albums-1-songs-MAX_NUM_FORMS': 1000,
         })
         self.assertTrue(form.is_valid())
         beatles = form.save()
@@ -367,6 +378,10 @@ class ClusterFormTest(TestCase):
             'albums-0-release_date': '1963-02-31',  # invalid date
             'albums-0-id': please_please_me.id,
             'albums-0-ORDER': 1,
+
+            'albums-0-songs-TOTAL_FORMS': 0,
+            'albums-0-songs-INITIAL_FORMS': 0,
+            'albums-0-songs-MAX_NUM_FORMS': 1000,
         }, instance=beatles)
 
         self.assertFalse(form.is_valid())
@@ -387,6 +402,10 @@ class ClusterFormTest(TestCase):
             'albums-0-id': please_please_me.id,
             'albums-0-ORDER': 1,
             'albums-0-DELETE': 'albums-0-DELETE',
+
+            'albums-0-songs-TOTAL_FORMS': 0,
+            'albums-0-songs-INITIAL_FORMS': 0,
+            'albums-0-songs-MAX_NUM_FORMS': 1000,
         }, instance=beatles)
 
         self.assertTrue(form.is_valid())
@@ -671,3 +690,337 @@ class FormWithM2MTest(TestCase):
         db_article = Article.objects.get(pk=self.article.pk)
         self.assertEqual(db_article.title, 'Updated test article')
         self.assertEqual(list(db_article.authors.all()), [self.charles_dickens])
+
+
+class NestedClusterFormTest(TestCase):
+
+    def test_nested_formsets(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+
+        self.assertTrue(BandForm.formsets)
+
+        beatles = Band(name='The Beatles', albums=[
+            Album(name='Please Please Me', songs=[
+                Song(name='I Saw Her Standing There'),
+                Song(name='Misery')
+            ]),
+        ])
+
+        form = BandForm(instance=beatles)
+
+        self.assertEqual(4, len(form.formsets['albums'].forms))
+        self.assertEqual(5, len(form.formsets['albums'].forms[0].formsets['songs']))
+        self.assertTrue('songs' in form.as_p())
+
+    def test_empty_nested_formsets(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+
+        form = BandForm()
+        self.assertEqual(3, len(form.formsets['albums'].forms))
+        self.assertEqual(3, len(form.formsets['albums'].forms[0].formsets['songs'].forms))
+
+    def test_incoming_form_data(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+
+        beatles = Band(name='The Beatles', albums=[
+            Album(name='Please Please Me', songs=[
+                Song(name='I Saw Her Standing There')
+            ]),
+        ])
+        form = BandForm({
+            'name': 'The Beatles',
+
+            'members-TOTAL_FORMS': 0,
+            'members-INITIAL_FORMS': 0,
+            'members-MAX_NUM_FORMS': 1000,
+
+            'albums-TOTAL_FORMS': 1,
+            'albums-INITIAL_FORMS': 0,
+            'albums-MAX_NUM_FORMS': 1000,
+
+            'albums-0-name': 'Please Please Me',
+            'albums-0-id': '',
+            'albums-0-ORDER': 1,
+
+            'albums-0-songs-TOTAL_FORMS': 2,
+            'albums-0-songs-INITIAL_FORMS': 1,
+            'albums-0-songs-MAX_NUM_FORMS': 1000,
+
+            'albums-0-songs-0-name': 'I Saw Her Standing There',
+            'albums-0-songs-0-DELETE': 'albums-0-songs-0-DELETE',
+            'albums-0-songs-0-id': '',
+
+            'albums-0-songs-1-name': 'Misery',
+            'albums-0-songs-1-id': '',
+        }, instance=beatles)
+
+        self.assertTrue(form.is_valid())
+        result = form.save(commit=False)
+        # result = form.save()
+        self.assertEqual(result, beatles)
+
+        self.assertEqual(1, beatles.albums.count())
+        self.assertEqual('Please Please Me', beatles.albums.first().name)
+
+        self.assertEqual(1, beatles.albums.first().songs.all().count())
+        self.assertEqual('Misery', beatles.albums.first().songs.first().name)
+
+        # should not exist in the database yet
+        self.assertFalse(Album.objects.filter(name='Please Please Me').exists())
+        self.assertFalse(Song.objects.filter(name='Misery').exists())
+
+        beatles.save()
+        # this should create database entries
+        self.assertTrue(Band.objects.filter(name='The Beatles').exists())
+        self.assertTrue(Album.objects.filter(name='Please Please Me').exists())
+        self.assertTrue(Song.objects.filter(name='Misery').exists())
+        self.assertFalse(Song.objects.filter(name='I Saw Her Standing There').exists())
+
+    @unittest.skip('Explicit nested formsets not yet enabled')
+    def test_explicit_nested_formset_list(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                formsets = {
+                    'albums': {'formsets': ['songs']}
+                }
+                fields = ['name']
+
+        form = BandForm()
+        self.assertTrue(form.formsets.get('albums'))
+        self.assertTrue(form.formsets.get('albums').forms[0].formsets['songs'])
+
+        self.assertTrue('albums' in form.as_p())
+        self.assertTrue('songs' in form.as_p())
+
+    @unittest.skip('Excluded nested formsets not yet enabled')
+    def test_excluded_nested_formset_list(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                formsets = {
+                    'albums': {'exclude_formsets': ['songs']}
+                }
+                fields = ['name']
+
+        form = BandForm()
+        self.assertTrue(form.formsets.get('albums'))
+
+        self.assertTrue('albums' in form.as_p())
+        self.assertFalse('songs' in form.as_p())
+
+    def test_saved_items(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+
+        first_song = Song(name='I Saw Her Standing There')
+        second_song = Song(name='Misery')
+        album = Album(name='Please Please Me', songs=[first_song, second_song])
+        beatles = Band(name='The Beatles', albums=[album])
+        beatles.save()
+
+        self.assertTrue(album.id)
+        self.assertTrue(first_song.id)
+        self.assertTrue(second_song.id)
+
+        form = BandForm({
+            'name': 'The Beatles',
+
+            'members-TOTAL_FORMS': 0,
+            'members-INITIAL_FORMS': 0,
+            'members-MAX_NUM_FORMS': 1000,
+
+            'albums-TOTAL_FORMS': 1,
+            'albums-INITIAL_FORMS': 1,
+            'albums-MAX_NUM_FORMS': 1000,
+
+            'albums-0-name': album.name,
+            'albums-0-id': album.id,
+            'albums-0-ORDER': 1,
+
+            'albums-0-songs-TOTAL_FORMS': 4,
+            'albums-0-songs-INITIAL_FORMS': 2,
+            'albums-0-songs-MAX_NUM_FORMS': 1000,
+
+            'albums-0-songs-0-name': first_song.name,
+            'albums-0-songs-0-DELETE': 'albums-0-songs-0-DELETE',
+            'albums-0-songs-0-id': first_song.id,
+
+            'albums-0-songs-1-name': second_song.name,
+            'albums-0-songs-1-id': second_song.id,
+
+            'albums-0-songs-2-name': 'Anna',
+            'albums-0-songs-2-id': '',
+
+            'albums-0-songs-3-name': '',
+            'albums-0-songs-3-id': '',
+        }, instance=beatles)
+        self.assertTrue(form.is_valid())
+        form.save()
+
+        self.assertTrue(Song.objects.filter(name='Anna').exists())
+        self.assertTrue(Song.objects.filter(name='Misery').exists())
+        self.assertFalse(Song.objects.filter(name='I Saw Her Standing There').exists())
+
+    def test_saved_items_with_non_db_relation(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+
+        first_song = Song(name='I Saw Her Standing There')
+        second_song = Song(name='Misery')
+        album = Album(name='Please Please Me', songs=[first_song, second_song])
+        beatles = Band(name='The Beatles', albums=[album])
+        beatles.save()
+
+        # pack and unpack the record so that we're working with a non-db-backed queryset
+        new_beatles = Band.from_json(beatles.to_json())
+
+        form = BandForm({
+            'name': 'The Beatles',
+
+            'members-TOTAL_FORMS': 0,
+            'members-INITIAL_FORMS': 0,
+            'members-MAX_NUM_FORMS': 1000,
+
+            'albums-TOTAL_FORMS': 1,
+            'albums-INITIAL_FORMS': 1,
+            'albums-MAX_NUM_FORMS': 1000,
+
+            'albums-0-name': album.name,
+            'albums-0-id': album.id,
+            'albums-0-ORDER': 1,
+
+            'albums-0-songs-TOTAL_FORMS': 4,
+            'albums-0-songs-INITIAL_FORMS': 2,
+            'albums-0-songs-MAX_NUM_FORMS': 1000,
+
+            'albums-0-songs-0-name': first_song.name,
+            'albums-0-songs-0-DELETE': 'albums-0-songs-0-DELETE',
+            'albums-0-songs-0-id': first_song.id,
+
+            'albums-0-songs-1-name': second_song.name,
+            'albums-0-songs-1-id': second_song.id,
+
+            'albums-0-songs-2-name': 'Anna',
+            'albums-0-songs-2-id': '',
+
+            'albums-0-songs-3-name': '',
+            'albums-0-songs-3-id': '',
+        }, instance=new_beatles)
+        self.assertTrue(form.is_valid())
+        form.save()
+
+        self.assertTrue(Song.objects.filter(name='Anna').exists())
+        self.assertFalse(Song.objects.filter(name='I Saw Her Standing There').exists())
+
+    def test_creation(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+
+        form = BandForm({
+            'name': "The Beatles",
+
+            'members-TOTAL_FORMS': 0,
+            'members-INITIAL_FORMS': 0,
+            'members-MAX_NUM_FORMS': 1000,
+
+            'albums-TOTAL_FORMS': 1,
+            'albums-INITIAL_FORMS': 1,
+            'albums-MAX_NUM_FORMS': 1000,
+
+            'albums-0-name': 'Please Please Me',
+            'albums-0-id': '',
+            'albums-0-ORDER': 1,
+
+            'albums-0-songs-TOTAL_FORMS': 4,
+            'albums-0-songs-INITIAL_FORMS': 2,
+            'albums-0-songs-MAX_NUM_FORMS': 1000,
+
+            'albums-0-songs-0-name': 'I Saw Her Standing There',
+            'albums-0-songs-0-id': '',
+
+            'albums-0-songs-1-name': 'Misery',
+            'albums-0-songs-1-id': '',
+
+            'albums-0-songs-2-name': 'Anna',
+            'albums-0-songs-2-DELETE': 'albums-0-songs-2-DELETE',
+            'albums-0-songs-2-id': '',
+
+            'albums-0-songs-3-name': '',
+            'albums-0-songs-3-id': '',
+        })
+        self.assertTrue(form.is_valid())
+        beatles = form.save()
+
+        self.assertTrue(beatles.id)
+        self.assertEqual('The Beatles', beatles.name)
+        self.assertEqual('The Beatles', Band.objects.get(id=beatles.id).name)
+        self.assertEqual(1, beatles.albums.count())
+        self.assertEqual(2, beatles.albums.first().songs.count())
+        self.assertTrue(Song.objects.filter(name='I Saw Her Standing There').exists())
+        self.assertFalse(Song.objects.filter(name='Anna').exists())
+
+    def test_sort_order_is_output_on_form(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+
+        form = BandForm()
+        form_html = form.as_p()
+        self.assertTrue('albums-0-ORDER' in form_html)
+        self.assertTrue('albums-0-songs-0-ORDER' in form_html)
+
+    def test_sort_order_is_committed(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+
+        form = BandForm({
+            'name': "The Beatles",
+
+            'members-TOTAL_FORMS': 0,
+            'members-INITIAL_FORMS': 0,
+            'members-MAX_NUM_FORMS': 1000,
+
+            'albums-TOTAL_FORMS': 1,
+            'albums-INITIAL_FORMS': 0,
+            'albums-MAX_NUM_FORMS': 1000,
+
+            'albums-0-name': 'Please Please Me',
+            'albums-0-id': '',
+            'albums-0-ORDER': 1,
+
+            'albums-0-songs-TOTAL_FORMS': 2,
+            'albums-0-songs-INITIAL_FORMS': 0,
+            'albums-0-songs-MAX_NUM_FORMS': 1000,
+
+            'albums-0-songs-0-name': 'Misery',
+            'albums-0-songs-0-id': '',
+            'albums-0-songs-0-ORDER': 2,
+
+            'albums-0-songs-1-name': 'I Saw Her Standing There',
+            'albums-0-songs-1-id': '',
+            'albums-0-songs-1-ORDER': 1,
+        })
+        self.assertTrue(form.is_valid())
+        beatles = form.save()
+
+        self.assertEqual('I Saw Her Standing There', beatles.albums.first().songs.all()[0].name)
+        self.assertEqual('Misery', beatles.albums.first().songs.all()[1].name)

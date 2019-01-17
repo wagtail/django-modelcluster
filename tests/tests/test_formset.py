@@ -1,8 +1,8 @@
 from __future__ import unicode_literals
 
 from django.test import TestCase
-from modelcluster.forms import transientmodelformset_factory, childformset_factory
-from tests.models import NewsPaper, Article, Author, Band, BandMember, Album
+from modelcluster.forms import ClusterForm, transientmodelformset_factory, childformset_factory
+from tests.models import NewsPaper, Article, Author, Band, BandMember, Album, Song
 
 
 class TransientFormsetTest(TestCase):
@@ -456,3 +456,126 @@ class OrderedFormsetTest(TestCase):
 
         album_names = [album.name for album in beatles.albums.all()]
         self.assertEqual(['Please Please Me', 'With The Beatles'], album_names)
+
+
+class NestedChildFormsetTest(TestCase):
+
+    def test_can_create_formset(self):
+        beatles = Band(name='The Beatles', albums=[
+            Album(name='Please Please Me', songs=[
+                Song(name='I Saw Her Standing There'),
+                Song(name='Misery')
+            ])
+        ])
+        AlbumsFormset = childformset_factory(Band, Album, form=ClusterForm, extra=3)
+        albums_formset = AlbumsFormset(instance=beatles)
+
+        self.assertEqual(4, len(albums_formset.forms))
+        self.assertEqual('Please Please Me', albums_formset.forms[0].instance.name)
+
+        self.assertEqual(5, len(albums_formset.forms[0].formsets['songs'].forms))
+        self.assertEqual(
+            'I Saw Her Standing There',
+            albums_formset.forms[0].formsets['songs'].forms[0].instance.name
+        )
+
+    def test_empty_formset(self):
+        AlbumsFormset = childformset_factory(Band, Album, form=ClusterForm, extra=3)
+        albums_formset = AlbumsFormset()
+        self.assertEqual(3, len(albums_formset.forms))
+        self.assertEqual(3, len(albums_formset.forms[0].formsets['songs'].forms))
+
+    def test_save_commit_false(self):
+        first_song = Song(name='I Saw Her Standing There')
+        second_song = Song(name='Mystery')
+        album = Album(name='Please Please Me', songs=[first_song, second_song])
+        beatles = Band(name='The Beatles', albums=[album])
+        beatles.save()
+        first_song_id, second_song_id = first_song.id, second_song.id
+
+        AlbumsFormset = childformset_factory(Band, Album, form=ClusterForm, extra=3)
+
+        albums_formset = AlbumsFormset({
+            'form-TOTAL_FORMS': 1,
+            'form-INITIAL_FORMS': 1,
+            'form-MAX_NUM_FORMS': 1000,
+
+            'form-0-name': 'Please Please Me',
+            'form-0-id': album.id,
+
+            'form-0-songs-TOTAL_FORMS': 4,
+            'form-0-songs-INITIAL_FORMS': 2,
+            'form-0-songs-MAX_NUM_FORMS': 1000,
+
+            'form-0-songs-0-name': 'I Saw Her Standing There',
+            'form-0-songs-0-DELETE': 'form-0-songs-0-DELETE',
+            'form-0-songs-0-id': first_song_id,
+
+            'form-0-songs-1-name': 'Misery',  # changing data of an existing record
+            'form-0-songs-1-id': second_song_id,
+
+            'form-0-songs-2-name': '',
+            'form-0-songs-2-id': '',
+
+            'form-0-songs-3-name': 'Chains',  # adding a record
+            'form-0-songs-3-id': '',
+        }, instance=beatles)
+        self.assertTrue(albums_formset.is_valid())
+        updated_albums = albums_formset.save(commit=False)
+
+        # updated_members should only include the items that have been changed and not deleted
+        self.assertEqual(1, len(updated_albums))
+        self.assertEqual('Please Please Me', updated_albums[0].name)
+        self.assertEqual(2, updated_albums[0].songs.count())
+        self.assertEqual('Misery', updated_albums[0].songs.first().name)
+        self.assertEqual(second_song_id, updated_albums[0].songs.first().id)
+
+        self.assertEqual('Chains', updated_albums[0].songs.all()[1].name)
+        self.assertEqual(None, updated_albums[0].songs.all()[1].id)
+
+        # Changes should not be committed to the db yet
+        self.assertTrue(Song.objects.filter(name='I Saw Her Standing There', id=first_song_id).exists())
+        self.assertEqual('Mystery', Song.objects.get(id=second_song_id).name)
+        self.assertFalse(Song.objects.filter(name='Chains').exists())
+
+        beatles.albums.first().songs.commit()
+        # this should create/update/delete database entries
+        self.assertEqual('Misery', Song.objects.get(id=second_song_id).name)
+        self.assertTrue(Song.objects.filter(name='Chains').exists())
+        self.assertFalse(Song.objects.filter(name='I Saw Her Standing There').exists())
+
+    def test_child_updates_without_ids(self):
+        first_song = Song(name='I Saw Her Standing There')
+        album = Album(name='Please Please Me', songs=[first_song])
+        beatles = Band(name='The Beatles', albums=[album])
+        beatles.save()
+
+        first_song_id = first_song.id
+
+        second_song = Song(name='Misery')
+        album.songs.add(second_song)
+
+        AlbumsFormset = childformset_factory(Band, Album, form=ClusterForm, extra=3)
+
+        albums_formset = AlbumsFormset({
+            'form-TOTAL_FORMS': 1,
+            'form-INITIAL_FORMS': 1,
+            'form-MAX_NUM_FORMS': 1000,
+
+            'form-0-name': 'Please Please Me',
+            'form-0-id': album.id,
+
+            'form-0-songs-TOTAL_FORMS': 2,
+            'form-0-songs-INITIAL_FORMS': 2,
+            'form-0-songs-MAX_NUM_FORMS': 1000,
+
+            'form-0-songs-0-name': 'I Saw Her Standing There',
+            'form-0-songs-0-id': first_song_id,
+
+            'form-0-songs-1-name': 'Misery',
+            'form-0-songs-1-id': '',
+        }, instance=beatles)
+
+        self.assertTrue(albums_formset.is_valid())
+        albums_formset.save(commit=False)
+        self.assertEqual(2, beatles.albums.first().songs.count())

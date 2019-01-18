@@ -765,7 +765,6 @@ class NestedClusterFormTest(TestCase):
 
         self.assertTrue(form.is_valid())
         result = form.save(commit=False)
-        # result = form.save()
         self.assertEqual(result, beatles)
 
         self.assertEqual(1, beatles.albums.count())

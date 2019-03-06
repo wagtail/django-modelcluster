@@ -226,6 +226,10 @@ class ClusterFormOptions(ModelFormOptions):
 class ClusterFormMetaclass(ModelFormMetaclass):
     extra_form_count = 3
 
+    @classmethod
+    def child_form(cls):
+        return ClusterForm
+
     def __new__(cls, name, bases, attrs):
         try:
             parents = [b for b in bases if issubclass(b, ClusterForm)]
@@ -280,7 +284,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                 except AttributeError:
                     pass
 
-                formset = childformset_factory(opts.model, rel.field.model, form=ClusterForm, **kwargs)
+                formset = childformset_factory(opts.model, rel.field.model, form=cls.child_form(), **kwargs)
                 formsets[rel_name] = formset
 
             new_class.formsets = formsets

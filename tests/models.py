@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from taggit.managers import TaggableManager
@@ -11,7 +10,6 @@ from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from modelcluster.models import ClusterableModel
 
 
-@python_2_unicode_compatible
 class Band(ClusterableModel):
     name = models.CharField(max_length=255)
 
@@ -19,7 +17,6 @@ class Band(ClusterableModel):
         return self.name
 
 
-@python_2_unicode_compatible
 class BandMember(models.Model):
     band = ParentalKey('Band', related_name='members', on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
@@ -34,7 +31,6 @@ class BandMember(models.Model):
         ]
 
 
-@python_2_unicode_compatible
 class Album(ClusterableModel):
     band = ParentalKey('Band', related_name='albums')
     name = models.CharField(max_length=255)
@@ -50,7 +46,6 @@ class Album(ClusterableModel):
         ordering = ['sort_order']
 
 
-@python_2_unicode_compatible
 class Song(models.Model):
     album = ParentalKey('Album', related_name='songs')
     name = models.CharField(max_length=255)
@@ -69,7 +64,6 @@ class TaggedPlace(TaggedItemBase):
     content_object = ParentalKey('Place', related_name='tagged_items', on_delete=models.CASCADE)
 
 
-@python_2_unicode_compatible
 class Place(ClusterableModel):
     name = models.CharField(max_length=255)
     tags = ClusterTaggableManager(through=TaggedPlace, blank=True)
@@ -91,7 +85,6 @@ class TaggedNonClusterPlace(TaggedItemBase):
     content_object = models.ForeignKey('NonClusterPlace', related_name='tagged_items', on_delete=models.CASCADE)
 
 
-@python_2_unicode_compatible
 class NonClusterPlace(models.Model):
     """
     For backwards compatibility we need ClusterModel to work with
@@ -105,7 +98,6 @@ class NonClusterPlace(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
 class Dish(models.Model):
     name = models.CharField(max_length=255)
 
@@ -113,7 +105,6 @@ class Dish(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
 class Wine(models.Model):
     name = models.CharField(max_length=255)
 
@@ -121,7 +112,6 @@ class Wine(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
 class Chef(models.Model):
     name = models.CharField(max_length=255)
 
@@ -129,7 +119,6 @@ class Chef(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
 class MenuItem(models.Model):
     restaurant = ParentalKey('Restaurant', related_name='menu_items', on_delete=models.CASCADE)
     dish = models.ForeignKey('Dish', related_name='+', on_delete=models.CASCADE)
@@ -140,7 +129,6 @@ class MenuItem(models.Model):
         return "%s - %f" % (self.dish, self.price)
 
 
-@python_2_unicode_compatible
 class Review(models.Model):
     place = ParentalKey('Place', related_name='reviews', on_delete=models.CASCADE)
     author = models.CharField(max_length=255)
@@ -150,7 +138,6 @@ class Review(models.Model):
         return "%s on %s" % (self.author, self.place.name)
 
 
-@python_2_unicode_compatible
 class Log(ClusterableModel):
     time = models.DateTimeField(blank=True, null=True)
     data = models.CharField(max_length=255)
@@ -159,7 +146,6 @@ class Log(ClusterableModel):
         return "[%s] %s" % (self.time.isoformat(), self.data)
 
 
-@python_2_unicode_compatible
 class Document(ClusterableModel):
     title = models.CharField(max_length=255)
     file = models.FileField(upload_to='documents')
@@ -168,7 +154,6 @@ class Document(ClusterableModel):
         return self.title
 
 
-@python_2_unicode_compatible
 class NewsPaper(ClusterableModel):
     title = models.CharField(max_length=255)
 
@@ -180,7 +165,6 @@ class TaggedArticle(TaggedItemBase):
     content_object = ParentalKey('Article', related_name='tagged_items', on_delete=models.CASCADE)
 
 
-@python_2_unicode_compatible
 class Article(ClusterableModel):
     paper = ParentalKey(NewsPaper, blank=True, null=True, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
@@ -194,7 +178,6 @@ class Article(ClusterableModel):
         return self.title
 
 
-@python_2_unicode_compatible
 class Author(models.Model):
     name = models.CharField(max_length=255)
 
@@ -205,7 +188,6 @@ class Author(models.Model):
         ordering = ['name']
 
 
-@python_2_unicode_compatible
 class Category(models.Model):
     name = models.CharField(max_length=255)
 
@@ -213,7 +195,6 @@ class Category(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
 class Gallery(ClusterableModel):
     title = models.CharField(max_length=255)
 

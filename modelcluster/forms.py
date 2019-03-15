@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import django
 from django.forms import ValidationError
 from django.core.exceptions import NON_FIELD_ERRORS
-from django.utils.six import with_metaclass
 from django.forms.models import (
     BaseModelFormSet, modelformset_factory,
     ModelForm, _get_foreign_key, ModelFormMetaclass, ModelFormOptions
@@ -288,7 +287,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
         return new_class
 
 
-class ClusterForm(with_metaclass(ClusterFormMetaclass, ModelForm)):
+class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
     def __init__(self, data=None, files=None, instance=None, prefix=None, **kwargs):
         super(ClusterForm, self).__init__(data, files, instance=instance, prefix=prefix, **kwargs)
 

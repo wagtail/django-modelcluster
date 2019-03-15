@@ -8,12 +8,8 @@ addons:
 
 matrix:
   include:
-   - env: TOXENV=py27-dj110-sqlite
-     python: 2.7
    - env: TOXENV=py34-dj110-sqlite
      python: 3.4
-   - env: TOXENV=py27-dj111-sqlite
-     python: 2.7
    - env: TOXENV=py35-dj111-sqlite
      python: 3.5
    - env: TOXENV=py34-dj20-sqlite
@@ -40,12 +36,8 @@ matrix:
      python: 3.7
      dist: xenial
      sudo: true
-   - env: TOXENV=py27-dj110-postgres
-     python: 2.7
    - env: TOXENV=py34-dj110-postgres
      python: 3.4
-   - env: TOXENV=py27-dj111-postgres
-     python: 2.7
    - env: TOXENV=py35-dj111-postgres
      python: 3.5
    - env: TOXENV=py34-dj20-postgres

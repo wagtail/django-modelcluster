@@ -2,8 +2,6 @@ from __future__ import unicode_literals
 
 import unittest
 
-from django.utils.six import text_type
-
 from django.test import TestCase
 from tests.models import Band, BandMember, Album, Restaurant, Article, Author, Document, Gallery, Song
 from modelcluster.forms import ClusterForm
@@ -517,8 +515,8 @@ class ClusterFormTest(TestCase):
 
         form = FormWithWidgetMedia()
 
-        self.assertIn('test.js', text_type(form.media['js']))
-        self.assertIn('test.css', text_type(form.media['css']))
+        self.assertIn('test.js', str(form.media['js']))
+        self.assertIn('test.css', str(form.media['css']))
 
     def test_widgets_with_media_on_child_form(self):
         """
@@ -549,8 +547,8 @@ class ClusterFormTest(TestCase):
 
         form = FormWithWidgetMedia()
 
-        self.assertIn('fancy-text-input.js', text_type(form.media['js']))
-        self.assertIn('fancy-file-uploader.js', text_type(form.media['js']))
+        self.assertIn('fancy-text-input.js', str(form.media['js']))
+        self.assertIn('fancy-file-uploader.js', str(form.media['js']))
 
     def test_is_multipart_on_parent_form(self):
         """

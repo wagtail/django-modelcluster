@@ -3,6 +3,7 @@ Changelog
 
 4.4 (xx.xx.xxxx)
 ~~~~~~~~~~~~~~~~
+* Django 2.2 compatibility
 * Support nested child relationships in ClusterForm (Sam Costigan)
 
 4.3 (15.11.2018)

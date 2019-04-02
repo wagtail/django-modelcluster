@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 
-import django
 from django.core import checks
 from django.db import IntegrityError, router
 from django.db.models import CASCADE
@@ -89,10 +88,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
                 instance = instances_dict[rel_obj_attr(rel_obj)]
                 setattr(rel_obj, rel_field.name, instance)
             cache_name = rel_field.related_query_name()
-            if django.VERSION >= (2, 0):
-                return qs, rel_obj_attr, instance_attr, False, cache_name, False
-            else:
-                return qs, rel_obj_attr, instance_attr, False, cache_name
+            return qs, rel_obj_attr, instance_attr, False, cache_name, False
 
         def get_object_list(self):
             """
@@ -203,15 +199,12 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
                     item.delete()
 
             for item in final_items:
-                if django.VERSION >= (1, 9):
-                    # Django 1.9+ bulk updates items by default which assumes
-                    # that they have already been saved to the database.
-                    # Disable this behaviour.
-                    # https://code.djangoproject.com/ticket/18556
-                    # https://github.com/django/django/commit/adc0c4fbac98f9cb975e8fa8220323b2de638b46
-                    original_manager.add(item, bulk=False)
-                else:
-                    original_manager.add(item)
+                # Django 1.9+ bulk updates items by default which assumes
+                # that they have already been saved to the database.
+                # Disable this behaviour.
+                # https://code.djangoproject.com/ticket/18556
+                # https://github.com/django/django/commit/adc0c4fbac98f9cb975e8fa8220323b2de638b46
+                original_manager.add(item, bulk=False)
 
             # purge the _cluster_related_objects entry, so we switch back to live SQL
             del self.instance._cluster_related_objects[relation_name]
@@ -289,21 +282,7 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
             self.instance = instance
 
         def get_original_manager(self):
-            if django.VERSION >= (1, 9):
-                return original_manager_cls(self.instance)
-            else:
-                field = rel.field
-                return original_manager_cls(
-                    model=rel.to,
-                    query_field_name=field.related_query_name(),
-                    prefetch_cache_name=field.name,
-                    instance=self.instance,
-                    symmetrical=rel.symmetrical,
-                    source_field_name=field.m2m_field_name(),
-                    target_field_name=field.m2m_reverse_field_name(),
-                    reverse=False,
-                    through=rel.through,
-                )
+            return original_manager_cls(self.instance)
 
         def get_live_queryset(self):
             """
@@ -457,10 +436,7 @@ class ParentalManyToManyDescriptor(ManyToManyDescriptor):
 
     @cached_property
     def child_object_manager_cls(self):
-        if django.VERSION >= (1, 9):
-            rel = self.rel
-        else:
-            rel = self.field.rel
+        rel = self.rel
 
         return create_deferring_forward_many_to_many_manager(rel, self.related_manager_cls)
 

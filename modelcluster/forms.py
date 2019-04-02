@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 
-import django
 from django.forms import ValidationError
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.forms.models import (
@@ -66,16 +65,6 @@ class BaseTransientModelFormSet(BaseModelFormSet):
                 if not commit:
                     self.saved_forms.append(form)
         return saved_instances
-
-    if django.VERSION < (1, 9):
-        def save_existing(self, form, instance, commit=True):
-            """Saves and returns an existing model instance for the given form."""
-            return form.save(commit=commit)
-
-        def delete_existing(self, obj, commit=True):
-            """Deletes an existing model instance."""
-            if commit:
-                obj.delete()
 
 
 def transientmodelformset_factory(model, formset=BaseTransientModelFormSet, **kwargs):

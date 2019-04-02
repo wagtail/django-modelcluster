@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import json
 import datetime
 
-import django
 from django.db import models
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.fields import FieldDoesNotExist
@@ -127,16 +126,10 @@ def get_all_child_relations(model):
     Return a list of RelatedObject records for child relations of the given model,
     including ones attached to ancestors of the model
     """
-    if django.VERSION >= (1, 9):
-        return [
-            field for field in model._meta.get_fields()
-            if isinstance(field.remote_field, ParentalKey)
-        ]
-    else:
-        return [
-            field for field in model._meta.get_fields()
-            if isinstance(field, ForeignObjectRel) and isinstance(field.field, ParentalKey)
-        ]
+    return [
+        field for field in model._meta.get_fields()
+        if isinstance(field.remote_field, ParentalKey)
+    ]
 
 
 def get_all_child_m2m_relations(model):

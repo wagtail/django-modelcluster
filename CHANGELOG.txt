@@ -3,7 +3,7 @@ Changelog
 
 5.0 (xx.xx.xxxx)
 ~~~~~~~~~~~~~~~~
-* Removed Python 2 support
+* Removed Python 2 and 3.4 support
 * Removed Django 1.10 and 1.11 support
 
 4.4 (02.04.2019)

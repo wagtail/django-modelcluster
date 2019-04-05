@@ -96,4 +96,7 @@ class ClusterTaggableManager(TaggableManager):
         # to accommodate the possibility of this having uncommitted changes relative to
         # the live database
         rel_name = self.through._meta.get_field('content_object').remote_field.get_accessor_name()
-        return getattr(instance, rel_name).all()
+        ret = getattr(instance, rel_name).all()
+        if TAGGIT_VERSION >= (1, ):  # expects a Tag list instead of TaggedItem List
+            ret = [tagged_item.tag for tagged_item in ret]
+        return ret

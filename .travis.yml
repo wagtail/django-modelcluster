@@ -6,37 +6,29 @@ addons:
 
 matrix:
   include:
-   - env: TOXENV=py35-dj20-sqlite
+   - env: TOXENV=py35-dj20-sqlite-taggit0
      python: 3.5
-   - env: TOXENV=py36-dj20-sqlite
+   - env: TOXENV=py36-dj20-sqlite-taggit1
      python: 3.6
-   - env: TOXENV=py35-dj21-sqlite
+   - env: TOXENV=py36-dj21-sqlite-taggit0
+     python: 3.6
+   - env: TOXENV=py35-dj22-sqlite-taggit0
      python: 3.5
-   - env: TOXENV=py36-dj21-sqlite
+   - env: TOXENV=py36-dj22-sqlite-taggit1
      python: 3.6
-   - env: TOXENV=py37-dj21-sqlite
+   - env: TOXENV=py37-dj22-sqlite-taggit0
      python: 3.7
-   - env: TOXENV=py35-dj22-sqlite
+   - env: TOXENV=py35-dj20-postgres-taggit0
      python: 3.5
-   - env: TOXENV=py36-dj22-sqlite
+   - env: TOXENV=py36-dj20-postgres-taggit0
      python: 3.6
-   - env: TOXENV=py37-dj22-sqlite
+   - env: TOXENV=py37-dj21-postgres-taggit1
      python: 3.7
-   - env: TOXENV=py35-dj20-postgres
+   - env: TOXENV=py35-dj22-postgres-taggit1
      python: 3.5
-   - env: TOXENV=py36-dj20-postgres
+   - env: TOXENV=py36-dj22-postgres-taggit1
      python: 3.6
-   - env: TOXENV=py35-dj21-postgres
-     python: 3.5
-   - env: TOXENV=py36-dj21-postgres
-     python: 3.6
-   - env: TOXENV=py37-dj21-postgres
-     python: 3.7
-   - env: TOXENV=py35-dj22-postgres
-     python: 3.5
-   - env: TOXENV=py36-dj22-postgres
-     python: 3.6
-   - env: TOXENV=py37-dj22-postgres
+   - env: TOXENV=py37-dj22-postgres-taggit1
      python: 3.7
 
 install:

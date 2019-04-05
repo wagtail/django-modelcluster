@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import unittest
 
 from django.test import TestCase, override_settings
+from taggit import VERSION as TAGGIT_VERSION
 from taggit.models import Tag
 from modelcluster.forms import ClusterForm
 
@@ -82,7 +83,8 @@ class TagTest(TestCase):
 
         form = PlaceForm(instance=mission_burrito)
         self.assertEqual(2, len(form['tags'].value()))
-        self.assertEqual(TaggedPlace, form['tags'].value()[0].__class__)
+        expected_instance = TaggedPlace if TAGGIT_VERSION < (1,) else Tag
+        self.assertEqual(expected_instance, form['tags'].value()[0].__class__)
 
         form = PlaceForm({
             'name': "Mission Burrito",

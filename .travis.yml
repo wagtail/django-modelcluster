@@ -30,6 +30,14 @@ matrix:
      python: 3.6
    - env: TOXENV=py37-dj22-postgres-taggit1
      python: 3.7
+   - env: TOXENV=py37-dj22stable-postgres-taggit1
+     python: 3.7
+   - env: TOXENV=py37-djmaster-postgres-taggit1
+     python: 3.7
+  allow_failures:
+    # allow failures against Django git master and 2.2.x stable
+    - env: TOXENV=py37-dj22stable-postgres-taggit1
+    - env: TOXENV=py37-djmaster-postgres-taggit1
 
 install:
   - pip install tox

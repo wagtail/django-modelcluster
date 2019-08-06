@@ -5,6 +5,7 @@ Changelog
 ~~~~~~~~~~~~~~~~
 * Removed Python 2 and 3.4 support
 * Removed Django 1.10 and 1.11 support
+* Added django-taggit 1.x compatibility (Gassan Gousseinov, Matt Westcott)
 
 4.4 (02.04.2019)
 ~~~~~~~~~~~~~~~~

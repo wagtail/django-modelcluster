@@ -132,6 +132,19 @@ class TagTest(TestCase):
             set([Tag.objects.get(name='burrito'), Tag.objects.get(name='fajita')])
         )
 
+    def test_render_tag_form(self):
+        class PlaceForm(ClusterForm):
+            class Meta:
+                model = Place
+                exclude_formsets = ['tagged_items', 'reviews']
+                fields = ['name', 'tags']
+
+        mission_burrito = Place(name="Mission Burrito")
+        mission_burrito.tags.add('burrito', 'mexican')
+        form = PlaceForm(instance=mission_burrito)
+        form_html = form.as_p()
+        self.assertInHTML('<input type="text" name="tags" value="burrito, mexican" id="id_tags">', form_html)
+
     @override_settings(TAGGIT_CASE_INSENSITIVE=True)
     def test_case_insensitive_tags(self):
         mission_burrito = Place(name='Mission Burrito')

@@ -375,6 +375,13 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
             # 2) if we need to sort it, we can do so without mutating the original
             objs = list(objs)
 
+            if objs and not isinstance(objs[0], rel_model):
+                # assume objs is a list of pks (like when loading data from a
+                # fixture), and allow the orignal manager to handle things
+                original_manager = self.get_original_manager()
+                original_manager.set(objs)
+                return
+
             cluster_related_objects = self._get_cluster_related_objects()
 
             # Clone and sort the 'objs' list, if necessary

@@ -1,0 +1,30 @@
+[
+  {
+    "model": "tests.house",
+    "pk": 1,
+    "fields": {
+      "name": "Weekend home",
+      "address": "1 Homely Drive, Hometown",
+      "owner": null,
+      "main_room": null
+    }
+  },
+  {
+    "model": "tests.house",
+    "pk": 2,
+    "fields": {
+      "name": "Midweek home",
+      "address": "1 Business Park, Worktown",
+      "owner": null,
+      "main_room": null
+    }
+  },
+  {
+    "model": "tests.person",
+    "pk": 1,
+    "fields": {
+      "name": "Mr Two Houses",
+      "houses": [1, 2]
+    }
+  }
+]

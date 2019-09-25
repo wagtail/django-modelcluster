@@ -3,9 +3,9 @@ from __future__ import unicode_literals
 import json
 import datetime
 
+from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 from django.db.models.fields.related import ForeignObjectRel
-from django.db.models.fields import FieldDoesNotExist
 from django.utils.encoding import is_protected_type
 from django.core.serializers.json import DjangoJSONEncoder
 from django.conf import settings

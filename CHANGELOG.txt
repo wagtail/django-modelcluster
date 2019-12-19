@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.4.1 (xx.xx.xxxx)
+~~~~~~~~~~~~~~~~~~
+* Fix: ClusterForm without an explicit `formsets` kwarg now allows formsets to be omitted from form submissions, to fix regression with nested relations
+
 4.4 (02.04.2019)
 ~~~~~~~~~~~~~~~~
 * Django 2.2 compatibility

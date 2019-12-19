@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import unittest
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from tests.models import Band, BandMember, Album, Restaurant, Article, Author, Document, Gallery, Song
 from modelcluster.forms import ClusterForm
@@ -214,6 +215,86 @@ class ClusterFormTest(TestCase):
         self.assertEqual('The New Beatles', new_beatles.name)
         self.assertTrue(BandMember.objects.filter(name='George Harrison').exists())
         self.assertFalse(BandMember.objects.filter(name='John Lennon').exists())
+
+    def test_can_omit_formset_from_submission(self):
+        """
+        If no explicit `formsets` parameter has been given, any formsets missing from the
+        submission should be skipped over.
+        https://github.com/wagtail/wagtail/issues/5414#issuecomment-567468127
+        """
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+
+        john = BandMember(name='John Lennon')
+        paul = BandMember(name='Paul McCartney')
+        abbey_road = Album(name='Abbey Road')
+        beatles = Band(name='The Beatles', members=[john, paul], albums=[abbey_road])
+        beatles.save()
+
+        form = BandForm({
+            'name': "The Beatles",
+
+            'members-TOTAL_FORMS': 3,
+            'members-INITIAL_FORMS': 2,
+            'members-MAX_NUM_FORMS': 1000,
+
+            'members-0-name': john.name,
+            'members-0-DELETE': 'members-0-DELETE',
+            'members-0-id': john.id,
+
+            'members-1-name': paul.name,
+            'members-1-id': paul.id,
+
+            'members-2-name': 'George Harrison',
+            'members-2-id': '',
+        }, instance=beatles)
+        self.assertTrue(form.is_valid())
+        form.save()
+
+        beatles = Band.objects.get(id=beatles.id)
+        self.assertEqual(1, beatles.albums.count())
+        self.assertTrue(BandMember.objects.filter(name='George Harrison').exists())
+        self.assertFalse(BandMember.objects.filter(name='John Lennon').exists())
+
+    def test_cannot_omit_explicit_formset_from_submission(self):
+        """
+        If an explicit `formsets` parameter has been given, formsets missing from a form submission
+        should raise a ValidationError as normal
+        """
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+                formsets = ['members', 'albums']
+
+        john = BandMember(name='John Lennon')
+        paul = BandMember(name='Paul McCartney')
+        abbey_road = Album(name='Abbey Road')
+        beatles = Band(name='The Beatles', members=[john, paul], albums=[abbey_road])
+        beatles.save()
+
+        form = BandForm({
+            'name': "The Beatles",
+
+            'members-TOTAL_FORMS': 3,
+            'members-INITIAL_FORMS': 2,
+            'members-MAX_NUM_FORMS': 1000,
+
+            'members-0-name': john.name,
+            'members-0-DELETE': 'members-0-DELETE',
+            'members-0-id': john.id,
+
+            'members-1-name': paul.name,
+            'members-1-id': paul.id,
+
+            'members-2-name': 'George Harrison',
+            'members-2-id': '',
+        }, instance=beatles)
+
+        with self.assertRaises(ValidationError):
+            form.is_valid()
 
     def test_saved_items_with_non_db_relation(self):
         class BandForm(ClusterForm):

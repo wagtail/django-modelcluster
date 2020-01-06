@@ -1,7 +1,7 @@
 Changelog
 =========
 
-4.4.1 (xx.xx.xxxx)
+4.4.1 (06.01.2020)
 ~~~~~~~~~~~~~~~~~~
 * Fix: ClusterForm without an explicit `formsets` kwarg now allows formsets to be omitted from form submissions, to fix regression with nested relations
 

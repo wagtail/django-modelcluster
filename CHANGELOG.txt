@@ -1,7 +1,7 @@
 Changelog
 =========
 
-5.0.1 (xx.xx.xxxx)
+5.0.1 (06.01.2020)
 ~~~~~~~~~~~~~~~~~~
 * Fix: ClusterForm without an explicit `formsets` kwarg now allows formsets to be omitted from form submissions, to fix regression with nested relations
 * Fix: ParentalManyToManyField data is now loaded correctly by `manage.py loaddata` (Andy Babic)
@@ -12,7 +12,7 @@ Changelog
 * Removed Django 1.10 and 1.11 support
 * Added django-taggit 1.x compatibility (Gassan Gousseinov, Matt Westcott)
 
-4.4.1 (xx.xx.xxxx)
+4.4.1 (06.01.2020)
 ~~~~~~~~~~~~~~~~~~
 * Fix: ClusterForm without an explicit `formsets` kwarg now allows formsets to be omitted from form submissions, to fix regression with nested relations
 

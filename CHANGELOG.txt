@@ -4,6 +4,7 @@ Changelog
 5.0.1 (xx.xx.xxxx)
 ~~~~~~~~~~~~~~~~~~
 * Fix: ClusterForm without an explicit `formsets` kwarg now allows formsets to be omitted from form submissions, to fix regression with nested relations
+* Fix: ParentalManyToManyField data is now loaded correctly by `manage.py loaddata` (Andy Babic)
 
 5.0 (06.08.2019)
 ~~~~~~~~~~~~~~~~

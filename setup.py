@@ -17,7 +17,7 @@ setup(
     long_description=open('README.rst').read(),
     python_requires=">=3.5",
     install_requires=[
-        "pytz>=2015.2",
+        "Django>=2.0,<2.3",
     ],
     extras_require={
         'taggit': ['django-taggit>=0.20'],

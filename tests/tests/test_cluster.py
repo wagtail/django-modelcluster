@@ -764,6 +764,48 @@ class ParentalM2MTest(TestCase):
         )
 
 
+class ParentalManyToManyPrefetchTests(TestCase):
+    def setUp(self):
+        authors = Author.objects.bulk_create(
+            Author(id=i, name=str(i)) for i in range(10)
+        )
+        authors = Author.objects.all()
+
+        for i in range(10):
+            article = Article(title=str(i))
+            article.authors = authors
+            article.save()
+
+    def get_author_names(self, articles):
+        return [
+            author.name
+            for article in articles
+            for author in article.authors.all()
+        ]
+
+    def test_prefetch_related(self):
+        with self.assertNumQueries(11):
+            names = self.get_author_names(Article.objects.all())
+
+        with self.assertNumQueries(2):
+            prefetched_names = self.get_author_names(
+                Article.objects.prefetch_related('authors')
+            )
+
+        self.assertEqual(names, prefetched_names)
+
+    def test_prefetch_related_with_custom_queryset(self):
+        from django.db.models import Prefetch
+
+        with self.assertNumQueries(2):
+            names = self.get_author_names(
+                Article.objects.prefetch_related(
+                    Prefetch('authors', queryset=Author.objects.filter(name__lt='5'))
+                )
+            )
+
+        self.assertEqual(len(names), 50)
+
 class PrefetchRelatedTest(TestCase):
     def test_fakequeryset_prefetch_related(self):
         person1 = Person.objects.create(name='Joe')

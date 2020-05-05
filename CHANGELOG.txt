@@ -4,6 +4,7 @@ Changelog
 5.1 (xx.xx.xxxx)
 ~~~~~~~~~~~~~~~~
 * Allow child form class to be overridden in the `formsets` Meta property of ClusterForm (Helder Correia)
+* Add prefetch_related support to ParentalManyToManyField (Andy Chosak)
 
 5.0.2 (26.05.2020)
 ~~~~~~~~~~~~~~~~~~

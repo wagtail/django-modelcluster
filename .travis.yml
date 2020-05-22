@@ -16,7 +16,13 @@ matrix:
      python: 3.5
    - env: TOXENV=py36-dj22-sqlite-taggit1
      python: 3.6
+   - env: TOXENV=py36-dj22-sqlite-taggit13
+     python: 3.6
    - env: TOXENV=py37-dj22-sqlite-taggit0
+     python: 3.7
+   - env: TOXENV=py37-dj22-sqlite-taggit1
+     python: 3.7
+   - env: TOXENV=py37-dj22-sqlite-taggit13
      python: 3.7
    - env: TOXENV=py35-dj20-postgres-taggit0
      python: 3.5
@@ -26,18 +32,24 @@ matrix:
      python: 3.7
    - env: TOXENV=py35-dj22-postgres-taggit1
      python: 3.5
+   - env: TOXENV=py35-dj22-postgres-taggit13
+     python: 3.5
    - env: TOXENV=py36-dj22-postgres-taggit1
+     python: 3.6
+   - env: TOXENV=py36-dj22-postgres-taggit13
      python: 3.6
    - env: TOXENV=py37-dj22-postgres-taggit1
      python: 3.7
-   - env: TOXENV=py37-dj22stable-postgres-taggit1
+   - env: TOXENV=py37-dj22-postgres-taggit13
      python: 3.7
-   - env: TOXENV=py37-djmaster-postgres-taggit1
+   - env: TOXENV=py37-dj22stable-postgres-taggit13
+     python: 3.7
+   - env: TOXENV=py37-djmaster-postgres-taggit13
      python: 3.7
   allow_failures:
     # allow failures against Django git master and 2.2.x stable
-    - env: TOXENV=py37-dj22stable-postgres-taggit1
-    - env: TOXENV=py37-djmaster-postgres-taggit1
+    - env: TOXENV=py37-dj22stable-postgres-taggit13
+    - env: TOXENV=py37-djmaster-postgres-taggit13
 
 install:
   - pip install tox

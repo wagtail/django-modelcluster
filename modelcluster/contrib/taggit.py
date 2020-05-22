@@ -41,7 +41,10 @@ class _ClusterTaggableManager(_TaggableManager):
 
     @require_instance_manager
     def add(self, *tags):
-        tag_objs = self._to_tag_model_instances(tags)
+        if TAGGIT_VERSION >= (1, 3, 0):
+            tag_objs = self._to_tag_model_instances(tags, {})
+        else:
+            tag_objs = self._to_tag_model_instances(tags)
 
         # Now write these to the relation
         tagged_item_manager = self.get_tagged_item_manager()

@@ -766,6 +766,7 @@ class ParentalM2MTest(TestCase):
 
 class ParentalManyToManyPrefetchTests(TestCase):
     def setUp(self):
+        # Create 10 articles with 10 authors each.
         authors = Author.objects.bulk_create(
             Author(id=i, name=str(i)) for i in range(10)
         )
@@ -805,6 +806,21 @@ class ParentalManyToManyPrefetchTests(TestCase):
             )
 
         self.assertEqual(len(names), 50)
+
+    def test_prefetch_from_fake_queryset(self):
+        article = Article(title='Article with related articles')
+        article.related_articles = list(Article.objects.all())
+
+        with self.assertNumQueries(10):
+            names = self.get_author_names(article.related_articles.all())
+
+        with self.assertNumQueries(1):
+            prefetched_names = self.get_author_names(
+                article.related_articles.prefetch_related('authors')
+            )
+
+        self.assertEqual(names, prefetched_names)
+
 
 class PrefetchRelatedTest(TestCase):
     def test_fakequeryset_prefetch_related(self):

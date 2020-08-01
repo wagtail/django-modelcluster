@@ -272,7 +272,7 @@ class ClusterableModel(models.Model):
         return cls.from_serializable_data(json.loads(json_data), check_fks=check_fks, strict_fks=strict_fks)
 
     @transaction.atomic
-    def copy_child_relation(self, child_relation, target, append=False):
+    def copy_child_relation(self, child_relation, target, commit=False, append=False):
         """
         Copies all of the objects in the accessor_name to the target object.
 
@@ -280,7 +280,10 @@ class ClusterableModel(models.Model):
 
             my_event.copy_child_relation('speakers', my_other_event)
 
-        By default, this will overwrite the child relation on the target object. This is to avoid any issues with unique keys
+        By default, this copies the child objects without saving them. Set the commit paremter to True to save the objects
+        but note that this would cause an exception if the target object is not saved.
+
+        This will overwrite the child relation on the target object. This is to avoid any issues with unique keys
         and/or sort_order. If you want it to append. set the `append` parameter to True.
 
         This method returns a dictionary mapping the child relation/primary key on the source object to the new object created for the
@@ -322,9 +325,12 @@ class ClusterableModel(models.Model):
 
                 child_object_map[(child_relation, None)].append(child_object)
 
+        if commit:
+            target_manager.commit()
+
         return child_object_map
 
-    def copy_all_child_relations(self, target, exclude=None, append=False):
+    def copy_all_child_relations(self, target, exclude=None, commit=False, append=False):
         """
         Copies all of the objects in all child relations to the target object.
 
@@ -332,7 +338,7 @@ class ClusterableModel(models.Model):
 
         Set exclude to a list of child relation accessor names that shouldn't be copied.
 
-        This method returns a dictionary mapping the model/primary key on the source object to the new object created for the
+        This method returns a dictionary mapping the child_relation/primary key on the source object to the new object created for the
         target object.
         """
         exclude = exclude or []
@@ -342,7 +348,7 @@ class ClusterableModel(models.Model):
             if child_relation.get_accessor_name() in exclude:
                 continue
 
-            child_object_map.update(self.copy_child_relation(child_relation, target, append=append))
+            child_object_map.update(self.copy_child_relation(child_relation, target, commit=commit, append=append))
 
         return child_object_map
 

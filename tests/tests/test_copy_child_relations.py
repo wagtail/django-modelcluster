@@ -1,3 +1,4 @@
+from django.db.utils import IntegrityError
 from django.test import TestCase
 
 from modelcluster.models import get_all_child_relations
@@ -179,6 +180,42 @@ class TestCopyChildRelations(TestCase):
 
         self.assertFalse(beatles_clone.members.filter(name='Julian Lennon').exists())
 
+    def test_commit(self):
+        # The commit parameter will instruct the method to save the child objects straight away
+
+        self.beatles.save()
+        john = self.beatles.members.get(name='John Lennon')
+        paul = self.beatles.members.get(name='Paul McCartney')
+
+        beatles_clone = Band(name='The Beatles 2020 comeback')
+        beatles_clone.save()
+
+        child_object_mapping = self.beatles.copy_child_relation('members', beatles_clone, commit=True)
+
+        new_john = beatles_clone.members.get(name='John Lennon')
+        new_paul = beatles_clone.members.get(name='Paul McCartney')
+
+        self.assertIsNotNone(new_john.pk)
+        self.assertIsNotNone(new_paul.pk)
+        self.assertEqual(new_john.band, beatles_clone)
+        self.assertEqual(new_paul.band, beatles_clone)
+
+        self.assertEqual(child_object_mapping, {
+            (band_members_rel, john.pk): new_john,
+            (band_members_rel, paul.pk): new_paul,
+        })
+
+    def test_commit_to_unsaved(self):
+        # You can't use commit if the target isn't saved
+        self.beatles.save()
+        john = self.beatles.members.get(name='John Lennon')
+        paul = self.beatles.members.get(name='Paul McCartney')
+
+        beatles_clone = Band(name='The Beatles 2020 comeback')
+
+        with self.assertRaises(IntegrityError):
+            self.beatles.copy_child_relation('members', beatles_clone, commit=True)
+
     def test_append(self):
         # But you can specify append=True, which appends them to the existing list
 
@@ -309,6 +346,59 @@ class TestCopyAllChildRelations(TestCase):
             (band_members_rel, None): [new_john, new_paul],
             (band_albums_rel, None): [new_album_1, new_album_2, new_album_3],
         })
+
+    def test_commit(self):
+        # The commit parameter will instruct the method to save the child objects straight away
+
+        self.beatles.save()
+        john = self.beatles.members.get(name='John Lennon')
+        paul = self.beatles.members.get(name='Paul McCartney')
+        album_1 = self.beatles.albums.get(sort_order=1)
+        album_2 = self.beatles.albums.get(sort_order=2)
+        album_3 = self.beatles.albums.get(sort_order=3)
+
+        beatles_clone = Band(name='The Beatles 2020 comeback')
+        beatles_clone.save()
+
+        child_object_mapping = self.beatles.copy_all_child_relations(beatles_clone, commit=True)
+
+        new_john = beatles_clone.members.get(name='John Lennon')
+        new_paul = beatles_clone.members.get(name='Paul McCartney')
+
+        new_album_1 = beatles_clone.albums.get(sort_order=1)
+        new_album_2 = beatles_clone.albums.get(sort_order=2)
+        new_album_3 = beatles_clone.albums.get(sort_order=3)
+
+        self.assertIsNotNone(new_john.pk)
+        self.assertIsNotNone(new_paul.pk)
+        self.assertIsNotNone(new_album_1.pk)
+        self.assertIsNotNone(new_album_2.pk)
+        self.assertIsNotNone(new_album_3.pk)
+
+        self.assertEqual(new_john.band, beatles_clone)
+        self.assertEqual(new_paul.band, beatles_clone)
+        self.assertEqual(new_album_1.band, beatles_clone)
+        self.assertEqual(new_album_2.band, beatles_clone)
+        self.assertEqual(new_album_3.band, beatles_clone)
+
+        self.assertEqual(child_object_mapping, {
+            (band_members_rel, john.pk): new_john,
+            (band_members_rel, paul.pk): new_paul,
+            (band_albums_rel, album_1.pk): new_album_1,
+            (band_albums_rel, album_2.pk): new_album_2,
+            (band_albums_rel, album_3.pk): new_album_3,
+        })
+
+    def test_commit_to_unsaved(self):
+        # You can't use commit if the target isn't saved
+        self.beatles.save()
+        john = self.beatles.members.get(name='John Lennon')
+        paul = self.beatles.members.get(name='Paul McCartney')
+
+        beatles_clone = Band(name='The Beatles 2020 comeback')
+
+        with self.assertRaises(IntegrityError):
+            self.beatles.copy_all_child_relations(beatles_clone, commit=True)
 
     def test_append(self):
         beatles_clone = Band(name='The Beatles 2020 comeback')

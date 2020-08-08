@@ -352,5 +352,64 @@ class ClusterableModel(models.Model):
 
         return child_object_map
 
+    def copy_cluster(self, exclude_fields=None):
+        """
+        Makes a copy of this object and all child relations.
+
+        Includes all field data including child relations and parental many to many fields.
+
+        Doesn't include non-parental many to many.
+
+        The result of this method is unsaved.
+        """
+        exclude_fields = exclude_fields or []
+
+        # Extract field data from self into a dictionary
+        data_dict = {}
+        for field in self._meta.get_fields():
+            # Ignore explicitly excluded fields
+            if field.name in exclude_fields:
+                continue
+
+            # Ignore reverse relations
+            if field.auto_created:
+                continue
+
+            # Copy parental m2m relations
+            # Otherwise add them to the m2m dict to be set after saving
+            if field.many_to_many:
+                if isinstance(field, ParentalManyToManyField):
+                    parental_field = getattr(self, field.name)
+                    if hasattr(parental_field, 'all'):
+                        values = parental_field.all()
+                        if values:
+                            data_dict[field.name] = values
+                continue
+
+            # Ignore parent links (page_ptr)
+            if isinstance(field, models.OneToOneField) and field.remote_field.parent_link:
+                continue
+
+            if isinstance(field, models.ForeignKey):
+                # Use attname to copy the ID instead of retrieving the instance
+
+                # Note: We first need to set the field to None to unset any object
+                # that's there already just setting _id on its own won't change the
+                # field until its saved.
+
+                data_dict[field.name] = None
+                data_dict[field.attname] = getattr(self, field.attname)
+
+            else:
+                data_dict[field.name] = getattr(self, field.name)
+
+        # Create copy
+        copy = self.__class__(**data_dict)
+
+        # Copy child relations
+        child_object_map = self.copy_all_child_relations(copy, exclude=exclude_fields)
+
+        return copy, child_object_map
+
     class Meta:
         abstract = True

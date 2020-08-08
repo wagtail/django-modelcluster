@@ -3,7 +3,7 @@ Changelog
 
 5.2 (xx.xx.xxxx) - IN DEVELOPMENT
 ~~~~~~~~~~~~~~~~
-* ...
+* Implement `copy_cluster` method on ClusterableModel (Karl Hobley)
 
 5.1 (10.09.2020)
 ~~~~~~~~~~~~~~~~

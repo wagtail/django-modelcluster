@@ -69,7 +69,10 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
         def _apply_rel_filters(self, queryset):
             # Implemented as empty for compatibility sake
             # But there is probably a better implementation of this function
-            return queryset._next_is_sticky()
+            #
+            # NOTE: _apply_rel_filters() must return a copy of the queryset
+            # to work correctly with prefetch
+            return queryset._next_is_sticky().all()
 
         def get_prefetch_queryset(self, instances, queryset=None):
             if queryset is None:

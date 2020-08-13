@@ -5,12 +5,13 @@ import itertools
 
 from django.test import TestCase
 from django.db import IntegrityError
+from django.db.models import Prefetch
 
 from modelcluster.models import get_all_child_relations
 from modelcluster.queryset import FakeQuerySet
 
 from tests.models import Band, BandMember, Place, Restaurant, SeafoodRestaurant, Review, Album, \
-    Article, Author, Category, Person, Room, House, Log
+    Article, Author, Category, Person, Room, House, Log, Dish, MenuItem, Wine
 
 
 class ClusterTest(TestCase):
@@ -795,3 +796,21 @@ class PrefetchRelatedTest(TestCase):
         with self.assertNumQueries(0):
             main_rooms = [ house.main_room for house in person1.houses.all() ]
             self.assertEqual(len(main_rooms), 2)
+
+    def test_prefetch_related_with_lookup(self):
+        restaurant1 = Restaurant.objects.create(name='The Jolly Beaver')
+        restaurant2 = Restaurant.objects.create(name='The Prancing Rhino')
+        dish1 = Dish.objects.create(name='Goodies')
+        dish2 = Dish.objects.create(name='Baddies')
+        wine1 = Wine.objects.create(name='Chateau1')
+        wine2 = Wine.objects.create(name='Chateau2')
+        menu_item1 = MenuItem.objects.create(restaurant=restaurant1, dish=dish1, recommended_wine=wine1, price=1)
+        menu_item2 = MenuItem.objects.create(restaurant=restaurant2, dish=dish2, recommended_wine=wine2, price=10)
+
+        query = Restaurant.objects.all().prefetch_related(
+            Prefetch('menu_items', queryset=MenuItem.objects.only('price', 'recommended_wine').select_related('recommended_wine'))
+        )
+
+        res = list(query)
+        self.assertEqual(query[0].menu_items.all()[0], menu_item1)
+        self.assertEqual(query[1].menu_items.all()[0], menu_item2)

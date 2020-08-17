@@ -10,7 +10,7 @@ from modelcluster.models import get_all_child_relations
 from modelcluster.queryset import FakeQuerySet
 
 from tests.models import Band, BandMember, Place, Restaurant, SeafoodRestaurant, Review, Album, \
-    Article, Author, Category, Person, Room, House, Log
+    Article, Author, Category, Person, Room, House, Log, Song, Vocalist
 
 
 class ClusterTest(TestCase):
@@ -505,7 +505,7 @@ class ClusterTest(TestCase):
 
     def test_order_by_with_multiple_fields(self):
         beatles = Band(name='The Beatles', albums=[
-            Album(name='Please Please Me', sort_order=2),
+            Album(name='Please Please Me', sort_order=2, ),
             Album(name='With The Beatles', sort_order=1),
             Album(name='Abbey Road', sort_order=2),
         ])
@@ -515,6 +515,41 @@ class ClusterTest(TestCase):
 
         albums = [album.name for album in beatles.albums.order_by('sort_order', '-name')]
         self.assertEqual(['With The Beatles', 'Please Please Me', 'Abbey Road'], albums)
+
+    def test_order_by_related_fields(self):
+        mccartney = Vocalist(name="Paul McCartney")
+        lennon = Vocalist(name="John Lennon")
+        harrison = Vocalist(name="George Harrison")
+        starr = Vocalist(name="Ring Starr")
+
+        abbey_rd = Album(name='Abbey Road', songs=[
+            Song(name='Come Together', lead_vocalist=lennon),
+            Song(name='Something', lead_vocalist=harrison),
+            Song(name='Maxwell\'s Silver Hammer', lead_vocalist=mccartney),
+            Song(name='Oh! Darling', lead_vocalist=mccartney),
+            Song(name='Octopus\'s Garden', lead_vocalist=starr),
+            Song(name='I Want You (She\'s So Heavy)', lead_vocalist=lennon)
+        ])
+
+        songs = [song.name for song in abbey_rd.songs.order_by('lead_vocalist__name', 'name')]
+        self.assertEqual([
+            'Something',
+            'Come Together',
+            'I Want You (She\'s So Heavy)',
+            'Maxwell\'s Silver Hammer',
+            'Oh! Darling',
+            'Octopus\'s Garden'
+            ], songs)
+
+        songs = [song.name for song in abbey_rd.songs.order_by('lead_vocalist', 'name')]
+        self.assertEqual([
+            'Something',
+            'Come Together',
+            'I Want You (She\'s So Heavy)',
+            'Maxwell\'s Silver Hammer',
+            'Oh! Darling',
+            'Octopus\'s Garden'
+            ], songs)
 
     def test_meta_ordering(self):
         beatles = Band(name='The Beatles', albums=[

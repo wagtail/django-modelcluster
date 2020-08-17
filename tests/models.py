@@ -31,6 +31,13 @@ class BandMember(models.Model):
         ]
 
 
+class Vocalist(ClusterableModel):
+    name = models.CharField(max_length=255)
+
+    class Meta:
+        ordering = ['name']
+
+
 class Album(ClusterableModel):
     band = ParentalKey('Band', related_name='albums')
     name = models.CharField(max_length=255)
@@ -49,6 +56,7 @@ class Album(ClusterableModel):
 class Song(models.Model):
     album = ParentalKey('Album', related_name='songs')
     name = models.CharField(max_length=255)
+    lead_vocalist = ParentalKey('Vocalist', related_name='songs', null=True, blank=True, on_delete=models.SET_NULL)
     sort_order = models.IntegerField(null=True, blank=True, editable=False)
 
     sort_order_field = 'sort_order'

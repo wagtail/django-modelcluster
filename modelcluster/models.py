@@ -56,11 +56,16 @@ def get_serializable_data_for_fields(model):
 
 def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
     pk_field = model._meta.pk
-    # If model is a child via multitable inheritance, use parent's pk
+    kwargs = {}
+
+    # If model is a child via multitable inheritance, we need to set ptr_id fields all the way up
+    # to the main PK field, as Django won't populate these for us automatically.
     while pk_field.remote_field and pk_field.remote_field.parent_link:
+        kwargs[pk_field.attname] = data['pk']
         pk_field = pk_field.remote_field.model._meta.pk
 
-    kwargs = {pk_field.attname: data['pk']}
+    kwargs[pk_field.attname] = data['pk']
+
     for field_name, field_value in data.items():
         try:
             field = model._meta.get_field(field_name)

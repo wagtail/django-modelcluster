@@ -7,8 +7,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 
-from tests.models import Band, BandMember, Album, Restaurant, Dish, MenuItem, Chef, Wine, \
-    Review, Log, Document, Article, Author, Category
+from tests.models import Band, BandMember, Album, Place, Restaurant, SeafoodRestaurant, Dish, \
+    MenuItem, Chef, Wine, Review, Log, Document, Article, Author, Category
 
 
 class SerializeTest(TestCase):
@@ -111,6 +111,15 @@ class SerializeTest(TestCase):
         self.assertEqual(fat_duck.name, "The Fat Duck")
         self.assertEqual(fat_duck.serves_hot_dogs, False)
         self.assertEqual(fat_duck.reviews.all()[0].author, "Michael Winner")
+
+    def test_deserialize_with_second_level_multi_table_inheritance(self):
+        oyster_club = SeafoodRestaurant.from_json('{"pk": 43, "name": "The Oyster Club"}')
+        self.assertEqual(oyster_club.id, 43)
+        self.assertEqual(oyster_club.restaurant_ptr_id, 43)
+        self.assertEqual(oyster_club.place_ptr_id, 43)
+        self.assertEqual(oyster_club.restaurant_ptr.__class__, Restaurant)
+        self.assertEqual(oyster_club.place_ptr.__class__, Place)
+        self.assertEqual(oyster_club.name, "The Oyster Club")
 
     def test_dangling_foreign_keys(self):
         heston_blumenthal = Chef.objects.create(name="Heston Blumenthal")

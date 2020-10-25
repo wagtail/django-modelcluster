@@ -276,7 +276,7 @@ class ChildFormsetTest(TestCase):
             'form-2-id': '',
         })
         self.assertFalse(band_members_formset.is_valid())
-        self.assertEqual(band_members_formset.non_form_errors()[0], "Please submit 2 or fewer forms.")
+        self.assertEqual(band_members_formset.non_form_errors().as_data()[0].code, "too_many_forms")
 
     def test_max_num_pass_validation(self):
         BandMembersFormset = childformset_factory(Band, BandMember, max_num=2, validate_max=True)
@@ -319,7 +319,7 @@ class ChildFormsetTest(TestCase):
             'form-0-id': '',
         })
         self.assertFalse(band_members_formset.is_valid())
-        self.assertEqual(band_members_formset.non_form_errors()[0], "Please submit 2 or more forms.")
+        self.assertEqual(band_members_formset.non_form_errors().as_data()[0].code, "too_few_forms")
 
     def test_min_num_pass_validation(self):
         BandMembersFormset = childformset_factory(Band, BandMember, min_num=2, validate_min=True)

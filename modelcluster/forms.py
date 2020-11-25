@@ -261,6 +261,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
 
                 kwargs = {
                     'extra': cls.extra_form_count,
+                    'form': cls.child_form(),
                     'formfield_callback': formfield_callback,
                     'fk_name': rel.field.name,
                     'widgets': widgets
@@ -273,7 +274,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                 except AttributeError:
                     pass
 
-                formset = childformset_factory(opts.model, rel.field.model, form=cls.child_form(), **kwargs)
+                formset = childformset_factory(opts.model, rel.field.model, **kwargs)
                 formsets[rel_name] = formset
 
             new_class.formsets = formsets

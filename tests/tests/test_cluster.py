@@ -5,12 +5,13 @@ import itertools
 
 from django.test import TestCase
 from django.db import IntegrityError
+from django.db.models import Prefetch
 
 from modelcluster.models import get_all_child_relations
 from modelcluster.queryset import FakeQuerySet
 
 from tests.models import Band, BandMember, Place, Restaurant, SeafoodRestaurant, Review, Album, \
-    Article, Author, Category, Person, Room, House, Log, Song, Vocalist
+    Article, Author, Category, Person, Room, House, Log, Dish, MenuItem, Wine, Song, Vocalist
 
 
 class ClusterTest(TestCase):
@@ -799,6 +800,64 @@ class ParentalM2MTest(TestCase):
         )
 
 
+class ParentalManyToManyPrefetchTests(TestCase):
+    def setUp(self):
+        # Create 10 articles with 10 authors each.
+        authors = Author.objects.bulk_create(
+            Author(id=i, name=str(i)) for i in range(10)
+        )
+        authors = Author.objects.all()
+
+        for i in range(10):
+            article = Article(title=str(i))
+            article.authors = authors
+            article.save()
+
+    def get_author_names(self, articles):
+        return [
+            author.name
+            for article in articles
+            for author in article.authors.all()
+        ]
+
+    def test_prefetch_related(self):
+        with self.assertNumQueries(11):
+            names = self.get_author_names(Article.objects.all())
+
+        with self.assertNumQueries(2):
+            prefetched_names = self.get_author_names(
+                Article.objects.prefetch_related('authors')
+            )
+
+        self.assertEqual(names, prefetched_names)
+
+    def test_prefetch_related_with_custom_queryset(self):
+        from django.db.models import Prefetch
+
+        with self.assertNumQueries(2):
+            names = self.get_author_names(
+                Article.objects.prefetch_related(
+                    Prefetch('authors', queryset=Author.objects.filter(name__lt='5'))
+                )
+            )
+
+        self.assertEqual(len(names), 50)
+
+    def test_prefetch_from_fake_queryset(self):
+        article = Article(title='Article with related articles')
+        article.related_articles = list(Article.objects.all())
+
+        with self.assertNumQueries(10):
+            names = self.get_author_names(article.related_articles.all())
+
+        with self.assertNumQueries(1):
+            prefetched_names = self.get_author_names(
+                article.related_articles.prefetch_related('authors')
+            )
+
+        self.assertEqual(names, prefetched_names)
+
+
 class PrefetchRelatedTest(TestCase):
     def test_fakequeryset_prefetch_related(self):
         person1 = Person.objects.create(name='Joe')
@@ -830,3 +889,21 @@ class PrefetchRelatedTest(TestCase):
         with self.assertNumQueries(0):
             main_rooms = [ house.main_room for house in person1.houses.all() ]
             self.assertEqual(len(main_rooms), 2)
+
+    def test_prefetch_related_with_lookup(self):
+        restaurant1 = Restaurant.objects.create(name='The Jolly Beaver')
+        restaurant2 = Restaurant.objects.create(name='The Prancing Rhino')
+        dish1 = Dish.objects.create(name='Goodies')
+        dish2 = Dish.objects.create(name='Baddies')
+        wine1 = Wine.objects.create(name='Chateau1')
+        wine2 = Wine.objects.create(name='Chateau2')
+        menu_item1 = MenuItem.objects.create(restaurant=restaurant1, dish=dish1, recommended_wine=wine1, price=1)
+        menu_item2 = MenuItem.objects.create(restaurant=restaurant2, dish=dish2, recommended_wine=wine2, price=10)
+
+        query = Restaurant.objects.all().prefetch_related(
+            Prefetch('menu_items', queryset=MenuItem.objects.only('price', 'recommended_wine').select_related('recommended_wine'))
+        )
+
+        res = list(query)
+        self.assertEqual(query[0].menu_items.all()[0], menu_item1)
+        self.assertEqual(query[1].menu_items.all()[0], menu_item2)

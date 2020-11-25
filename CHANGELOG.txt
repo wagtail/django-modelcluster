@@ -1,6 +1,13 @@
 Changelog
 =========
 
+5.1 (10.09.2020)
+~~~~~~~~~~~~~~~~
+* Allow child form class to be overridden in the `formsets` Meta property of ClusterForm (Helder Correia)
+* Add prefetch_related support to ParentalManyToManyField (Andy Chosak)
+* Implement `copy_child_relation` and `copy_all_child_relations` methods on ClusterableModel (Karl Hobley)
+* Fix: Fix behavior of ParentalKeys and prefetch_related() supplied with a lookup queryset (Juha Yrjölä)
+
 5.0.2 (26.05.2020)
 ~~~~~~~~~~~~~~~~~~
 * Fix: Fix compatibility with django-taggit 1.3.0 (Martin Sandström)

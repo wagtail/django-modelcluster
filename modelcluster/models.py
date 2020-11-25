@@ -4,7 +4,7 @@ import json
 import datetime
 
 from django.core.exceptions import FieldDoesNotExist
-from django.db import models
+from django.db import models, transaction
 from django.db.models.fields.related import ForeignObjectRel
 from django.utils.encoding import is_protected_type
 from django.core.serializers.json import DjangoJSONEncoder
@@ -270,6 +270,87 @@ class ClusterableModel(models.Model):
     @classmethod
     def from_json(cls, json_data, check_fks=True, strict_fks=False):
         return cls.from_serializable_data(json.loads(json_data), check_fks=check_fks, strict_fks=strict_fks)
+
+    @transaction.atomic
+    def copy_child_relation(self, child_relation, target, commit=False, append=False):
+        """
+        Copies all of the objects in the accessor_name to the target object.
+
+        For example, say we have an event with speakers (my_event) and we need to copy these to another event (my_other_event):
+
+            my_event.copy_child_relation('speakers', my_other_event)
+
+        By default, this copies the child objects without saving them. Set the commit paremter to True to save the objects
+        but note that this would cause an exception if the target object is not saved.
+
+        This will overwrite the child relation on the target object. This is to avoid any issues with unique keys
+        and/or sort_order. If you want it to append. set the `append` parameter to True.
+
+        This method returns a dictionary mapping the child relation/primary key on the source object to the new object created for the
+        target object.
+        """
+        # A dict that maps child objects from their old IDs to their new objects
+        child_object_map = {}
+
+        if isinstance(child_relation, str):
+            child_relation = self._meta.get_field(child_relation)
+
+        if not isinstance(child_relation.remote_field, ParentalKey):
+            raise LookupError("copy_child_relation can only be used for relationships defined with a ParentalKey")
+
+        # The name of the ParentalKey field on the child model
+        parental_key_name = child_relation.field.attname
+
+        # Get managers for both the source and target objects
+        source_manager = getattr(self, child_relation.get_accessor_name())
+        target_manager = getattr(target, child_relation.get_accessor_name())
+
+        if not append:
+            target_manager.clear()
+
+        for child_object in source_manager.all().order_by('pk'):
+            old_pk = child_object.pk
+            is_saved = old_pk is not None
+            child_object.pk = None
+            setattr(child_object, parental_key_name, target.id)
+            target_manager.add(child_object)
+
+            # Add mapping to object
+            # If the PK is none, add them into a list since there may be multiple of these
+            if old_pk is not None:
+                child_object_map[(child_relation, old_pk)] = child_object
+            else:
+                if (child_relation, None) not in child_object_map:
+                    child_object_map[(child_relation, None)] = []
+
+                child_object_map[(child_relation, None)].append(child_object)
+
+        if commit:
+            target_manager.commit()
+
+        return child_object_map
+
+    def copy_all_child_relations(self, target, exclude=None, commit=False, append=False):
+        """
+        Copies all of the objects in all child relations to the target object.
+
+        This will overwrite all of the child relations on the target object.
+
+        Set exclude to a list of child relation accessor names that shouldn't be copied.
+
+        This method returns a dictionary mapping the child_relation/primary key on the source object to the new object created for the
+        target object.
+        """
+        exclude = exclude or []
+        child_object_map = {}
+
+        for child_relation in get_all_child_relations(self):
+            if child_relation.get_accessor_name() in exclude:
+                continue
+
+            child_object_map.update(self.copy_child_relation(child_relation, target, commit=commit, append=append))
+
+        return child_object_map
 
     class Meta:
         abstract = True

@@ -154,6 +154,21 @@ class ClusterFormTest(TestCase):
         self.assertNotIn('release_date', form.formsets['albums'].forms[0].fields)
         self.assertEqual(Textarea, type(form.formsets['albums'].forms[0]['name'].field.widget))
 
+    def test_custom_formset_form(self):
+        class AlbumForm(ClusterForm):
+            pass
+
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                formsets = {
+                    'albums': {'fields': ['name'], 'form': AlbumForm}
+                }
+                fields = ['name']
+
+        form = BandForm()
+        self.assertTrue(isinstance(form.formsets.get("albums").forms[0], AlbumForm))
+
     def test_formfield_callback(self):
 
         def formfield_for_dbfield(db_field, **kwargs):

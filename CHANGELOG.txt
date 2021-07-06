@@ -1,6 +1,10 @@
 Changelog
 =========
 
+5.2 (xx.xx.xxxx) - IN DEVELOPMENT
+~~~~~~~~~~~~~~~~
+* ...
+
 5.1 (10.09.2020)
 ~~~~~~~~~~~~~~~~
 * Allow child form class to be overridden in the `formsets` Meta property of ClusterForm (Helder Correia)

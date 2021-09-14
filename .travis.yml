@@ -26,17 +26,23 @@ matrix:
      python: 3.6
    - env: TOXENV=py36-dj22-postgres-taggit13
      python: 3.6
+   - env: TOXENV=py36-dj32-postgres-taggit13
+     python: 3.6
    - env: TOXENV=py37-dj30-postgres-taggit13
+     python: 3.7
+   - env: TOXENV=py37-dj32-postgres-taggit13
      python: 3.7
    - env: TOXENV=py38-dj31-postgres-taggit13
      python: 3.8
-   - env: TOXENV=py38-dj31stable-postgres-taggit13
+   - env: TOXENV=py38-dj32-postgres-taggit13
+     python: 3.8
+   - env: TOXENV=py38-dj32stable-postgres-taggit13
      python: 3.8
    - env: TOXENV=py38-djmaster-postgres-taggit13
      python: 3.8
   allow_failures:
     # allow failures against Django git master and 3.1.x stable
-    - env: TOXENV=py38-dj31stable-postgres-taggit13
+    - env: TOXENV=py38-dj32stable-postgres-taggit13
     - env: TOXENV=py38-djmaster-postgres-taggit13
 
 install:

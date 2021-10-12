@@ -169,6 +169,31 @@ class ClusterFormTest(TestCase):
         form = BandForm()
         self.assertTrue(isinstance(form.formsets.get("albums").forms[0], AlbumForm))
 
+    def test_alternative_formset_name(self):
+        """Support specifying a formset_name that differs from the relation"""
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                formsets = {
+                    'albums': {'fields': ['name'], 'formset_name': 'records'}
+                }
+                fields = ['name']
+
+        form = BandForm({
+            'name': "The Beatles",
+
+            'records-TOTAL_FORMS': 1,
+            'records-INITIAL_FORMS': 0,
+            'records-MAX_NUM_FORMS': 1000,
+
+            'records-0-name': 'Please Please Me',
+            'records-0-id': '',
+        })
+
+        self.assertTrue(form.is_valid())
+        result = form.save(commit=False)
+        self.assertEqual(result.albums.first().name, 'Please Please Me')
+
     def test_formfield_callback(self):
 
         def formfield_for_dbfield(db_field, **kwargs):

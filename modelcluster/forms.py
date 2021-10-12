@@ -264,7 +264,8 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                     'form': cls.child_form(),
                     'formfield_callback': formfield_callback,
                     'fk_name': rel.field.name,
-                    'widgets': widgets
+                    'widgets': widgets,
+                    'formset_name': rel_name
                 }
 
                 # see if opts.formsets looks like a dict; if so, allow the value
@@ -274,8 +275,9 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                 except AttributeError:
                     pass
 
+                formset_name = kwargs.pop('formset_name')
                 formset = childformset_factory(opts.model, rel.field.model, **kwargs)
-                formsets[rel_name] = formset
+                formsets[formset_name] = formset
 
             new_class.formsets = formsets
             new_class._has_explicit_formsets = (opts.formsets is not None or opts.exclude_formsets is not None)

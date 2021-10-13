@@ -5,6 +5,7 @@ Changelog
 ~~~~~~~~~~~~~~~~
 * Implement `copy_cluster` method on ClusterableModel (Karl Hobley)
 * Add `formset_name` option on ClusterableModel formsets to allow the formset name to differ from the relation name (Matt Westcott)
+* Fix: Fix tests for Django 3.2 (Alex Tomkins, Matt Westcott, María Fernanda Magallanes)
 
 5.1 (10.09.2020)
 ~~~~~~~~~~~~~~~~

@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import unittest
 
+from django import VERSION as DJANGO_VERSION
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from tests.models import Band, BandMember, Album, Restaurant, Article, Author, Document, Gallery, Song
@@ -333,8 +334,12 @@ class ClusterFormTest(TestCase):
             'members-2-id': '',
         }, instance=beatles)
 
-        with self.assertRaises(ValidationError):
-            form.is_valid()
+        if DJANGO_VERSION >= (3, 2):
+            # in Django >=3.2, a missing ManagementForm gives a validation error rather than an exception
+            self.assertFalse(form.is_valid())
+        else:
+            with self.assertRaises(ValidationError):
+                form.is_valid()
 
     def test_saved_items_with_non_db_relation(self):
         class BandForm(ClusterForm):

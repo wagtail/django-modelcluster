@@ -158,7 +158,7 @@ class TagTest(TestCase):
     def test_integers(self):
         """Adding an integer as a tag should raise a ValueError"""
         mission_burrito = Place(name='Mission Burrito')
-        with self.assertRaisesRegexp(ValueError, (
+        with self.assertRaisesRegex(ValueError, (
                 r"Cannot add 1 \(<(type|class) 'int'>\). "
                 r"Expected <class 'django.db.models.base.ModelBase'> or str.")):
             mission_burrito.tags.add(1)

@@ -75,7 +75,13 @@ class _ClusterTaggableManager(_TaggableManager):
         # to ensure that the correct set of m2m_changed signals is fired, and our reimplementation here
         # doesn't fire them at all (which makes logical sense, because the whole point of this module is
         # that the add/remove/set/clear operations don't write to the database).
-        return super(_ClusterTaggableManager, self).set(*tags, clear=True)
+        if TAGGIT_VERSION >= (2, 0, 0):
+            if isinstance(tags[0], (list, tuple)):
+                tags = tags[0]
+            args = [tags]
+        else:
+            args = tags
+        return super(_ClusterTaggableManager, self).set(*args, clear=True)
 
     @require_instance_manager
     def clear(self):

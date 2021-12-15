@@ -10,8 +10,8 @@ from django.db.models import Prefetch
 from modelcluster.models import get_all_child_relations
 from modelcluster.queryset import FakeQuerySet
 
-from tests.models import Band, BandMember, Place, Restaurant, SeafoodRestaurant, Review, Album, \
-    Article, Author, Category, Person, Room, House, Log, Dish, MenuItem, Wine
+from tests.models import Band, BandMember, Chef, Place, Restaurant, SeafoodRestaurant, Review, \
+    Album, Article, Author, Category, Person, Room, House, Log, Dish, MenuItem, Wine
 
 
 class ClusterTest(TestCase):
@@ -96,8 +96,8 @@ class ClusterTest(TestCase):
         self.assertRaises(BandMember.DoesNotExist, lambda: beatles.members.get(name='Reginald Dwight'))
         self.assertRaises(BandMember.MultipleObjectsReturned, lambda: beatles.members.get())
 
-        self.assertEqual([('Paul McCartney',)], beatles.members.filter(name='Paul McCartney').values_list('name'))
-        self.assertEqual(['Paul McCartney'], beatles.members.filter(name='Paul McCartney').values_list('name', flat=True))
+        self.assertEqual([('Paul McCartney',)], list(beatles.members.filter(name='Paul McCartney').values_list('name')))
+        self.assertEqual(['Paul McCartney'], list(beatles.members.filter(name='Paul McCartney').values_list('name', flat=True)))
         # quick-and-dirty check that we can invoke values_list with empty args list
         beatles.members.filter(name='Paul McCartney').values_list()
 
@@ -476,6 +476,140 @@ class ClusterTest(TestCase):
         self.assertEqual(
             logs.get(time__second=2).data,
             "one person died"
+        )
+
+    def test_queryset_filtering_accross_foreignkeys(self):
+        gordon = Chef.objects.create(name="Gordon Ramsay")
+        strawberry_fields = Restaurant.objects.create(name="Strawberry Fields", proprietor=gordon)
+
+        marco = Chef.objects.create(name="Marco Pierre White")
+        the_yellow_submarine = Restaurant.objects.create(name="The Yellow Submarine", proprietor=marco)
+
+        band = Band(
+            name="The Beatles",
+            members=[
+                BandMember(name="John Lennon", favourite_restaurant=strawberry_fields),
+                BandMember(name="Ringo Starr", favourite_restaurant=the_yellow_submarine)
+            ],
+        )
+
+        # Filter over a single relationship
+        # ---------------------------------------
+        # Using the default/exact lookup type
+        self.assertEqual(
+            tuple(band.members.filter(favourite_restaurant__name="Strawberry Fields")),
+            (band.members.get(name="John Lennon"),)
+        )
+        self.assertEqual(
+            tuple(band.members.filter(favourite_restaurant__name="The Yellow Submarine")),
+            (band.members.get(name="Ringo Starr"),)
+        )
+        # Using an alternative lookup type
+        self.assertEqual(
+            tuple(band.members.filter(favourite_restaurant__name__icontains="straw")),
+            (band.members.get(name="John Lennon"),)
+        )
+        self.assertEqual(
+            tuple(band.members.filter(favourite_restaurant__name__icontains="yello")),
+            (band.members.get(name="Ringo Starr"),)
+        )
+
+        # Filtering over 2 relationships
+        # ---------------------------------------
+        # Using a default/exact field lookup
+        self.assertEqual(
+            tuple(band.members.filter(favourite_restaurant__proprietor__name="Gordon Ramsay")),
+            (band.members.get(name="John Lennon"),)
+        )
+        self.assertEqual(
+            tuple(band.members.filter(favourite_restaurant__proprietor__name="Marco Pierre White")),
+            (band.members.get(name="Ringo Starr"),)
+        )
+        # Using an alternative lookup type
+        self.assertEqual(
+            tuple(band.members.filter(favourite_restaurant__proprietor__name__iexact="gORDON rAMSAY")),
+            (band.members.get(name="John Lennon"),)
+        )
+        self.assertEqual(
+            tuple(band.members.filter(favourite_restaurant__proprietor__name__iexact="mARCO pIERRE wHITE")),
+            (band.members.get(name="Ringo Starr"),)
+        )
+        # Using an exact proprietor comparisson
+        self.assertEqual(
+            tuple(band.members.filter(favourite_restaurant__proprietor=gordon)),
+            (band.members.get(name="John Lennon"),)
+        )
+        self.assertEqual(
+            tuple(band.members.filter(favourite_restaurant__proprietor=marco)),
+            (band.members.get(name="Ringo Starr"),)
+        )
+
+    def test_filtering_via_reverse_foreignkey(self):
+        band = Band(
+            name="The Beatles",
+            members=[
+                BandMember(name="John Lennon"),
+                BandMember(name="Ringo Starr"),
+            ],
+        )
+        self.assertEqual(
+            tuple(band.members.filter(band__name="The Beatles")),
+            tuple(band.members.all())
+        )
+        self.assertEqual(
+            tuple(band.members.filter(band__name="The Monkeys")),
+            ()
+        )
+
+    def test_ordering_accross_foreignkeys(self):
+        gordon = Chef.objects.create(name="Gordon Ramsay")
+        strawberry_fields = Restaurant.objects.create(name="Strawberry Fields", proprietor=gordon)
+
+        marco = Chef.objects.create(name="Marco Pierre White")
+        the_yellow_submarine = Restaurant.objects.create(name="The Yellow Submarine", proprietor=marco)
+
+        band = Band(
+            name="The Beatles",
+            members=[
+                BandMember(name="John Lennon", favourite_restaurant=strawberry_fields),
+                BandMember(name="Ringo Starr", favourite_restaurant=the_yellow_submarine)
+            ],
+        )
+
+        # Ordering accross a single relationship
+        # ---------------------------------------
+        self.assertEqual(
+            tuple(band.members.order_by("favourite_restaurant__name")),
+            (
+                band.members.get(name="John Lennon"),
+                band.members.get(name="Ringo Starr"),
+            )
+        )
+        # How about ordering in reverse?
+        self.assertEqual(
+            tuple(band.members.order_by("-favourite_restaurant__name")),
+            (
+                band.members.get(name="Ringo Starr"),
+                band.members.get(name="John Lennon"),
+            )
+        )
+
+        # Ordering accross 2 relationships
+        # --------------------------------
+        self.assertEqual(
+            tuple(band.members.order_by("favourite_restaurant__proprietor__name")),
+            (
+                band.members.get(name="John Lennon"),
+                band.members.get(name="Ringo Starr"),
+            )
+        )
+        # How about ordering in reverse?
+        self.assertEqual(
+            tuple(band.members.order_by("-favourite_restaurant__proprietor__name")),
+            (
+                band.members.get(name="Ringo Starr"),
+                band.members.get(name="John Lennon"),
+            )
         )
 
     def test_prefetch_related(self):

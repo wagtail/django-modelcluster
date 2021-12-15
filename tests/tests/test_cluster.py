@@ -170,6 +170,40 @@ class ClusterTest(TestCase):
         # Filtering or ordering after using values_list() should not raise an error
         beatles.members.values_list("name").filter(name__contains="n").order_by("name")
 
+    def test_values(self):
+        beatles = Band(
+            name='The Beatles',
+            members=[
+                BandMember(name='John Lennon'),
+                BandMember(name='Paul McCartney'),
+            ]
+        )
+
+        # Not specifying 'fields' should return dictionaries with all field values
+        self.assertEqual(
+            [
+                beatles.members.get(name='Paul McCartney').__dict__
+            ],
+            list(beatles.members.filter(name='Paul McCartney').values())
+        )
+
+        NAME_ONLY_DICT = {"name": "Paul McCartney"}
+
+        # Specifying 'fields' should return a dictionary of just those field values
+        self.assertEqual([NAME_ONLY_DICT], list(beatles.members.filter(name='Paul McCartney').values('name')))
+
+        # get() should return a dict if used after values()
+        self.assertEqual(NAME_ONLY_DICT, beatles.members.filter(name='Paul McCartney').values('name').get())
+
+        # first() should return a dict if used after values_list()
+        self.assertEqual(NAME_ONLY_DICT, beatles.members.filter(name='Paul McCartney').values('name').first())
+
+        # last() should return a dict if used after values_list()
+        self.assertEqual(NAME_ONLY_DICT, beatles.members.filter(name='Paul McCartney').values('name').last())
+
+        # Filtering or ordering after using values() should not raise an error
+        beatles.members.values("name").filter(name__contains="n").order_by("name")
+
     def test_related_manager_assignment_ops(self):
         beatles = Band(name='The Beatles')
         john = BandMember(name='John Lennon')

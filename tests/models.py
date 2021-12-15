@@ -218,8 +218,17 @@ class House(models.Model):
         ordering = ['id']
 
 
-class Room(models.Model):
+class Feature(models.Model):
+    name = models.CharField(max_length=255)
+    desirability = models.PositiveIntegerField()
+
+    class Meta:
+        ordering = ["-desirability"]
+
+
+class Room(ClusterableModel):
     name = models.CharField(max_length=50)
+    features = ParentalManyToManyField(Feature, blank=True, related_name='rooms')
 
     class Meta:
         ordering = ['id']

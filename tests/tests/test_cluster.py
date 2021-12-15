@@ -9,9 +9,10 @@ from django.db.models import Prefetch
 
 from modelcluster.models import get_all_child_relations
 from modelcluster.queryset import FakeQuerySet
+from modelcluster.utils import ManyToManyTraversalError
 
-from tests.models import Band, BandMember, Chef, Place, Restaurant, SeafoodRestaurant, Review, \
-    Album, Article, Author, Category, Person, Room, House, Log, Dish, MenuItem, Wine
+from tests.models import Band, BandMember, Chef, Feature, Place, Restaurant, SeafoodRestaurant, \
+    Review, Album, Article, Author, Category, Person, Room, House, Log, Dish, MenuItem, Wine
 
 
 class ClusterTest(TestCase):
@@ -611,6 +612,25 @@ class ClusterTest(TestCase):
                 band.members.get(name="John Lennon"),
             )
         )
+
+    def test_filtering_via_manytomany_raises_exception(self):
+        bay_window = Feature.objects.create(name="Bay window", desirability=6)
+        underfloor_heating = Feature.objects.create(name="Underfloor heading", desirability=10)
+        open_fire = Feature.objects.create(name="Open fire", desirability=3)
+        log_burner = Feature.objects.create(name="Log burner", desirability=10)
+
+        modern_living_room = Room.objects.create(name="Modern living room", features=[bay_window, underfloor_heating, log_burner])
+        classic_living_room = Room.objects.create(name="Classic living room", features=[bay_window, open_fire])
+
+        modern_house = House.objects.create(name="Modern house", address="1 Yellow Brick Road", main_room=modern_living_room)
+        classic_house = House.objects.create(name="Classic house", address="3 Yellow Brick Road", main_room=classic_living_room)
+
+        tenant = Person(
+            name="Alex", houses=[modern_house, classic_house]
+        )
+
+        with self.assertRaises(ManyToManyTraversalError):
+            tenant.houses.filter(main_room__features__name="Bay window")
 
     def test_prefetch_related(self):
         Band.objects.create(name='The Beatles', members=[

@@ -97,11 +97,6 @@ class ClusterTest(TestCase):
         self.assertRaises(BandMember.DoesNotExist, lambda: beatles.members.get(name='Reginald Dwight'))
         self.assertRaises(BandMember.MultipleObjectsReturned, lambda: beatles.members.get())
 
-        self.assertEqual([('Paul McCartney',)], list(beatles.members.filter(name='Paul McCartney').values_list('name')))
-        self.assertEqual(['Paul McCartney'], list(beatles.members.filter(name='Paul McCartney').values_list('name', flat=True)))
-        # quick-and-dirty check that we can invoke values_list with empty args list
-        beatles.members.filter(name='Paul McCartney').values_list()
-
         self.assertTrue(beatles.members.filter(name='Paul McCartney').exists())
         self.assertFalse(beatles.members.filter(name='Reginald Dwight').exists())
 
@@ -136,6 +131,44 @@ class ClusterTest(TestCase):
 
         # queries on beatles.members should now revert to SQL
         self.assertTrue(beatles.members.extra(where=["tests_bandmember.name='John Lennon'"]).exists())
+
+    def test_values_list(self):
+        beatles = Band(
+            name='The Beatles',
+            members=[
+                BandMember(name='John Lennon'),
+                BandMember(name='Paul McCartney'),
+            ]
+        )
+
+        # Not specifying 'fields' should return a tuple of all field values
+        self.assertEqual(
+            [
+                # ID, band, name, favourite_restaurant
+                (None, beatles, 'Paul McCartney', None)
+            ],
+            list(beatles.members.filter(name='Paul McCartney').values_list())
+        )
+
+        NAME_ONLY_TUPLE = ('Paul McCartney',)
+
+        # Specifying 'fields' should return a tuple of just those field values
+        self.assertEqual([NAME_ONLY_TUPLE], list(beatles.members.filter(name='Paul McCartney').values_list('name')))
+
+        # get() should return a tuple if used after values_list()
+        self.assertEqual(NAME_ONLY_TUPLE, beatles.members.filter(name='Paul McCartney').values_list('name').get())
+
+        # first() should return a tuple if used after values_list()
+        self.assertEqual(NAME_ONLY_TUPLE, beatles.members.filter(name='Paul McCartney').values_list('name').first())
+
+        # last() should return a tuple if used after values_list()
+        self.assertEqual(NAME_ONLY_TUPLE, beatles.members.filter(name='Paul McCartney').values_list('name').last())
+
+        # And the 'flat' argument should work as it does in Django
+        self.assertEqual(['Paul McCartney'], list(beatles.members.filter(name='Paul McCartney').values_list('name', flat=True)))
+
+        # Filtering or ordering after using values_list() should not raise an error
+        beatles.members.values_list("name").filter(name__contains="n").order_by("name")
 
     def test_related_manager_assignment_ops(self):
         beatles = Band(name='The Beatles')

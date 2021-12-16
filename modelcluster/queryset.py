@@ -376,8 +376,8 @@ class DictIterable(FakeQuerySetIterable):
         for obj in self.queryset.results:
             if self.queryset.dict_fields:
                 yield {
-                    field: getattr(obj, field)
-                    for field in self.queryset.dict_fields
+                    field_name: extract_field_value(obj, field_name, suppress_fielddoesnotexist=True)
+                    for field_name in self.queryset.dict_fields
                 }
             else:
                 yield obj.__dict__
@@ -387,14 +387,14 @@ class ValuesListIterable(FakeQuerySetIterable):
     def __iter__(self):
         field_names = self.queryset.tuple_fields or [field.name for field in self.queryset.model._meta.fields]
         for obj in self.queryset.results:
-            yield tuple([getattr(obj, field_name) for field_name in field_names])
+            yield tuple([extract_field_value(obj, field_name, suppress_fielddoesnotexist=True) for field_name in field_names])
 
 
 class FlatValuesListIterable(FakeQuerySetIterable):
     def __iter__(self):
         field_name = self.queryset.tuple_fields[0]
         for obj in self.queryset.results:
-            yield getattr(obj, field_name)
+            yield extract_field_value(obj, field_name, suppress_fielddoesnotexist=True)
 
 
 class FakeQuerySet(object):
@@ -494,12 +494,18 @@ class FakeQuerySet(object):
     def values(self, *fields):
         clone = self.get_clone()
         clone.dict_fields = fields
+        # Ensure all 'fields' are available model fields
+        for f in fields:
+            get_model_field(self.model, f)
         clone.iterable_class = DictIterable
         return clone
 
     def values_list(self, *fields, flat=None):
         clone = self.get_clone()
         clone.tuple_fields = fields
+        # Ensure all 'fields' are available model fields
+        for f in fields:
+            get_model_field(self.model, f)
         if flat:
             if len(fields) > 1:
                 raise TypeError("'flat' is not valid when values_list is called with more than one field.")

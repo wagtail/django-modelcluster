@@ -361,13 +361,45 @@ def _build_test_function_from_filter(model, key_clauses, val):
     return constructor(model, attribute_name, val)
 
 
+class FakeQuerySetIterable:
+    def __init__(self, queryset):
+        self.queryset = queryset
+
+
+class ModelIterable(FakeQuerySetIterable):
+    def __iter__(self):
+        yield from self.queryset.results
+
+
+class ValuesListIterable(FakeQuerySetIterable):
+    def __iter__(self):
+        field_names = self.queryset.tuple_fields or [field.name for field in self.queryset.model._meta.fields]
+        for obj in self.queryset.results:
+            yield tuple([getattr(obj, field_name) for field_name in field_names])
+
+
+class FlatValuesListIterable(FakeQuerySetIterable):
+    def __iter__(self):
+        field_name = self.queryset.tuple_fields[0]
+        for obj in self.queryset.results:
+            yield getattr(obj, field_name)
+
+
 class FakeQuerySet(object):
     def __init__(self, model, results):
         self.model = model
         self.results = results
+        self.tuple_fields = []
+        self.iterable_class = ModelIterable
 
     def all(self):
         return self
+
+    def get_clone(self, results = None):
+        new = FakeQuerySet(self.model, results if results is not None else self.results)
+        new.tuple_fields = self.tuple_fields
+        new.iterable_class = self.iterable_class
+        return new
 
     def _get_filters(self, **kwargs):
         # a list of test functions; objects must pass all tests to be included
@@ -384,22 +416,20 @@ class FakeQuerySet(object):
     def filter(self, **kwargs):
         filters = self._get_filters(**kwargs)
 
-        filtered_results = [
+        clone = self.get_clone(results=[
             obj for obj in self.results
             if all([test(obj) for test in filters])
-        ]
-
-        return FakeQuerySet(self.model, filtered_results)
+        ])
+        return clone
 
     def exclude(self, **kwargs):
         filters = self._get_filters(**kwargs)
 
-        filtered_results = [
+        clone = self.get_clone(results=[
             obj for obj in self.results
             if not all([test(obj) for test in filters])
-        ]
-
-        return FakeQuerySet(self.model, filtered_results)
+        ])
+        return clone
 
     def get(self, **kwargs):
         results = self.filter(**kwargs)
@@ -436,35 +466,24 @@ class FakeQuerySet(object):
         prefetch_related_objects(self.results, *args)
         return self
 
-    def values_list(self, *fields, **kwargs):
-        # FIXME: values_list should return an object that behaves like both a queryset and a list,
-        # so that we can do things like Foo.objects.values_list('id').order_by('id')
 
-        flat = kwargs.get('flat')  # TODO: throw TypeError if other kwargs are present
 
-        if not fields:
-            # return a tuple of all fields
-            field_names = [field.name for field in self.model._meta.fields]
-            return [
-                tuple([getattr(obj, field_name) for field_name in field_names])
-                for obj in self.results
-            ]
 
+    def values_list(self, *fields, flat=None):
+        clone = self.get_clone()
+        clone.tuple_fields = fields
         if flat:
             if len(fields) > 1:
                 raise TypeError("'flat' is not valid when values_list is called with more than one field.")
-            field_name = fields[0]
-            return [getattr(obj, field_name) for obj in self.results]
+            clone.iterable_class = FlatValuesListIterable
         else:
-            return [
-                tuple([getattr(obj, field_name) for field_name in fields])
-                for obj in self.results
-            ]
+            clone.iterable_class = ValuesListIterable
+        return clone
 
     def order_by(self, *fields):
-        results = self.results[:]  # make a copy of results
-        sort_by_fields(results, fields)
-        return FakeQuerySet(self.model, results)
+        clone = self.get_clone(results=self.results[:])
+        sort_by_fields(clone.results, fields)
+        return clone
 
     # a standard QuerySet will store the results in _result_cache on running the query;
     # this is effectively the same as self.results on a FakeQuerySet, and so we'll make
@@ -482,7 +501,8 @@ class FakeQuerySet(object):
         return self.results[k]
 
     def __iter__(self):
-        return self.results.__iter__()
+        iterator = self.iterable_class(self)
+        yield from iterator
 
     def __nonzero__(self):
         return bool(self.results)

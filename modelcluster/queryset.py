@@ -371,6 +371,18 @@ class ModelIterable(FakeQuerySetIterable):
         yield from self.queryset.results
 
 
+class DictIterable(FakeQuerySetIterable):
+    def __iter__(self):
+        for obj in self.queryset.results:
+            if self.queryset.dict_fields:
+                yield {
+                    field: getattr(obj, field)
+                    for field in self.queryset.dict_fields
+                }
+            else:
+                yield obj.__dict__
+
+
 class ValuesListIterable(FakeQuerySetIterable):
     def __iter__(self):
         field_names = self.queryset.tuple_fields or [field.name for field in self.queryset.model._meta.fields]
@@ -389,6 +401,7 @@ class FakeQuerySet(object):
     def __init__(self, model, results):
         self.model = model
         self.results = results
+        self.dict_fields = []
         self.tuple_fields = []
         self.iterable_class = ModelIterable
 
@@ -397,6 +410,7 @@ class FakeQuerySet(object):
 
     def get_clone(self, results = None):
         new = FakeQuerySet(self.model, results if results is not None else self.results)
+        new.dict_fields = self.dict_fields
         new.tuple_fields = self.tuple_fields
         new.iterable_class = self.iterable_class
         return new
@@ -468,6 +482,11 @@ class FakeQuerySet(object):
 
 
 
+    def values(self, *fields):
+        clone = self.get_clone()
+        clone.dict_fields = fields
+        clone.iterable_class = DictIterable
+        return clone
 
     def values_list(self, *fields, flat=None):
         clone = self.get_clone()

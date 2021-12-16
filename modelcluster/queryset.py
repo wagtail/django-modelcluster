@@ -446,13 +446,14 @@ class FakeQuerySet(object):
         return clone
 
     def get(self, **kwargs):
-        results = self.filter(**kwargs)
-        result_count = results.count()
+        clone = self.filter(**kwargs)
+        result_count = clone.count()
 
         if result_count == 0:
             raise self.model.DoesNotExist("%s matching query does not exist." % self.model._meta.object_name)
         elif result_count == 1:
-            return results[0]
+            for result in clone:
+                return result
         else:
             raise self.model.MultipleObjectsReturned(
                 "get() returned more than one %s -- it returned %s!" % (self.model._meta.object_name, result_count)
@@ -465,12 +466,14 @@ class FakeQuerySet(object):
         return bool(self.results)
 
     def first(self):
-        if self.results:
-            return self.results[0]
+        for result in self:
+            return result
 
     def last(self):
         if self.results:
-            return self.results[-1]
+            clone = self.get_clone(results=reversed(self.results))
+            for result in clone:
+                return result
 
     def select_related(self, *args):
         # has no meaningful effect on non-db querysets

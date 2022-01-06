@@ -49,6 +49,12 @@ jobs:
             psycopg: "psycopg2>=2.6"
             experimental: false
           - python: "3.10"
+            django: "Django>=4.0,<4.1"
+            taggit: "django-taggit>=2.0"
+            database: "postgresql"
+            psycopg: "psycopg2>=2.6"
+            experimental: false
+          - python: "3.10"
             django: "git+https://github.com/django/django.git@stable/4.0.x#egg=Django"
             taggit: "django-taggit>=2.0"
             database: "sqlite3"

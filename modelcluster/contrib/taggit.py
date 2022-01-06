@@ -64,7 +64,7 @@ class _ClusterTaggableManager(_TaggableManager):
         tagged_item_manager.remove(*tagged_items)
 
     @require_instance_manager
-    def set(self, *tags, **kwargs):
+    def set(self, *args, **kwargs):
         # Ignore the 'clear' kwarg (which defaults to False) and override it to be always true;
         # this means that set is implemented as a clear then an add, which was the standard behaviour
         # prior to django-taggit 0.19 (https://github.com/alex/django-taggit/commit/6542a702b590a5cfb91ea0de218b7f71ffd07c33).
@@ -75,7 +75,7 @@ class _ClusterTaggableManager(_TaggableManager):
         # to ensure that the correct set of m2m_changed signals is fired, and our reimplementation here
         # doesn't fire them at all (which makes logical sense, because the whole point of this module is
         # that the add/remove/set/clear operations don't write to the database).
-        return super(_ClusterTaggableManager, self).set(*tags, clear=True)
+        return super(_ClusterTaggableManager, self).set(*args, clear=True)
 
     @require_instance_manager
     def clear(self):

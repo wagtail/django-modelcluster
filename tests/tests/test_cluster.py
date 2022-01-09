@@ -16,6 +16,16 @@ from tests.models import Band, BandMember, Chef, Feature, Place, Restaurant, Sea
 
 
 class ClusterTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.gordon_ramsay = Chef.objects.create(name="Gordon Ramsay")
+        cls.strawberry_fields = Restaurant.objects.create(name="Strawberry Fields", proprietor=cls.gordon_ramsay)
+
+        cls.marco_pierre_white = Chef.objects.create(name="Marco Pierre White")
+        cls.the_yellow_submarine = Restaurant.objects.create(name="The Yellow Submarine", proprietor=cls.marco_pierre_white)
+
     def test_can_create_cluster(self):
         beatles = Band(name='The Beatles')
 
@@ -333,10 +343,7 @@ class ClusterTest(TestCase):
         self.assertEqual(3, beatles.members.filter(band=also_beatles).count())
 
     def test_queryset_filtering_on_models_with_inheritance(self):
-        strawberry_fields = Restaurant.objects.create(name='Strawberry Fields')
-        the_yellow_submarine = SeafoodRestaurant.objects.create(name='The Yellow Submarine')
-
-        john = BandMember(name='John Lennon', favourite_restaurant=strawberry_fields)
+        john = BandMember(name='John Lennon', favourite_restaurant=self.strawberry_fields)
         ringo = BandMember(name='Ringo Starr', favourite_restaurant=Restaurant.objects.get(name='The Yellow Submarine'))
 
         beatles = Band(name='The Beatles', members=[john, ringo])
@@ -547,17 +554,11 @@ class ClusterTest(TestCase):
         )
 
     def test_queryset_filtering_accross_foreignkeys(self):
-        gordon = Chef.objects.create(name="Gordon Ramsay")
-        strawberry_fields = Restaurant.objects.create(name="Strawberry Fields", proprietor=gordon)
-
-        marco = Chef.objects.create(name="Marco Pierre White")
-        the_yellow_submarine = Restaurant.objects.create(name="The Yellow Submarine", proprietor=marco)
-
         band = Band(
             name="The Beatles",
             members=[
-                BandMember(name="John Lennon", favourite_restaurant=strawberry_fields),
-                BandMember(name="Ringo Starr", favourite_restaurant=the_yellow_submarine)
+                BandMember(name="John Lennon", favourite_restaurant=self.strawberry_fields),
+                BandMember(name="Ringo Starr", favourite_restaurant=self.the_yellow_submarine)
             ],
         )
 
@@ -630,17 +631,11 @@ class ClusterTest(TestCase):
         )
 
     def test_ordering_accross_foreignkeys(self):
-        gordon = Chef.objects.create(name="Gordon Ramsay")
-        strawberry_fields = Restaurant.objects.create(name="Strawberry Fields", proprietor=gordon)
-
-        marco = Chef.objects.create(name="Marco Pierre White")
-        the_yellow_submarine = Restaurant.objects.create(name="The Yellow Submarine", proprietor=marco)
-
         band = Band(
             name="The Beatles",
             members=[
-                BandMember(name="John Lennon", favourite_restaurant=strawberry_fields),
-                BandMember(name="Ringo Starr", favourite_restaurant=the_yellow_submarine)
+                BandMember(name="John Lennon", favourite_restaurant=self.strawberry_fields),
+                BandMember(name="Ringo Starr", favourite_restaurant=self.the_yellow_submarine),
             ],
         )
 

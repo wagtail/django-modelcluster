@@ -356,7 +356,7 @@ class ClusterTest(TestCase):
 
         # queried instance is more specific
         self.assertEqual(
-            list(beatles.members.filter(favourite_restaurant=the_yellow_submarine)),
+            list(beatles.members.filter(favourite_restaurant=self.the_yellow_submarine)),
             [ringo]
         )
 
@@ -605,11 +605,11 @@ class ClusterTest(TestCase):
         )
         # Using an exact proprietor comparisson
         self.assertEqual(
-            tuple(band.members.filter(favourite_restaurant__proprietor=gordon)),
+            tuple(band.members.filter(favourite_restaurant__proprietor=self.gordon_ramsay)),
             (band.members.get(name="John Lennon"),)
         )
         self.assertEqual(
-            tuple(band.members.filter(favourite_restaurant__proprietor=marco)),
+            tuple(band.members.filter(favourite_restaurant__proprietor=self.marco_pierre_white)),
             (band.members.get(name="Ringo Starr"),)
         )
 

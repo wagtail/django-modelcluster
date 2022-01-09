@@ -50,16 +50,17 @@ def get_model_field(model, name):
         if field is not None:
             if isinstance(field, (ManyToManyField, ManyToManyRel)):
                 raise ManyToManyTraversalError(
-                    "The lookup '%(name)s' from %(model)s cannot be replicated "
-                    "by modelcluster, because the '%(field_name)s' "
-                    "relationship from %(subject_model)s is a many-to-many, "
+                    "The lookup '{name}' from {model} cannot be replicated "
+                    "by modelcluster, because the '{field_name}' "
+                    "relationship from {subject_model} is a many-to-many, "
                     "and traversal is only supported for one-to-one or "
-                    "many-to-one relationships." % {
-                        'name': name,
-                        'model': model,
-                        'field_name': field_name,
-                        'subject_model': subject_model,
-                    }
+                    "many-to-one relationships."
+                    .format(
+                        name=name,
+                        model=model,
+                        field_name=field_name,
+                        subject_model=subject_model,
+                    )
                 )
             if hasattr(field, "related_model"):
                 traversals.append(TraversedRelationship(subject_model, field))
@@ -88,14 +89,14 @@ def extract_field_value(obj, key, suppress_fielddoesnotexist=False):
             return getattr(obj, key)
         if REL_DELIMETER in key:
             segments = key.split(REL_DELIMETER)
-            new_source = extract_field_value(obj, segments.pop(0))
-            return extract_field_value(new_source, REL_DELIMETER.join(segments))
+            new_source = extract_field_value(obj, segments.pop(0), suppress_fielddoesnotexist)
+            return extract_field_value(new_source, REL_DELIMETER.join(segments), suppress_fielddoesnotexist)
         if suppress_fielddoesnotexist:
-            return
+            return None
         raise FieldDoesNotExist(
-            "'%(name)s' is not a valid field name for %(model)s." % {
-                'name': key, 'model': type(obj)
-            }
+            "'{name}' is not a valid field name for {model}".format(
+                name=key, model=type(obj)
+            )
         )
 
 

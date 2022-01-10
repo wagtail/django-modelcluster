@@ -376,7 +376,7 @@ class DictIterable(FakeQuerySetIterable):
         for obj in self.queryset.results:
             if self.queryset.dict_fields:
                 yield {
-                    field_name: extract_field_value(obj, field_name, suppress_fielddoesnotexist=True)
+                    field_name: extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True)
                     for field_name in self.queryset.dict_fields
                 }
             else:
@@ -387,14 +387,14 @@ class ValuesListIterable(FakeQuerySetIterable):
     def __iter__(self):
         field_names = self.queryset.tuple_fields or [field.name for field in self.queryset.model._meta.fields]
         for obj in self.queryset.results:
-            yield tuple([extract_field_value(obj, field_name, suppress_fielddoesnotexist=True) for field_name in field_names])
+            yield tuple([extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True) for field_name in field_names])
 
 
 class FlatValuesListIterable(FakeQuerySetIterable):
     def __iter__(self):
         field_name = self.queryset.tuple_fields[0]
         for obj in self.queryset.results:
-            yield extract_field_value(obj, field_name, suppress_fielddoesnotexist=True)
+            yield extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True)
 
 
 class FakeQuerySet(object):

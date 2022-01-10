@@ -76,28 +76,39 @@ def get_model_field(model, name):
     return field
 
 
-def extract_field_value(obj, key, suppress_fielddoesnotexist=False):
+def extract_field_value(obj, key, pk_only=False, suppress_fielddoesnotexist=False):
     """
     Attempts to extract a field value from ``obj`` matching the ``key`` - which,
     can contain double-underscores (`'__'`) to indicate traversal of relationships
     to related objects.
 
-    Raises ``FieldDoesNotExist`` if the name cannot be mapped to a model field.
+    For keys that specify ``ForeignKey`` or ``OneToOneField`` field values, full
+    related objects are returned by default. If only the primary key values are
+    required ((.g. when ordering, or using ``values()`` or ``values_list()``)),
+    call the function with ``pk_only=True``.
+
+    By default, ``FieldDoesNotExist`` is raised if the key cannot be mapped to
+    a model field. Call the function with ``suppress_fielddoesnotexist=True``
+    to get ``None`` values instead.
     """
+    source = obj
     for attr in key.split(REL_DELIMETER):
-        if hasattr(obj, key):
-            return getattr(obj, key)
-        if REL_DELIMETER in key:
-            segments = key.split(REL_DELIMETER)
-            new_source = extract_field_value(obj, segments.pop(0), suppress_fielddoesnotexist)
-            return extract_field_value(new_source, REL_DELIMETER.join(segments), suppress_fielddoesnotexist)
-        if suppress_fielddoesnotexist:
-            return None
-        raise FieldDoesNotExist(
-            "'{name}' is not a valid field name for {model}".format(
-                name=key, model=type(obj)
+        if hasattr(obj, attr):
+            value = getattr(source, attr)
+            source = obj
+            continue
+        elif suppress_fielddoesnotexist:
+            value = None
+            break
+        else:
+            raise FieldDoesNotExist(
+                "'{name}' is not a valid field name for {model}".format(
+                    name=attr, model=type(source)
+                )
             )
-        )
+    if pk_only and hasattr(value, 'pk'):
+        return value.pk
+    return value
 
 
 def sort_by_fields(items, fields):

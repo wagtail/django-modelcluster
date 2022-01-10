@@ -93,13 +93,12 @@ def extract_field_value(obj, key, pk_only=False, suppress_fielddoesnotexist=Fals
     """
     source = obj
     for attr in key.split(REL_DELIMETER):
-        if hasattr(obj, attr):
+        if hasattr(source, attr):
             value = getattr(source, attr)
-            source = obj
+            source = value
             continue
         elif suppress_fielddoesnotexist:
-            value = None
-            break
+            return None
         else:
             raise FieldDoesNotExist(
                 "'{name}' is not a valid field name for {model}".format(
@@ -129,7 +128,7 @@ def sort_by_fields(items, fields):
         def get_sort_value(item):
             # Use a tuple of (v is not None, v) as the key, to ensure that None sorts before other values,
             # as comparing directly with None breaks on python3
-            value = extract_field_value(item, key)
+            value = extract_field_value(item, key, pk_only=True, suppress_fielddoesnotexist=True)
             return (value is not None, value)
 
         # Sort items

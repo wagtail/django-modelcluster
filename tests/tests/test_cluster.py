@@ -156,8 +156,8 @@ class ClusterTest(TestCase):
         # Not specifying 'fields' should return a tuple of all field values
         self.assertEqual(
             [
-                # ID, band, name, favourite_restaurant
-                (None, beatles, 'Paul McCartney', self.the_yellow_submarine)
+                # ID, band_id, name, favourite_restaurant_id
+                (None, None, 'Paul McCartney', self.the_yellow_submarine.id)
             ],
             list(beatles.members.filter(name='Paul McCartney').values_list())
         )
@@ -167,14 +167,27 @@ class ClusterTest(TestCase):
         # Specifying 'fields' should return a tuple of just those field values
         self.assertEqual([NAME_ONLY_TUPLE], list(beatles.members.filter(name='Paul McCartney').values_list('name')))
 
-        # Items in 'fields' can span relationships using '__'
+        # 'fields' can span relationships using '__'
+        members = beatles.members.all().values_list('name', 'favourite_restaurant__proprietor__name')
         self.assertEqual(
-            list(beatles.members.all().values_list('name', 'favourite_restaurant__proprietor__name')),
+            list(members),
             [
                 ("John Lennon", "Gordon Ramsay"),
                 ("Paul McCartney", "Marco Pierre White"),
                 ("George Harrison", None),
-                ("Ringo Starr", None)
+                ("Ringo Starr", None),
+            ]
+        )
+
+        # Ordering on the related fields will work too, and items with `None`` values will appear first
+        self.assertEqual(
+            list(members.order_by('favourite_restaurant__proprietor__name')),
+            [
+                ("George Harrison", None),
+                ("Ringo Starr", None),
+                ("John Lennon", "Gordon Ramsay"),
+                ("Paul McCartney", "Marco Pierre White"),
+
             ]
         )
 
@@ -217,14 +230,26 @@ class ClusterTest(TestCase):
         # Specifying 'fields' should return a dictionary of just those field values
         self.assertEqual([NAME_ONLY_DICT], list(beatles.members.filter(name='Paul McCartney').values('name')))
 
-        # Items in 'fields' can span relationships using '__'
+        # 'fields' can span relationships using '__'
+        members = beatles.members.all().values('name', 'favourite_restaurant__proprietor__name')
         self.assertEqual(
-            list(beatles.members.all().values('name', 'favourite_restaurant__proprietor__name')),
+            list(members),
             [
                 {"name": "John Lennon", "favourite_restaurant__proprietor__name": "Gordon Ramsay"},
                 {"name": "Paul McCartney", "favourite_restaurant__proprietor__name": "Marco Pierre White"},
                 {"name": "George Harrison", "favourite_restaurant__proprietor__name": None},
                 {"name": "Ringo Starr", "favourite_restaurant__proprietor__name": None},
+            ]
+        )
+
+        # Ordering on the related fields will work too, and items with `None`` values will appear first
+        self.assertEqual(
+            list(members.order_by('favourite_restaurant__proprietor__name')),
+            [
+                {"name": "George Harrison", "favourite_restaurant__proprietor__name": None},
+                {"name": "Ringo Starr", "favourite_restaurant__proprietor__name": None},
+                {"name": "John Lennon", "favourite_restaurant__proprietor__name": "Gordon Ramsay"},
+                {"name": "Paul McCartney", "favourite_restaurant__proprietor__name": "Marco Pierre White"},
             ]
         )
 

@@ -220,7 +220,7 @@ class ClusterTest(TestCase):
         # Not specifying 'fields' should return dictionaries with all field values
         self.assertEqual(
             [
-                beatles.members.get(name='Paul McCartney').__dict__
+                {"id": None, "band": None, "name": "Paul McCartney", "favourite_restaurant": self.the_yellow_submarine.id}
             ],
             list(beatles.members.filter(name='Paul McCartney').values())
         )

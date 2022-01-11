@@ -373,14 +373,12 @@ class ModelIterable(FakeQuerySetIterable):
 
 class DictIterable(FakeQuerySetIterable):
     def __iter__(self):
+        field_names = self.queryset.dict_fields or [field.name for field in self.queryset.model._meta.fields]
         for obj in self.queryset.results:
-            if self.queryset.dict_fields:
-                yield {
-                    field_name: extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True)
-                    for field_name in self.queryset.dict_fields
-                }
-            else:
-                yield obj.__dict__
+            yield {
+                field_name: extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True)
+                for field_name in field_names
+            }
 
 
 class ValuesListIterable(FakeQuerySetIterable):

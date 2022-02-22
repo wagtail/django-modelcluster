@@ -168,11 +168,11 @@ class ClusterableModel(models.Model):
                 if rel_name in kwargs:
                     relation_assignments[rel_name] = kwargs_for_super.pop(rel_name)
 
-            super(ClusterableModel, self).__init__(*args, **kwargs_for_super)
+            super().__init__(*args, **kwargs_for_super)
             for (field_name, related_instances) in relation_assignments.items():
                 setattr(self, field_name, related_instances)
         else:
-            super(ClusterableModel, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
     def save(self, **kwargs):
         """
@@ -198,7 +198,7 @@ class ClusterableModel(models.Model):
                 else:
                     real_update_fields.append(field)
 
-        super(ClusterableModel, self).save(update_fields=real_update_fields, **kwargs)
+        super().save(update_fields=real_update_fields, **kwargs)
 
         for relation in relations_to_commit:
             getattr(self, relation).commit()

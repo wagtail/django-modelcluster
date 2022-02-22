@@ -29,7 +29,7 @@ class _ClusterTaggableManager(_TaggableManager):
             # (which probably means it's being invoked within a prefetch_related operation);
             # this means that we don't have to deal with uncommitted models/tags, and can just
             # use the standard taggit handler
-            return super(_ClusterTaggableManager, self).get_queryset(extra_filters)
+            return super().get_queryset(extra_filters)
         else:
             # FIXME: we ought to have some way of querying the tagged item manager about whether
             # it has uncommitted changes, and return a real queryset (using the original taggit logic)
@@ -75,7 +75,7 @@ class _ClusterTaggableManager(_TaggableManager):
         # to ensure that the correct set of m2m_changed signals is fired, and our reimplementation here
         # doesn't fire them at all (which makes logical sense, because the whole point of this module is
         # that the add/remove/set/clear operations don't write to the database).
-        return super(_ClusterTaggableManager, self).set(*args, clear=True)
+        return super().set(*args, clear=True)
 
     @require_instance_manager
     def clear(self):

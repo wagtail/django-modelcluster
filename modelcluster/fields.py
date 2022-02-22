@@ -29,7 +29,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
 
     class DeferringRelatedManager(superclass):
         def __init__(self, instance):
-            super(DeferringRelatedManager, self).__init__()
+            super().__init__()
             self.model = rel_model
             self.instance = instance
 
@@ -77,7 +77,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
         def get_prefetch_queryset(self, instances, queryset=None):
             if queryset is None:
                 db = self._db or router.db_for_read(self.model, instance=instances[0])
-                queryset = super(DeferringRelatedManager, self).get_queryset().using(db)
+                queryset = super().get_queryset().using(db)
 
             rel_obj_attr = rel_field.get_local_related_value
             instance_attr = rel_field.get_foreign_related_value
@@ -236,12 +236,12 @@ class ParentalKey(ForeignKey):
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('on_delete', CASCADE)
-        super(ParentalKey, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def check(self, **kwargs):
         from modelcluster.models import ClusterableModel
 
-        errors = super(ParentalKey, self).check(**kwargs)
+        errors = super().check(**kwargs)
 
         # Check that the destination model is a subclass of ClusterableModel.
         # If self.rel.to is a string at this point, it means that Django has been unable
@@ -284,7 +284,7 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
 
     class DeferringManyRelatedManager(superclass):
         def __init__(self, instance=None):
-            super(DeferringManyRelatedManager, self).__init__()
+            super().__init__()
             self.model = rel_model
             self.through = rel_through
             self.instance = instance
@@ -506,7 +506,7 @@ class ParentalManyToManyField(ManyToManyField):
         # https://github.com/django/django/blob/6157cd6da1b27716e8f3d1ed692a6e33d970ae46/django/db/models/fields/related.py#L1538
         # So, we'll let the original contribute_to_class do its thing, and then overwrite
         # the accessor...
-        super(ParentalManyToManyField, self).contribute_to_class(cls, name, **kwargs)
+        super().contribute_to_class(cls, name, **kwargs)
         setattr(cls, self.name, self.related_accessor_class(self.remote_field))
 
     def value_from_object(self, obj):

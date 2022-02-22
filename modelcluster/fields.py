@@ -62,7 +62,11 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             try:
                 results = self.instance._cluster_related_objects[relation_name]
             except (AttributeError, KeyError):
-                return self.get_live_queryset()
+                if self.instance.pk is None:
+                    # use an empty fake queryset if the instance is unsaved
+                    results = []
+                else:
+                    return self.get_live_queryset()
 
             return FakeQuerySet(related.related_model, results)
 
@@ -105,7 +109,10 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             try:
                 object_list = cluster_related_objects[relation_name]
             except KeyError:
-                object_list = list(self.get_live_queryset())
+                if self.instance.pk is None:
+                    object_list = []
+                else:
+                    object_list = list(self.get_live_queryset())
                 cluster_related_objects[relation_name] = object_list
 
             return object_list

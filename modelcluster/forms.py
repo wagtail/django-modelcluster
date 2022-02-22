@@ -84,13 +84,13 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         if queryset is None:
             queryset = getattr(self.instance, self.rel_name).all()
 
-        super(BaseChildFormSet, self).__init__(data, files, queryset=queryset, **kwargs)
+        super().__init__(data, files, queryset=queryset, **kwargs)
 
     def save(self, commit=True):
         # The base ModelFormSet's save(commit=False) will populate the lists
         # self.changed_objects, self.deleted_objects and self.new_objects;
         # use these to perform the appropriate updates on the relation's manager.
-        saved_instances = super(BaseChildFormSet, self).save(commit=False)
+        saved_instances = super().save(commit=False)
 
         manager = getattr(self.instance, self.rel_name)
 
@@ -121,7 +121,7 @@ class BaseChildFormSet(BaseTransientModelFormSet):
 
     def clean(self, *args, **kwargs):
         self.validate_unique()
-        return super(BaseChildFormSet, self).clean(*args, **kwargs)
+        return super().clean(*args, **kwargs)
 
     def validate_unique(self):
         '''This clean method will check for unique_together condition'''
@@ -207,7 +207,7 @@ def childformset_factory(
 
 class ClusterFormOptions(ModelFormOptions):
     def __init__(self, options=None):
-        super(ClusterFormOptions, self).__init__(options=options)
+        super().__init__(options=options)
         self.formsets = getattr(options, 'formsets', None)
         self.exclude_formsets = getattr(options, 'exclude_formsets', None)
 
@@ -231,7 +231,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
         # BAD METACLASS NO BISCUIT.
         formfield_callback = attrs.get('formfield_callback')
 
-        new_class = super(ClusterFormMetaclass, cls).__new__(cls, name, bases, attrs)
+        new_class = super().__new__(cls, name, bases, attrs)
         if not parents:
             return new_class
 
@@ -287,7 +287,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
 
 class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
     def __init__(self, data=None, files=None, instance=None, prefix=None, **kwargs):
-        super(ClusterForm, self).__init__(data, files, instance=instance, prefix=prefix, **kwargs)
+        super().__init__(data, files, instance=instance, prefix=prefix, **kwargs)
 
         self.formsets = {}
         for rel_name, formset_class in self.__class__.formsets.items():
@@ -311,23 +311,23 @@ class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
             self._posted_formsets = self.formsets.values()
 
     def as_p(self):
-        form_as_p = super(ClusterForm, self).as_p()
+        form_as_p = super().as_p()
         return form_as_p + ''.join([formset.as_p() for formset in self.formsets.values()])
 
     def is_valid(self):
-        form_is_valid = super(ClusterForm, self).is_valid()
+        form_is_valid = super().is_valid()
         formsets_are_valid = all(formset.is_valid() for formset in self._posted_formsets)
         return form_is_valid and formsets_are_valid
 
     def is_multipart(self):
         return (
-            super(ClusterForm, self).is_multipart()
+            super().is_multipart()
             or any(formset.is_multipart() for formset in self.formsets.values())
         )
 
     @property
     def media(self):
-        media = super(ClusterForm, self).media
+        media = super().media
         for formset in self.formsets.values():
             media = media + formset.media
         return media
@@ -347,7 +347,7 @@ class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
                 save_m2m_now = True
                 break
 
-        instance = super(ClusterForm, self).save(commit=(commit and not save_m2m_now))
+        instance = super().save(commit=(commit and not save_m2m_now))
 
         # The M2M-like fields designed for use with ClusterForm (currently
         # ParentalManyToManyField and ClusterTaggableManager) will manage their own in-memory

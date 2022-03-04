@@ -5,6 +5,8 @@ Changelog
 ~~~~~~~~~~~~~~~~
 * Avoid accessing live queryset on unsaved instances, for preliminary Django 4.1 compatibility (Matt Westcott)
 * Support traversing one-to-one and many-to-one relations in `filter` / `order_by` lookups (Andy Babic)
+* Add `inherit_kwargs` attribute to ClusterForm child formsets (Matt Westcott)
+* Fix: Fix HTML escaping behaviour on `ClusterForm.as_p()` (Matt Westcott)
 
 5.2 (13.10.2021)
 ~~~~~~~~~~~~~~~~

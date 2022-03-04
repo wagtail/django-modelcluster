@@ -9,6 +9,7 @@ from tests.models import Band, BandMember, Album, Restaurant, Article, Author, D
 from modelcluster.forms import ClusterForm
 from django.forms import Textarea, CharField
 from django.forms.widgets import TextInput, FileInput
+from django.utils.safestring import SafeString
 
 import datetime
 
@@ -30,7 +31,9 @@ class ClusterFormTest(TestCase):
         form = BandForm(instance=beatles)
 
         self.assertEqual(5, len(form.formsets['members'].forms))
-        self.assertTrue('albums' in form.as_p())
+        form_html = form.as_p()
+        self.assertIsInstance(form_html, SafeString)
+        self.assertInHTML('<label for="id_albums-0-name">Name:</label>', form_html)
 
     def test_empty_cluster_form(self):
         class BandForm(ClusterForm):

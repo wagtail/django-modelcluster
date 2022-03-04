@@ -1,6 +1,11 @@
 Changelog
 =========
 
+5.3 (xx.xx.xxxx) - IN DEVELOPMENT
+~~~~~~~~~~~~~~~~
+* Avoid accessing live queryset on unsaved instances, for preliminary Django 4.1 compatibility (Matt Westcott)
+* Support traversing one-to-one and many-to-one relations in `filter` / `order_by` lookups (Andy Babic)
+
 5.2 (13.10.2021)
 ~~~~~~~~~~~~~~~~
 * Implement `copy_cluster` method on ClusterableModel (Karl Hobley)

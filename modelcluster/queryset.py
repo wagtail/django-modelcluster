@@ -5,7 +5,7 @@ import re
 
 from django.db.models import Model, prefetch_related_objects
 
-from modelcluster.utils import sort_by_fields
+from modelcluster.utils import extract_field_value, get_model_field, sort_by_fields
 
 
 # Constructor for test functions that determine whether an object passes some boolean condition
@@ -13,27 +13,27 @@ def test_exact(model, attribute_name, value):
     if isinstance(value, Model):
         if value.pk is None:
             # comparing against an unsaved model, so objects need to match by reference
-            return lambda obj: getattr(obj, attribute_name) is value
+            return lambda obj: extract_field_value(obj, attribute_name) is value
         else:
             # comparing against a saved model; objects need to match by type and ID.
             # Additionally, where model inheritance is involved, we need to treat it as a
             # positive match if one is a subclass of the other
             def _test(obj):
-                other_value = getattr(obj, attribute_name)
+                other_value = extract_field_value(obj, attribute_name)
                 if not (isinstance(value, other_value.__class__) or isinstance(other_value, value.__class__)):
                     return False
                 return value.pk == other_value.pk
             return _test
     else:
-        field = model._meta.get_field(attribute_name)
+        field = get_model_field(model, attribute_name)
         # convert value to the correct python type for this field
         typed_value = field.to_python(value)
         # just a plain Python value = do a normal equality check
-        return lambda obj: getattr(obj, attribute_name) == typed_value
+        return lambda obj: extract_field_value(obj, attribute_name) == typed_value
 
 
 def test_iexact(model, attribute_name, match_value):
-    field = model._meta.get_field(attribute_name)
+    field = get_model_field(model, attribute_name)
     match_value = field.to_python(match_value)
 
     if match_value is None:
@@ -42,135 +42,135 @@ def test_iexact(model, attribute_name, match_value):
         match_value = match_value.upper()
 
         def _test(obj):
-            val = getattr(obj, attribute_name)
+            val = extract_field_value(obj, attribute_name)
             return val is not None and val.upper() == match_value
 
         return _test
 
 
 def test_contains(model, attribute_name, value):
-    field = model._meta.get_field(attribute_name)
+    field = get_model_field(model, attribute_name)
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and match_value in val
 
     return _test
 
 
 def test_icontains(model, attribute_name, value):
-    field = model._meta.get_field(attribute_name)
+    field = get_model_field(model, attribute_name)
     match_value = field.to_python(value).upper()
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and match_value in val.upper()
 
     return _test
 
 
 def test_lt(model, attribute_name, value):
-    field = model._meta.get_field(attribute_name)
+    field = get_model_field(model, attribute_name)
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val < match_value
 
     return _test
 
 
 def test_lte(model, attribute_name, value):
-    field = model._meta.get_field(attribute_name)
+    field = get_model_field(model, attribute_name)
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val <= match_value
 
     return _test
 
 
 def test_gt(model, attribute_name, value):
-    field = model._meta.get_field(attribute_name)
+    field = get_model_field(model, attribute_name)
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val > match_value
 
     return _test
 
 
 def test_gte(model, attribute_name, value):
-    field = model._meta.get_field(attribute_name)
+    field = get_model_field(model, attribute_name)
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val >= match_value
 
     return _test
 
 
 def test_in(model, attribute_name, value_list):
-    field = model._meta.get_field(attribute_name)
+    field = get_model_field(model, attribute_name)
     match_values = set(field.to_python(val) for val in value_list)
-    return lambda obj: getattr(obj, attribute_name) in match_values
+    return lambda obj: extract_field_value(obj, attribute_name) in match_values
 
 
 def test_startswith(model, attribute_name, value):
-    field = model._meta.get_field(attribute_name)
+    field = get_model_field(model, attribute_name)
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val.startswith(match_value)
 
     return _test
 
 
 def test_istartswith(model, attribute_name, value):
-    field = model._meta.get_field(attribute_name)
+    field = get_model_field(model, attribute_name)
     match_value = field.to_python(value).upper()
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val.upper().startswith(match_value)
 
     return _test
 
 
 def test_endswith(model, attribute_name, value):
-    field = model._meta.get_field(attribute_name)
+    field = get_model_field(model, attribute_name)
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val.endswith(match_value)
 
     return _test
 
 
 def test_iendswith(model, attribute_name, value):
-    field = model._meta.get_field(attribute_name)
+    field = get_model_field(model, attribute_name)
     match_value = field.to_python(value).upper()
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val.upper().endswith(match_value)
 
     return _test
 
 
 def test_range(model, attribute_name, range_val):
-    field = model._meta.get_field(attribute_name)
+    field = get_model_field(model, attribute_name)
     start_val = field.to_python(range_val[0])
     end_val = field.to_python(range_val[1])
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return (val is not None and val >= start_val and val <= end_val)
 
     return _test
@@ -178,7 +178,7 @@ def test_range(model, attribute_name, range_val):
 
 def test_date(model, attribute_name, match_value):
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         if isinstance(val, datetime.datetime):
             return val.date() == match_value
         else:
@@ -191,7 +191,7 @@ def test_year(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val.year == match_value
 
     return _test
@@ -201,7 +201,7 @@ def test_month(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val.month == match_value
 
     return _test
@@ -211,7 +211,7 @@ def test_day(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val.day == match_value
 
     return _test
@@ -221,7 +221,7 @@ def test_week(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val.isocalendar()[1] == match_value
 
     return _test
@@ -231,7 +231,7 @@ def test_week_day(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val.isoweekday() % 7 + 1 == match_value
 
     return _test
@@ -241,7 +241,7 @@ def test_quarter(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and int((val.month - 1) / 3) + 1 == match_value
 
     return _test
@@ -249,7 +249,7 @@ def test_quarter(model, attribute_name, match_value):
 
 def test_time(model, attribute_name, match_value):
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         if isinstance(val, datetime.datetime):
             return val.time() == match_value
         else:
@@ -262,7 +262,7 @@ def test_hour(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val.hour == match_value
 
     return _test
@@ -272,7 +272,7 @@ def test_minute(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val.minute == match_value
 
     return _test
@@ -282,7 +282,7 @@ def test_second(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and val.second == match_value
 
     return _test
@@ -290,16 +290,16 @@ def test_second(model, attribute_name, match_value):
 
 def test_isnull(model, attribute_name, sense):
     if sense:
-        return lambda obj: getattr(obj, attribute_name) is None
+        return lambda obj: extract_field_value(obj, attribute_name) is None
     else:
-        return lambda obj: getattr(obj, attribute_name) is not None
+        return lambda obj: extract_field_value(obj, attribute_name) is not None
 
 
 def test_regex(model, attribute_name, regex_string):
     regex = re.compile(regex_string)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and regex.search(val)
 
     return _test
@@ -309,7 +309,7 @@ def test_iregex(model, attribute_name, regex_string):
     regex = re.compile(regex_string, re.I)
 
     def _test(obj):
-        val = getattr(obj, attribute_name)
+        val = extract_field_value(obj, attribute_name)
         return val is not None and regex.search(val)
 
     return _test
@@ -350,15 +350,15 @@ FILTER_EXPRESSION_TOKENS = {
 def _build_test_function_from_filter(model, key_clauses, val):
     # Translate a filter kwarg rule (e.g. foo__bar__exact=123) into a function which can
     # take a model instance and return a boolean indicating whether it passes the rule
-    if len(key_clauses) == 1:
-        # key is a single clause; treat as an exact match test
-        return test_exact(model, key_clauses[0], val)
-    elif len(key_clauses) == 2 and key_clauses[1] in FILTER_EXPRESSION_TOKENS:
-        # second clause indicates the type of test
-        constructor = FILTER_EXPRESSION_TOKENS[key_clauses[1]]
-        return constructor(model, key_clauses[0], val)
+    if key_clauses[-1] in FILTER_EXPRESSION_TOKENS:
+        # the last clause indicates the type of test
+        constructor = FILTER_EXPRESSION_TOKENS[key_clauses.pop()]
     else:
-        raise NotImplementedError("Filter expression not supported: %s" % '__'.join(key_clauses))
+        constructor = test_exact
+    # recombine the remaining items to be interpretted
+    # by get_model_field() and extract_field_value()
+    attribute_name = "__".join(key_clauses)
+    return constructor(model, attribute_name, val)
 
 
 class FakeQuerySet(object):
@@ -375,9 +375,8 @@ class FakeQuerySet(object):
         filters = []
 
         for key, val in kwargs.items():
-            key_clauses = key.split('__')
             filters.append(
-                _build_test_function_from_filter(self.model, key_clauses, val)
+                _build_test_function_from_filter(self.model, key.split('__'), val)
             )
 
         return filters

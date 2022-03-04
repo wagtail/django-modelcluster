@@ -8,6 +8,7 @@ from django.forms.models import (
     ModelForm, _get_foreign_key, ModelFormMetaclass, ModelFormOptions
 )
 from django.db.models.fields.related import ForeignObjectRel
+from django.utils.html import format_html_join
 
 
 from modelcluster.models import get_all_child_relations
@@ -312,7 +313,7 @@ class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
 
     def as_p(self):
         form_as_p = super().as_p()
-        return form_as_p + ''.join([formset.as_p() for formset in self.formsets.values()])
+        return form_as_p + format_html_join('', '{}', [(formset.as_p(),) for formset in self.formsets.values()])
 
     def is_valid(self):
         form_is_valid = super().is_valid()

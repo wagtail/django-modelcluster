@@ -308,7 +308,7 @@ class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
             child_form_kwargs = {}
             if formset_class.inherit_kwargs:
                 for kwarg_name in formset_class.inherit_kwargs:
-                    child_form_kwargs[kwarg_name] = kwargs.get(kwarg_name)
+                    child_form_kwargs[kwarg_name] = getattr(self, kwarg_name, None)
 
             self.formsets[rel_name] = formset_class(
                 data, files, instance=instance, prefix=formset_prefix, form_kwargs=child_form_kwargs

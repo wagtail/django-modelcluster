@@ -7,7 +7,7 @@ except ImportError:
 
 setup(
     name='django-modelcluster',
-    version='5.2',
+    version='6.0',
     description="Django extension to allow working with 'clusters' of models as a single unit, independently of the database",
     author='Matthew Westcott',
     author_email='matthew.westcott@torchbox.com',

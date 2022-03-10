@@ -1,13 +1,16 @@
 Changelog
 =========
 
-5.3 (xx.xx.xxxx) - IN DEVELOPMENT
+6.0 (xx.xx.xxxx) - IN DEVELOPMENT
+~~~~~~~~~~~~~~~~
+* Add `inherit_kwargs` attribute to ClusterForm child formsets (Matt Westcott)
+
+5.3 (10.03.2022)
 ~~~~~~~~~~~~~~~~
 * Avoid accessing live queryset on unsaved instances, for preliminary Django 4.1 compatibility (Matt Westcott)
 * Support traversing one-to-one and many-to-one relations in `filter` / `order_by` lookups (Andy Babic)
 * Implement `values()` method on FakeQuerySet (Andy Babic)
 * Allow `values()` and `values_list()` to be chained with other queryset modifiers (Andy Babic)
-* Add `inherit_kwargs` attribute to ClusterForm child formsets (Matt Westcott)
 * Fix: Fix HTML escaping behaviour on `ClusterForm.as_p()` (Matt Westcott)
 * Fix: Match standard behaviour queryset of returning foreign keys as IDs in `values_list` (Andy Babic)
 

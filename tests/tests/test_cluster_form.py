@@ -158,46 +158,6 @@ class ClusterFormTest(TestCase):
         self.assertNotIn('release_date', form.formsets['albums'].forms[0].fields)
         self.assertEqual(Textarea, type(form.formsets['albums'].forms[0]['name'].field.widget))
 
-    def test_without_kwarg_inheritance(self):
-        # by default, kwargs passed to the ClusterForm do not propagate to child forms
-        class BandForm(ClusterForm):
-            class Meta:
-                model = Band
-                formsets = {
-                    'members': {'fields': ['name']}
-                }
-                fields = ['name']
-
-        form = BandForm(label_suffix="!!!:")
-        form_html = form.as_p()
-        # band name field should have label_suffix applied
-        self.assertInHTML('<label for="id_name">Name!!!:</label>', form_html)
-        # but this should not propagate to member form fields
-        self.assertInHTML('<label for="id_members-0-name">Name!!!:</label>', form_html, count=0)
-
-    def test_with_kwarg_inheritance(self):
-        # inherit_kwargs should allow kwargs passed to the ClusterForm to propagate to child forms
-        class BandForm(ClusterForm):
-            class Meta:
-                model = Band
-                formsets = {
-                    'members': {'fields': ['name'], 'inherit_kwargs': ['label_suffix']}
-                }
-                fields = ['name']
-
-        form = BandForm(label_suffix="!!!:")
-        form_html = form.as_p()
-        # band name field should have label_suffix applied
-        self.assertInHTML('<label for="id_name">Name!!!:</label>', form_html)
-        # and this should propagate to member form fields too
-        self.assertInHTML('<label for="id_members-0-name">Name!!!:</label>', form_html)
-
-        # the form should still work without a label_suffix kwarg
-        form = BandForm()
-        form_html = form.as_p()
-        self.assertInHTML('<label for="id_name">Name:</label>', form_html)
-        self.assertInHTML('<label for="id_members-0-name">Name:</label>', form_html)
-
     def test_custom_formset_form(self):
         class AlbumForm(ClusterForm):
             pass

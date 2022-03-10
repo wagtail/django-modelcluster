@@ -74,8 +74,6 @@ def transientmodelformset_factory(model, formset=BaseTransientModelFormSet, **kw
 
 
 class BaseChildFormSet(BaseTransientModelFormSet):
-    inherit_kwargs = None
-
     def __init__(self, data=None, files=None, instance=None, queryset=None, **kwargs):
         if instance is None:
             self.instance = self.fk.remote_field.model()
@@ -173,8 +171,7 @@ def childformset_factory(
     parent_model, model, form=ModelForm,
     formset=BaseChildFormSet, fk_name=None, fields=None, exclude=None,
     extra=3, can_order=False, can_delete=True, max_num=None, validate_max=False,
-    formfield_callback=None, widgets=None, min_num=None, validate_min=False,
-    inherit_kwargs=None,
+    formfield_callback=None, widgets=None, min_num=None, validate_min=False
 ):
 
     fk = _get_foreign_key(parent_model, model, fk_name=fk_name)
@@ -206,11 +203,6 @@ def childformset_factory(
     }
     FormSet = transientmodelformset_factory(model, **kwargs)
     FormSet.fk = fk
-
-    # A list of keyword argument names that should be passed on from ClusterForm's constructor
-    # to child forms in this formset
-    FormSet.inherit_kwargs = inherit_kwargs
-
     return FormSet
 
 
@@ -304,15 +296,7 @@ class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
                 formset_prefix = "%s-%s" % (prefix, rel_name)
             else:
                 formset_prefix = rel_name
-
-            child_form_kwargs = {}
-            if formset_class.inherit_kwargs:
-                for kwarg_name in formset_class.inherit_kwargs:
-                    child_form_kwargs[kwarg_name] = kwargs.get(kwarg_name)
-
-            self.formsets[rel_name] = formset_class(
-                data, files, instance=instance, prefix=formset_prefix, form_kwargs=child_form_kwargs
-            )
+            self.formsets[rel_name] = formset_class(data, files, instance=instance, prefix=formset_prefix)
 
         if self.is_bound and not self._has_explicit_formsets:
             # check which formsets have actually been provided as part of the form submission -

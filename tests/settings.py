@@ -36,3 +36,4 @@ MIDDLEWARE_CLASSES = (
 USE_TZ = True
 TIME_ZONE = 'America/Chicago'
 ROOT_URLCONF = 'tests.urls'
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

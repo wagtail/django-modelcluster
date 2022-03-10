@@ -311,7 +311,6 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                 formsets[formset_name] = formset
 
             new_class.formsets = formsets
-            new_class._has_explicit_formsets = (opts.formsets is not None or opts.exclude_formsets is not None)
 
         return new_class
 
@@ -336,26 +335,13 @@ class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
                 data, files, instance=instance, prefix=formset_prefix, form_kwargs=child_form_kwargs
             )
 
-        if self.is_bound and not self._has_explicit_formsets:
-            # check which formsets have actually been provided as part of the form submission -
-            # if no `formsets` or `exclude_formsets` was specified, we allow them to be omitted
-            # (https://github.com/wagtail/wagtail/issues/5414#issuecomment-567468127).
-            self._posted_formsets = [
-                formset
-                for formset in self.formsets.values()
-                if '%s-%s' % (formset.prefix, TOTAL_FORM_COUNT) in self.data
-            ]
-        else:
-            # expect all defined formsets to be part of the post
-            self._posted_formsets = self.formsets.values()
-
     def as_p(self):
         form_as_p = super().as_p()
         return form_as_p + format_html_join('', '{}', [(formset.as_p(),) for formset in self.formsets.values()])
 
     def is_valid(self):
         form_is_valid = super().is_valid()
-        formsets_are_valid = all(formset.is_valid() for formset in self._posted_formsets)
+        formsets_are_valid = all(formset.is_valid() for formset in self.formsets.values())
         return form_is_valid and formsets_are_valid
 
     def is_multipart(self):
@@ -410,7 +396,7 @@ class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
             if commit:
                 instance.save()
 
-        for formset in self._posted_formsets:
+        for formset in self.formsets.values():
             formset.instance = instance
             formset.save(commit=commit)
         return instance
@@ -421,7 +407,7 @@ class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
         # Need to recurse over nested formsets so that the form is saved if there are changes
         # to child forms but not the parent
         if self.formsets:
-            for formset in self._posted_formsets:
+            for formset in self.formsets.values():
                 for form in formset.forms:
                     if form.has_changed():
                         return True

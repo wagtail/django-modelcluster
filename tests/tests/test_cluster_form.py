@@ -15,11 +15,27 @@ import datetime
 
 
 class ClusterFormTest(TestCase):
+    def test_cluster_form_with_no_formsets(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+
+        self.assertFalse(BandForm.formsets)
+
+        beatles = Band(name='The Beatles')
+        form = BandForm(instance=beatles)
+        form_html = form.as_p()
+        self.assertIsInstance(form_html, SafeString)
+        self.assertInHTML('<label for="id_name">Name:</label>', form_html)
+        self.assertInHTML('<label for="id_albums-0-name">Name:</label>', form_html, count=0)
+
     def test_cluster_form(self):
         class BandForm(ClusterForm):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets = ['members', 'albums']
 
         self.assertTrue(BandForm.formsets)
 
@@ -33,6 +49,7 @@ class ClusterFormTest(TestCase):
         self.assertEqual(5, len(form.formsets['members'].forms))
         form_html = form.as_p()
         self.assertIsInstance(form_html, SafeString)
+        self.assertInHTML('<label for="id_name">Name:</label>', form_html)
         self.assertInHTML('<label for="id_albums-0-name">Name:</label>', form_html)
 
     def test_empty_cluster_form(self):
@@ -40,6 +57,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets = ['members', 'albums']
 
         form = BandForm()
 
@@ -50,6 +68,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets = ['members', 'albums']
 
         beatles = Band(name='The Beatles', members=[
             BandMember(name='George Harrison'),
@@ -133,6 +152,7 @@ class ClusterFormTest(TestCase):
                     }
                 }
                 fields = ['name']
+                formsets = ['members', 'albums']
 
         form = BandForm()
         self.assertEqual(Textarea, type(form['name'].field.widget))
@@ -250,6 +270,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets = ['members', 'albums']
 
         form = BandFormWithFFC()
         self.assertEqual(Textarea, type(form['name'].field.widget))
@@ -260,6 +281,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets = ['members', 'albums']
 
         john = BandMember(name='John Lennon')
         paul = BandMember(name='Paul McCartney')
@@ -297,48 +319,6 @@ class ClusterFormTest(TestCase):
 
         new_beatles = Band.objects.get(id=beatles.id)
         self.assertEqual('The New Beatles', new_beatles.name)
-        self.assertTrue(BandMember.objects.filter(name='George Harrison').exists())
-        self.assertFalse(BandMember.objects.filter(name='John Lennon').exists())
-
-    def test_can_omit_formset_from_submission(self):
-        """
-        If no explicit `formsets` parameter has been given, any formsets missing from the
-        submission should be skipped over.
-        https://github.com/wagtail/wagtail/issues/5414#issuecomment-567468127
-        """
-        class BandForm(ClusterForm):
-            class Meta:
-                model = Band
-                fields = ['name']
-
-        john = BandMember(name='John Lennon')
-        paul = BandMember(name='Paul McCartney')
-        abbey_road = Album(name='Abbey Road')
-        beatles = Band(name='The Beatles', members=[john, paul], albums=[abbey_road])
-        beatles.save()
-
-        form = BandForm({
-            'name': "The Beatles",
-
-            'members-TOTAL_FORMS': 3,
-            'members-INITIAL_FORMS': 2,
-            'members-MAX_NUM_FORMS': 1000,
-
-            'members-0-name': john.name,
-            'members-0-DELETE': 'members-0-DELETE',
-            'members-0-id': john.id,
-
-            'members-1-name': paul.name,
-            'members-1-id': paul.id,
-
-            'members-2-name': 'George Harrison',
-            'members-2-id': '',
-        }, instance=beatles)
-        self.assertTrue(form.is_valid())
-        form.save()
-
-        beatles = Band.objects.get(id=beatles.id)
-        self.assertEqual(1, beatles.albums.count())
         self.assertTrue(BandMember.objects.filter(name='George Harrison').exists())
         self.assertFalse(BandMember.objects.filter(name='John Lennon').exists())
 
@@ -389,6 +369,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets = ['members', 'albums']
 
         john = BandMember(name='John Lennon')
         paul = BandMember(name='Paul McCartney')
@@ -435,6 +416,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets = ['members', 'albums']
 
         form = BandForm({
             'name': "The Beatles",
@@ -475,6 +457,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets = ['members', 'albums']
 
         form = BandForm()
         form_html = form.as_p()
@@ -486,6 +469,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets = ['members', 'albums']
 
         form = BandForm({
             'name': "The Beatles",
@@ -525,6 +509,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets = ['members', 'albums']
 
         please_please_me = Album(name='Please Please Me', release_date=datetime.date(1963, 3, 22))
         beatles = Band(name='The Beatles', albums=[please_please_me])
@@ -582,7 +567,7 @@ class ClusterFormTest(TestCase):
         beatles.save()
         self.assertEqual(0, Band.objects.get(id=beatles.id).albums.count())
 
-    def test_cluster_form_without_formsets(self):
+    def test_cluster_form_with_empty_formsets_list(self):
         class BandForm(ClusterForm):
             class Meta:
                 model = Band
@@ -609,6 +594,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Restaurant
                 fields = ['name', 'tags', 'serves_hot_dogs', 'proprietor']
+                formsets = ['menu_items', 'reviews', 'tagged_items']
 
         self.assertIn('reviews', RestaurantForm.formsets)
 
@@ -678,6 +664,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Restaurant
                 fields = ['name', 'tags', 'serves_hot_dogs', 'proprietor']
+                formsets = ['menu_items', 'reviews', 'tagged_items']
                 widgets = {
                     'name': WidgetWithMedia
                 }
@@ -760,6 +747,7 @@ class ClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets = ['members', 'albums']
 
         form = BandForm({
             'name': "The Beatles",
@@ -861,11 +849,37 @@ class FormWithM2MTest(TestCase):
 
 class NestedClusterFormTest(TestCase):
 
+    def test_no_nested_formsets_without_explicit_formset_definition(self):
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+                formsets=['members', 'albums']
+
+        self.assertTrue(BandForm.formsets)
+
+        beatles = Band(name='The Beatles', albums=[
+            Album(name='Please Please Me', songs=[
+                Song(name='I Saw Her Standing There'),
+                Song(name='Misery')
+            ]),
+        ])
+
+        form = BandForm(instance=beatles)
+
+        self.assertEqual(4, len(form.formsets['albums'].forms))
+        self.assertNotIn('songs', form.formsets['albums'].forms[0].formsets)
+        self.assertNotIn('songs', form.as_p())
+
     def test_nested_formsets(self):
         class BandForm(ClusterForm):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets={
+                    'members': [],
+                    'albums': {'formsets': ['songs']}
+                }
 
         self.assertTrue(BandForm.formsets)
 
@@ -887,6 +901,10 @@ class NestedClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets={
+                    'members': [],
+                    'albums': {'formsets': ['songs']}
+                }
 
         form = BandForm()
         self.assertEqual(3, len(form.formsets['albums'].forms))
@@ -897,6 +915,10 @@ class NestedClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets={
+                    'members': [],
+                    'albums': {'formsets': ['songs']}
+                }
 
         beatles = Band(name='The Beatles', albums=[
             Album(name='Please Please Me', songs=[
@@ -987,6 +1009,10 @@ class NestedClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets={
+                    'members': [],
+                    'albums': {'formsets': ['songs']}
+                }
 
         first_song = Song(name='I Saw Her Standing There')
         second_song = Song(name='Misery')
@@ -1042,6 +1068,10 @@ class NestedClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets={
+                    'members': [],
+                    'albums': {'formsets': ['songs']}
+                }
 
         first_song = Song(name='I Saw Her Standing There')
         second_song = Song(name='Misery')
@@ -1095,6 +1125,10 @@ class NestedClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets={
+                    'members': [],
+                    'albums': {'formsets': ['songs']}
+                }
 
         form = BandForm({
             'name': "The Beatles",
@@ -1144,6 +1178,10 @@ class NestedClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets={
+                    'members': [],
+                    'albums': {'formsets': ['songs']}
+                }
 
         form = BandForm()
         form_html = form.as_p()
@@ -1155,6 +1193,10 @@ class NestedClusterFormTest(TestCase):
             class Meta:
                 model = Band
                 fields = ['name']
+                formsets={
+                    'members': [],
+                    'albums': {'formsets': ['songs']}
+                }
 
         form = BandForm({
             'name': "The Beatles",

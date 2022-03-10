@@ -467,7 +467,7 @@ class NestedChildFormsetTest(TestCase):
                 Song(name='Misery')
             ])
         ])
-        AlbumsFormset = childformset_factory(Band, Album, form=ClusterForm, extra=3)
+        AlbumsFormset = childformset_factory(Band, Album, form=ClusterForm, formsets=['songs'], extra=3)
         albums_formset = AlbumsFormset(instance=beatles)
 
         self.assertEqual(4, len(albums_formset.forms))
@@ -480,7 +480,7 @@ class NestedChildFormsetTest(TestCase):
         )
 
     def test_empty_formset(self):
-        AlbumsFormset = childformset_factory(Band, Album, form=ClusterForm, extra=3)
+        AlbumsFormset = childformset_factory(Band, Album, form=ClusterForm, formsets=['songs'], extra=3)
         albums_formset = AlbumsFormset()
         self.assertEqual(3, len(albums_formset.forms))
         self.assertEqual(3, len(albums_formset.forms[0].formsets['songs'].forms))
@@ -493,7 +493,7 @@ class NestedChildFormsetTest(TestCase):
         beatles.save()
         first_song_id, second_song_id = first_song.id, second_song.id
 
-        AlbumsFormset = childformset_factory(Band, Album, form=ClusterForm, extra=3)
+        AlbumsFormset = childformset_factory(Band, Album, form=ClusterForm, formsets=['songs'], extra=3)
 
         albums_formset = AlbumsFormset({
             'form-TOTAL_FORMS': 1,
@@ -555,7 +555,7 @@ class NestedChildFormsetTest(TestCase):
         second_song = Song(name='Misery')
         album.songs.add(second_song)
 
-        AlbumsFormset = childformset_factory(Band, Album, form=ClusterForm, extra=3)
+        AlbumsFormset = childformset_factory(Band, Album, form=ClusterForm, formsets=['songs'], extra=3)
 
         albums_formset = AlbumsFormset({
             'form-TOTAL_FORMS': 1,

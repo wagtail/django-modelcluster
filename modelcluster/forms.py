@@ -265,6 +265,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
         opts = new_class._meta = ClusterFormOptions(getattr(new_class, 'Meta', None))
         if opts.model:
             formsets = {}
+
             for rel in get_all_child_relations(opts.model):
                 # to build a childformset class from this relation, we need to specify:
                 # - the base model (opts.model)
@@ -274,9 +275,14 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                 rel_name = rel.get_accessor_name()
 
                 # apply 'formsets' and 'exclude_formsets' rules from meta
-                if opts.formsets is not None and rel_name not in opts.formsets:
+                if opts.exclude_formsets is not None and rel_name in opts.exclude_formsets:
+                    # formset is explicitly excluded
                     continue
-                if opts.exclude_formsets and rel_name in opts.exclude_formsets:
+                elif opts.formsets is not None and rel_name not in opts.formsets:
+                    # a formset list has been specified and this isn't on it
+                    continue
+                elif opts.formsets is None and opts.exclude_formsets is None:
+                    # neither formsets nor exclude_formsets has been specified - no formsets at all
                     continue
 
                 try:

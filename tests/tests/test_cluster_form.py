@@ -951,7 +951,6 @@ class NestedClusterFormTest(TestCase):
         self.assertTrue(Song.objects.filter(name='Misery').exists())
         self.assertFalse(Song.objects.filter(name='I Saw Her Standing There').exists())
 
-    @unittest.skip('Explicit nested formsets not yet enabled')
     def test_explicit_nested_formset_list(self):
         class BandForm(ClusterForm):
             class Meta:
@@ -968,7 +967,6 @@ class NestedClusterFormTest(TestCase):
         self.assertTrue('albums' in form.as_p())
         self.assertTrue('songs' in form.as_p())
 
-    @unittest.skip('Excluded nested formsets not yet enabled')
     def test_excluded_nested_formset_list(self):
         class BandForm(ClusterForm):
             class Meta:

@@ -174,7 +174,7 @@ def childformset_factory(
     formset=BaseChildFormSet, fk_name=None, fields=None, exclude=None,
     extra=3, can_order=False, can_delete=True, max_num=None, validate_max=False,
     formfield_callback=None, widgets=None, min_num=None, validate_min=False,
-    inherit_kwargs=None,
+    inherit_kwargs=None, formsets=None, exclude_formsets=None
 ):
 
     fk = _get_foreign_key(parent_model, model, fk_name=fk_name)
@@ -186,6 +186,22 @@ def childformset_factory(
     if exclude is None:
         exclude = []
     exclude += [fk.name]
+
+    if issubclass(form, ClusterForm) and (formsets is not None or exclude_formsets is not None):
+        # the modelformset_factory helper that we ultimately hand off to doesn't recognise
+        # formsets / exclude_formsets, so we need to prepare a specific subclass of our `form`
+        # class, with these pre-embedded in Meta, to use as the base form
+
+        # If parent form class already has an inner Meta, the Meta we're
+        # creating needs to inherit from the parent's inner meta.
+        bases = (form.Meta,) if hasattr(form, "Meta") else ()
+        Meta = type("Meta", bases, {
+            'formsets': formsets,
+            'exclude_formsets': exclude_formsets,
+        })
+
+        # Instantiate type(form) in order to use the same metaclass as form.
+        form = type(form)("_ClusterForm", (form,), {"Meta": Meta})
 
     kwargs = {
         'form': form,
@@ -404,3 +420,28 @@ class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
                     if form.has_changed():
                         return True
         return bool(self.changed_data)
+
+
+def clusterform_factory(model, form=ClusterForm, **kwargs):
+    # Same as Django's modelform_factory, but arbitrary kwargs are accepted and passed on to the
+    # Meta class.
+
+    # Build up a list of attributes that the Meta object will have.
+    meta_class_attrs = kwargs
+    meta_class_attrs["model"] = model
+
+    # If parent form class already has an inner Meta, the Meta we're
+    # creating needs to inherit from the parent's inner meta.
+    bases = (form.Meta,) if hasattr(form, "Meta") else ()
+    Meta = type("Meta", bases, meta_class_attrs)
+    formfield_callback = meta_class_attrs.get('formfield_callback')
+    if formfield_callback:
+        Meta.formfield_callback = staticmethod(formfield_callback)
+    # Give this new form class a reasonable name.
+    class_name = model.__name__ + "Form"
+
+    # Class attributes for the new form class.
+    form_class_attrs = {"Meta": Meta, "formfield_callback": formfield_callback}
+
+    # Instantiate type(form) in order to use the same metaclass as form.
+    return type(form)(class_name, (form,), form_class_attrs)

@@ -1,7 +1,7 @@
 Changelog
 =========
 
-6.0 (xx.xx.xxxx) - IN DEVELOPMENT
+6.0 (14.03.2022)
 ~~~~~~~~~~~~~~~~
 * BREAKING: ClusterForm now builds no child formsets when neither `formsets` nor `exclude_formsets` is specified in the Meta class, rather than building a formset for every child relation (Matt Westcott)
 * Support explicit definitions for nested formsets within ClusterForm, via a `formsets` option on the outer formset's definition (Matt Westcott)

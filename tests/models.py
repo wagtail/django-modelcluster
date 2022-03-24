@@ -6,7 +6,7 @@ from modelcluster.contrib.taggit import ClusterTaggableManager
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 
-from modelcluster.fields import ParentalKey, ParentalManyToManyField
+from modelcluster.fields import ParentalKey, ParentalManyToManyField, ParentalOneToOneField
 from modelcluster.models import ClusterableModel
 
 
@@ -29,6 +29,14 @@ class BandMember(models.Model):
         unique_together = [
             ['band', 'name']
         ]
+
+
+class BandManager(models.Model):
+    band = ParentalOneToOneField('Band', related_name='manager', on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
 
 
 class Album(ClusterableModel):

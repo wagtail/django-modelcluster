@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from modelcluster.models import get_all_child_relations
 
-from tests.models import Album, Band, BandMember
+from tests.models import Album, Band, BandMember, BandManager
 
 # Get child relations
 band_child_rels_by_model = {
@@ -11,6 +11,7 @@ band_child_rels_by_model = {
     for rel in get_all_child_relations(Band)
 }
 band_members_rel = band_child_rels_by_model[BandMember]
+band_manager_rel = band_child_rels_by_model[BandManager]
 band_albums_rel = band_child_rels_by_model[Album]
 
 
@@ -19,7 +20,7 @@ class TestCopyChildRelations(TestCase):
         self.beatles = Band(name='The Beatles', members=[
             BandMember(name='John Lennon'),
             BandMember(name='Paul McCartney'),
-        ])
+        ], manager=BandManager(name='Brian Epstein'))
 
     def test_copy_child_relations_between_unsaved_objects(self):
         # This test clones the Beatles into a new band. We haven't saved them in either the old record
@@ -28,19 +29,27 @@ class TestCopyChildRelations(TestCase):
         # Clone the beatle
         beatles_clone = Band(name='The Beatles 2020 comeback')
 
-        child_object_mapping = self.beatles.copy_child_relation('members', beatles_clone)
+        members_child_object_mapping = self.beatles.copy_child_relation('members', beatles_clone)
+        manager_child_object_mapping = self.beatles.copy_child_relation('manager', beatles_clone)
 
         new_john = beatles_clone.members.get(name='John Lennon')
         new_paul = beatles_clone.members.get(name='Paul McCartney')
+        new_brian = beatles_clone.manager
 
         self.assertIsNone(new_john.pk)
         self.assertIsNone(new_paul.pk)
+        self.assertIsNone(new_brian.pk)
         self.assertEqual(new_john.band, beatles_clone)
         self.assertEqual(new_paul.band, beatles_clone)
+        self.assertEqual(new_brian.band, beatles_clone)
 
         # As the source is unsaved, both band members are added into a list in the key with PK None
-        self.assertEqual(child_object_mapping, {
+        self.assertEqual(members_child_object_mapping, {
             (band_members_rel, None): [new_john, new_paul]
+        })
+
+        self.assertEqual(manager_child_object_mapping, {
+            (band_manager_rel, None): [new_brian],
         })
 
     def test_copy_child_relations_from_saved_to_unsaved_object(self):
@@ -50,23 +59,32 @@ class TestCopyChildRelations(TestCase):
         self.beatles.save()
         john = self.beatles.members.get(name='John Lennon')
         paul = self.beatles.members.get(name='Paul McCartney')
+        brian = self.beatles.manager
 
         beatles_clone = Band(name='The Beatles 2020 comeback')
 
-        child_object_mapping = self.beatles.copy_child_relation('members', beatles_clone)
+        members_child_object_mapping = self.beatles.copy_child_relation('members', beatles_clone)
+        manager_child_object_mapping = self.beatles.copy_child_relation('manager', beatles_clone)
 
         new_john = beatles_clone.members.get(name='John Lennon')
         new_paul = beatles_clone.members.get(name='Paul McCartney')
+        new_brian = beatles_clone.manager
 
         self.assertIsNone(new_john.pk)
         self.assertIsNone(new_paul.pk)
+        self.assertIsNone(new_brian.pk)
         self.assertEqual(new_john.band, beatles_clone)
         self.assertEqual(new_paul.band, beatles_clone)
+        self.assertEqual(new_brian.band, beatles_clone)
 
         # The objects are saved in the source, so we can give each item it's own entry in the mapping
-        self.assertEqual(child_object_mapping, {
+        self.assertEqual(members_child_object_mapping, {
             (band_members_rel, john.pk): new_john,
             (band_members_rel, paul.pk): new_paul,
+        })
+
+        self.assertEqual(manager_child_object_mapping, {
+            (band_manager_rel, brian.pk): new_brian,
         })
 
     def test_copy_child_relations_from_saved_and_unsaved_to_unsaved_object(self):
@@ -111,22 +129,31 @@ class TestCopyChildRelations(TestCase):
 
         john = self.beatles.members.get(name='John Lennon')
         paul = self.beatles.members.get(name='Paul McCartney')
+        brian = self.beatles.manager
 
         beatles_clone = Band(name='The Beatles 2020 comeback')
         beatles_clone.save()
 
-        child_object_mapping = self.beatles.copy_child_relation('members', beatles_clone)
+        members_child_object_mapping = self.beatles.copy_child_relation('members', beatles_clone)
+        manager_child_object_mapping = self.beatles.copy_child_relation('manager', beatles_clone)
 
         new_john = beatles_clone.members.get(name='John Lennon')
         new_paul = beatles_clone.members.get(name='Paul McCartney')
+        new_brian = beatles_clone.manager
 
         self.assertIsNone(new_john.pk)
         self.assertIsNone(new_paul.pk)
+        self.assertIsNone(new_brian.pk)
         self.assertEqual(new_john.band, beatles_clone)
         self.assertEqual(new_paul.band, beatles_clone)
+        self.assertEqual(new_brian.band, beatles_clone)
 
-        self.assertEqual(child_object_mapping, {
+        self.assertEqual(members_child_object_mapping, {
             (band_members_rel, None): [new_john, new_paul],
+        })
+
+        self.assertEqual(manager_child_object_mapping, {
+            (band_manager_rel, None): [new_brian],
         })
 
         # Bonus test! Let's save the clone again, and see if we can access the new PKs from child_object_mapping
@@ -134,6 +161,7 @@ class TestCopyChildRelations(TestCase):
         beatles_clone.save()
         self.assertTrue(child_object_mapping[(band_members_rel, None)][0].pk)
         self.assertTrue(child_object_mapping[(band_members_rel, None)][1].pk)
+        self.assertTrue(child_object_mapping[(band_manager_rel, None)][0].pk)
 
     def test_copy_child_relations_between_saved_objects(self):
         # This test copies child relations between two saved objects
@@ -142,23 +170,32 @@ class TestCopyChildRelations(TestCase):
         self.beatles.save()
         john = self.beatles.members.get(name='John Lennon')
         paul = self.beatles.members.get(name='Paul McCartney')
+        brian = self.beatles.manager
 
         beatles_clone = Band(name='The Beatles 2020 comeback')
         beatles_clone.save()
 
-        child_object_mapping = self.beatles.copy_child_relation('members', beatles_clone)
+        members_child_object_mapping = self.beatles.copy_child_relation('members', beatles_clone)
+        manager_child_object_mapping = self.beatles.copy_child_relation('manager', beatles_clone)
 
         new_john = beatles_clone.members.get(name='John Lennon')
         new_paul = beatles_clone.members.get(name='Paul McCartney')
+        new_brian = beatles_clone.manager
 
         self.assertIsNone(new_john.pk)
         self.assertIsNone(new_paul.pk)
+        self.assertIsNone(new_brian.pk)
         self.assertEqual(new_john.band, beatles_clone)
         self.assertEqual(new_paul.band, beatles_clone)
+        self.assertEqual(new_brian.band, beatles_clone)
 
-        self.assertEqual(child_object_mapping, {
+        self.assertEqual(members_child_object_mapping, {
             (band_members_rel, john.pk): new_john,
             (band_members_rel, paul.pk): new_paul,
+        })
+
+        self.assertEqual(manager_child_object_mapping, {
+            (band_manager_rel, brian.pk): new_brian,
         })
 
     def test_overwrites_existing_child_relations(self):
@@ -169,16 +206,20 @@ class TestCopyChildRelations(TestCase):
         self.beatles.save()
         john = self.beatles.members.get(name='John Lennon')
         paul = self.beatles.members.get(name='Paul McCartney')
+        brian = self.beatles.manager
 
         beatles_clone = Band(name='The Beatles 2020 comeback')
         beatles_clone.members.add(BandMember(name='Julian Lennon'))
+        beatles_clone.manager = BandManager(name='Allen Klein')
         beatles_clone.save()
 
         self.assertTrue(beatles_clone.members.filter(name='Julian Lennon').exists())
 
         self.beatles.copy_child_relation('members', beatles_clone)
+        self.beatles.copy_child_relation('manager', beatles_clone)
 
         self.assertFalse(beatles_clone.members.filter(name='Julian Lennon').exists())
+        self.assertEqual(beatles_clone.manger.name, 'Brian Epstein')
 
     def test_commit(self):
         # The commit parameter will instruct the method to save the child objects straight away
@@ -186,23 +227,32 @@ class TestCopyChildRelations(TestCase):
         self.beatles.save()
         john = self.beatles.members.get(name='John Lennon')
         paul = self.beatles.members.get(name='Paul McCartney')
+        brian = self.beatles.manager
 
         beatles_clone = Band(name='The Beatles 2020 comeback')
         beatles_clone.save()
 
-        child_object_mapping = self.beatles.copy_child_relation('members', beatles_clone, commit=True)
+        members_child_object_mapping = self.beatles.copy_child_relation('members', beatles_clone, commit=True)
+        manager_child_object_mapping = self.beatles.copy_child_relation('manager', beatles_clone, commit=True)
 
         new_john = beatles_clone.members.get(name='John Lennon')
         new_paul = beatles_clone.members.get(name='Paul McCartney')
+        new_brian = beatles_clone.manager
 
         self.assertIsNotNone(new_john.pk)
         self.assertIsNotNone(new_paul.pk)
+        self.assertIsNotNone(new_brian.pk)
         self.assertEqual(new_john.band, beatles_clone)
         self.assertEqual(new_paul.band, beatles_clone)
+        self.assertEqual(new_brian.band, beatles_clone)
 
-        self.assertEqual(child_object_mapping, {
+        self.assertEqual(members_child_object_mapping, {
             (band_members_rel, john.pk): new_john,
             (band_members_rel, paul.pk): new_paul,
+        })
+
+        self.assertEqual(manager_child_object_mapping, {
+            (band_manager_rel, brian.pk): new_brian,
         })
 
     def test_commit_to_unsaved(self):
@@ -215,6 +265,9 @@ class TestCopyChildRelations(TestCase):
 
         with self.assertRaises(IntegrityError):
             self.beatles.copy_child_relation('members', beatles_clone, commit=True)
+
+        with self.assertRaises(IntegrityError):
+            self.beatles.copy_child_relation('manager', beatles_clone, commit=True)
 
     def test_append(self):
         # But you can specify append=True, which appends them to the existing list
@@ -256,7 +309,7 @@ class TestCopyAllChildRelations(TestCase):
             Album(name='Please Please Me', sort_order=1),
             Album(name='With The Beatles', sort_order=2),
             Album(name='Abbey Road', sort_order=3),
-        ])
+        ], manager=BandManager(name='Brian Epstein'))
 
     def test_copy_all_child_relations_unsaved(self):
         # Let's imagine that cloned bands own the albums of their source
@@ -267,6 +320,7 @@ class TestCopyAllChildRelations(TestCase):
 
         new_john = beatles_clone.members.get(name='John Lennon')
         new_paul = beatles_clone.members.get(name='Paul McCartney')
+        new_brian = beatles_clone.manager
 
         new_album_1 = beatles_clone.albums.get(sort_order=1)
         new_album_2 = beatles_clone.albums.get(sort_order=2)
@@ -274,6 +328,7 @@ class TestCopyAllChildRelations(TestCase):
 
         self.assertEqual(child_object_mapping, {
             (band_members_rel, None): [new_john, new_paul],
+            (band_manager_rel, None): [new_brian],
             (band_albums_rel, None): [new_album_1, new_album_2, new_album_3],
         })
 
@@ -282,6 +337,7 @@ class TestCopyAllChildRelations(TestCase):
 
         john = self.beatles.members.get(name='John Lennon')
         paul = self.beatles.members.get(name='Paul McCartney')
+        brian = self.beatles.manager
         album_1 = self.beatles.albums.get(sort_order=1)
         album_2 = self.beatles.albums.get(sort_order=2)
         album_3 = self.beatles.albums.get(sort_order=3)
@@ -291,6 +347,7 @@ class TestCopyAllChildRelations(TestCase):
 
         new_john = beatles_clone.members.get(name='John Lennon')
         new_paul = beatles_clone.members.get(name='Paul McCartney')
+        new_brian = beatles_clone.manager
 
         new_album_1 = beatles_clone.albums.get(sort_order=1)
         new_album_2 = beatles_clone.albums.get(sort_order=2)
@@ -299,9 +356,11 @@ class TestCopyAllChildRelations(TestCase):
         self.assertEqual(child_object_mapping, {
             (band_members_rel, john.pk): new_john,
             (band_members_rel, paul.pk): new_paul,
+            (band_manager_rel, brian.pk): new_brian,
             (band_albums_rel, album_1.pk): new_album_1,
             (band_albums_rel, album_2.pk): new_album_2,
             (band_albums_rel, album_3.pk): new_album_3,
+
         })
 
     def test_exclude(self):
@@ -353,6 +412,7 @@ class TestCopyAllChildRelations(TestCase):
         self.beatles.save()
         john = self.beatles.members.get(name='John Lennon')
         paul = self.beatles.members.get(name='Paul McCartney')
+        brian = self.beatles.manager
         album_1 = self.beatles.albums.get(sort_order=1)
         album_2 = self.beatles.albums.get(sort_order=2)
         album_3 = self.beatles.albums.get(sort_order=3)
@@ -364,6 +424,7 @@ class TestCopyAllChildRelations(TestCase):
 
         new_john = beatles_clone.members.get(name='John Lennon')
         new_paul = beatles_clone.members.get(name='Paul McCartney')
+        new_brian = beatles_clone.manager
 
         new_album_1 = beatles_clone.albums.get(sort_order=1)
         new_album_2 = beatles_clone.albums.get(sort_order=2)
@@ -371,12 +432,14 @@ class TestCopyAllChildRelations(TestCase):
 
         self.assertIsNotNone(new_john.pk)
         self.assertIsNotNone(new_paul.pk)
+        self.assertIsNotNone(new_brian.pk)
         self.assertIsNotNone(new_album_1.pk)
         self.assertIsNotNone(new_album_2.pk)
         self.assertIsNotNone(new_album_3.pk)
 
         self.assertEqual(new_john.band, beatles_clone)
         self.assertEqual(new_paul.band, beatles_clone)
+        self.assertEqual(new_brian.band, beatles_clone)
         self.assertEqual(new_album_1.band, beatles_clone)
         self.assertEqual(new_album_2.band, beatles_clone)
         self.assertEqual(new_album_3.band, beatles_clone)
@@ -384,6 +447,7 @@ class TestCopyAllChildRelations(TestCase):
         self.assertEqual(child_object_mapping, {
             (band_members_rel, john.pk): new_john,
             (band_members_rel, paul.pk): new_paul,
+            (band_manager_rel, brian.pk): new_brian,
             (band_albums_rel, album_1.pk): new_album_1,
             (band_albums_rel, album_2.pk): new_album_2,
             (band_albums_rel, album_3.pk): new_album_3,

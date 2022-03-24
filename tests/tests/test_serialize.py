@@ -7,7 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 
-from tests.models import Band, BandMember, Album, Place, Restaurant, SeafoodRestaurant, Dish, \
+from tests.models import Band, BandMember, BandManager, Album, Place, Restaurant, SeafoodRestaurant, Dish, \
     MenuItem, Chef, Wine, Review, Log, Document, Article, Author, Category
 
 
@@ -16,12 +16,12 @@ class SerializeTest(TestCase):
         beatles = Band(name='The Beatles', members=[
             BandMember(name='John Lennon'),
             BandMember(name='Paul McCartney'),
-        ])
+        ], manager=BandManager(name='Brian Epstein'))
 
         expected = {'pk': None, 'albums': [], 'name': 'The Beatles', 'members': [
             {'pk': None, 'name': 'John Lennon', 'band': None, 'favourite_restaurant': None},
             {'pk': None, 'name': 'Paul McCartney', 'band': None, 'favourite_restaurant': None}
-        ]}
+        ], 'manager': {'pk': None, 'name': 'Brian Epstein', 'band': None}}
         self.assertEqual(expected, beatles.serializable_data())
 
     def test_serialize_m2m(self):
@@ -60,12 +60,14 @@ class SerializeTest(TestCase):
             'members': [
                 {'pk': None, 'name': 'John Lennon', 'band': None},
                 {'pk': None, 'name': 'Paul McCartney', 'band': None},
-            ]
+            ],
+            'manager': {'pk': None, 'name': 'Brian Epstein', 'band': None},
         })
         self.assertEqual(9, beatles.id)
         self.assertEqual('The Beatles', beatles.name)
         self.assertEqual(2, beatles.members.count())
         self.assertEqual(BandMember, beatles.members.all()[0].__class__)
+        self.assertEqual('Brian Epstein', beatles.manager.name)
 
     def test_deserialize_m2m(self):
         authors = {}
@@ -90,11 +92,12 @@ class SerializeTest(TestCase):
         self.assertEqual(article.categories.count(), 3)
 
     def test_deserialize_json(self):
-        beatles = Band.from_json('{"pk": 9, "albums": [], "name": "The Beatles", "members": [{"pk": null, "name": "John Lennon", "band": null}, {"pk": null, "name": "Paul McCartney", "band": null}]}')
+        beatles = Band.from_json('{"pk": 9, "albums": [], "name": "The Beatles", "members": [{"pk": null, "name": "John Lennon", "band": null}, {"pk": null, "name": "Paul McCartney", "band": null}], "manager": {"pk": null, "name": "Brian Epstein", "band": null}}')
         self.assertEqual(9, beatles.id)
         self.assertEqual('The Beatles', beatles.name)
         self.assertEqual(2, beatles.members.count())
         self.assertEqual(BandMember, beatles.members.all()[0].__class__)
+        self.assertEqual('Brian Epstein', beatles.manager.name)
 
     def test_serialize_with_multi_table_inheritance(self):
         fat_duck = Restaurant(name='The Fat Duck', serves_hot_dogs=False, reviews=[

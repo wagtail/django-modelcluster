@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.core import checks
 from django.db import IntegrityError, connections, router
 from django.db.models import CASCADE
-from django.db.models.fields.related import ForeignKey, ManyToManyField
+from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
 from django.utils.functional import cached_property
 
 from django.db.models.fields.related import ReverseManyToOneDescriptor, ManyToManyDescriptor
@@ -279,6 +279,45 @@ class ParentalKey(ForeignKey):
 
         return errors
 
+
+class ParentalOneToOneField(OneToOneField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('on_delete', CASCADE)
+        super().__init__(*args, **kwargs)
+
+    def check(self, **kwargs):
+        from modelcluster.models import ClusterableModel
+
+        errors = super().check(**kwargs)
+
+        # Check that the destination model is a subclass of ClusterableModel.
+        # If self.rel.to is a string at this point, it means that Django has been unable
+        # to resolve it as a model name; if so, skip this test so that Django's own
+        # system checks can report the appropriate error
+        if isinstance(self.remote_field.model, type) and not issubclass(self.remote_field.model, ClusterableModel):
+            errors.append(
+                checks.Error(
+                    'ParentalOneToOneField must point to a subclass of ClusterableModel.',
+                    hint='Change {model_name} into a ClusterableModel or use a ForeignKey instead.'.format(
+                        model_name=self.remote_field.model._meta.app_label + '.' + self.remote_field.model.__name__,
+                    ),
+                    obj=self,
+                    id='modelcluster.E001',
+                )
+            )
+
+        # ParentalOneToOneFields must have an accessor name (#49)
+        if self.remote_field.get_accessor_name() == '+':
+            errors.append(
+                checks.Error(
+                    "related_name='+' is not allowed on ParentalOneToOneField fields",
+                    hint="Either change it to a valid name or remove it",
+                    obj=self,
+                    id='modelcluster.E002',
+                )
+            )
+
+        return errors
 
 def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
     rel_field = rel.field

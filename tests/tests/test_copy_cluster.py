@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from modelcluster.models import get_all_child_relations
 
-from tests.models import Band, BandMember, Article, Author, Category
+from tests.models import Band, BandMember, BandManager, Article, Author, Category
 
 
 # Get child relations
@@ -23,6 +23,7 @@ class TestCopyCluster(TestCase):
             BandMember(name='John Lennon'),
             BandMember(name='Paul McCartney'),
         ]
+        beatles.manager = BandManager(name='Brian Epstein')
         beatles.save()
 
         beatles_copy, child_object_map = beatles.copy_cluster()
@@ -42,11 +43,14 @@ class TestCopyCluster(TestCase):
         # Check child_object_map
         old_john = beatles.members.get(name='John Lennon')
         old_paul = beatles.members.get(name='Paul McCartney')
+        old_brian = beatles.manager
         new_john = beatles_copy.members.get(name='John Lennon')
         new_paul = beatles_copy.members.get(name='Paul McCartney')
+        new_brian = beatles_copy.manager
         self.assertEqual(child_object_map, {
             (band_members_rel, old_john.pk): new_john,
             (band_members_rel, old_paul.pk): new_paul,
+            (band_manager_rel, old_brian.pk): new_brian,
         })
 
     def test_copies_parental_many_to_many_fields(self):

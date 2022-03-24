@@ -11,7 +11,7 @@ from modelcluster.models import get_all_child_relations
 from modelcluster.queryset import FakeQuerySet
 from modelcluster.utils import ManyToManyTraversalError
 
-from tests.models import Band, BandMember, Chef, Feature, Place, Restaurant, SeafoodRestaurant, \
+from tests.models import Band, BandMember, BandManager, Chef, Feature, Place, Restaurant, SeafoodRestaurant, \
     Review, Album, Article, Author, Category, Person, Room, House, Log, Dish, MenuItem, Wine
 
 
@@ -35,6 +35,7 @@ class ClusterTest(TestCase):
             BandMember(name='John Lennon'),
             BandMember(name='Paul McCartney'),
         ]
+        beatles.manager = BandManager(name='Brian Epstein')
 
         # we should be able to query this relation using (some) queryset methods
         self.assertEqual(2, beatles.members.count())
@@ -116,14 +117,18 @@ class ClusterTest(TestCase):
         self.assertTrue('John Lennon', beatles.members.order_by('name').first())
         self.assertTrue('Paul McCartney', beatles.members.order_by('-name').first())
 
+        self.assertEqual('Brian Epstein', beatles.manager.name)
+
         # these should not exist in the database yet
         self.assertFalse(Band.objects.filter(name='The Beatles').exists())
         self.assertFalse(BandMember.objects.filter(name='John Lennon').exists())
+        self.assertFalse(BandManager.objects.filter(name='Brian Epstein').exists())
 
         beatles.save()
         # this should create database entries
         self.assertTrue(Band.objects.filter(name='The Beatles').exists())
         self.assertTrue(BandMember.objects.filter(name='John Lennon').exists())
+        self.assertTrue(BandManager.objects.filter(name='Brian Epstein').exists())
 
         john_lennon = BandMember.objects.get(name='John Lennon')
         beatles.members = [john_lennon]

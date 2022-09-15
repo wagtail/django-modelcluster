@@ -317,6 +317,8 @@ class ClusterableModel(models.Model):
             old_pk = child_object.pk
             is_saved = old_pk is not None
             child_object.pk = None
+            child_object.id = None
+            child_object._state.adding = True
             setattr(child_object, parental_key_name, target.id)
             target_manager.add(child_object)
 

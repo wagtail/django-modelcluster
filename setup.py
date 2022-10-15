@@ -17,11 +17,11 @@ setup(
     long_description=open('README.rst').read(),
     python_requires=">=3.7",
     install_requires=[
-        "pytz>=2015.2",
-        "django>=2.2",
+        "pytz>=2022.4",
+        "django>=3.2",
     ],
     extras_require={
-        'taggit': ['django-taggit>=0.20'],
+        'taggit': ['django-taggit>=2.0'],
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable',

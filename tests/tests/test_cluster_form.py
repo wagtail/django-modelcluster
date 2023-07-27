@@ -271,6 +271,8 @@ class ClusterFormTest(TestCase):
                 model = Band
                 fields = ['name']
                 formsets = ['members', 'albums']
+                if DJANGO_VERSION >= (4, 2):
+                    formfield_callback = formfield_for_dbfield
 
         form = BandFormWithFFC()
         self.assertEqual(Textarea, type(form['name'].field.widget))

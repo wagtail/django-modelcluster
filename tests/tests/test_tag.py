@@ -2,11 +2,12 @@ from __future__ import unicode_literals
 
 import unittest
 
+from django import VERSION as DJANGO_VERSION
 from django.test import TestCase, override_settings
 from taggit import VERSION as TAGGIT_VERSION
 from taggit.models import Tag
-from modelcluster.forms import ClusterForm
 
+from modelcluster.forms import ClusterForm
 from tests.models import NonClusterPlace, Place, TaggedPlace
 
 
@@ -148,7 +149,13 @@ class TagTest(TestCase):
         mission_burrito.tags.add('burrito', 'mexican')
         form = PlaceForm(instance=mission_burrito)
         form_html = form.as_p()
-        self.assertInHTML('<input type="text" name="tags" value="burrito, mexican" id="id_tags">', form_html)
+        html = '<input type="text" name="tags" value="burrito, mexican" id="id_tags">'
+
+        if DJANGO_VERSION >= (5, 0):
+            # https://docs.djangoproject.com/en/dev/releases/5.0/#forms
+            html = '<input type="text" name="tags" value="burrito, mexican" aria-describedby="id_tags_helptext" id="id_tags">'
+
+        self.assertInHTML(html, form_html)
 
     @override_settings(TAGGIT_CASE_INSENSITIVE=True)
     def test_case_insensitive_tags(self):

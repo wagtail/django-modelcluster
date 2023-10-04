@@ -7,7 +7,7 @@ Changelog
 * Fixed deprecation warning for removal of `django.utils.timezone.utc` (John-Scott Atlakson)
 * Fix: Avoid unnecessary call to localtime for timestamps already in UTC (Stefan Hammer)
 * Removed Python 3.7 support
-* Add Python 3.11 support
+* Add Python 3.11 and 3.12 support
 
 6.0 (14.03.2022)
 ~~~~~~~~~~~~~~~~

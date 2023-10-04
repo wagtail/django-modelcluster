@@ -1,7 +1,7 @@
 Changelog
 =========
 
-6.1 (unreleased)
+6.1 (04.10.2023)
 ~~~~~~~~~~~~~~~~
 * Removed Django 2.2, 3.0, 3.1 & 4.0 support
 * Added Django 4.2 support (Irtaza Akram)

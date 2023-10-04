@@ -8,26 +8,52 @@ jobs:
   test:
     name: Python ${{ matrix.python }} - ${{ matrix.django }} - ${{ matrix.database }}
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-        python: ["3.8", "3.9", "3.10", "3.11"]
-        django: [
-          "Django>=3.2,<4.0",
-          "Django>=4.1,<4.2",
-          "Django>=4.2,<5.0",
-          "git+https://github.com/django/django.git@main#egg=Django"
-        ]
-        database: ["postgresql", "sqlite3"]
-        taggit: ["django-taggit>=2.1.0"]
-        psycopg: ["psycopg2>=2.9.2"]
-
-        exclude:
-          - python: "3.11"
-            django: "Django>=3.2,<4.0"
+        include:
           - python: "3.8"
-            django: "git+https://github.com/django/django.git@main#egg=Django"
+            django: "Django>=3.2,<4.0"
+            taggit: "django-taggit>=2.1.0"
+            database: "postgresql"
+            psycopg: "psycopg2>=2.9.2"
+            experimental: false
           - python: "3.9"
+            django: "Django>=4.0,<4.1"
+            taggit: "django-taggit>=2.1.0"
+            database: "sqlite3"
+            psycopg: "psycopg2>=2.9.2"
+            experimental: false
+          - python: "3.10"
+            django: "Django>=4.1,<4.2"
+            taggit: "django-taggit>=2.1.0"
+            database: "postgresql"
+            psycopg: "psycopg2>=2.9.2"
+            experimental: false
+          - python: "3.11"
+            django: "Django>=4.2,<4.3"
+            taggit: "django-taggit>=2.1.0"
+            database: "postgresql"
+            psycopg: "psycopg2>=2.9.2"
+            experimental: false
+          - python: "3.12"
+            django: "Django>=4.2,<4.3"
+            taggit: "django-taggit>=2.1.0"
+            database: "sqlite3"
+            psycopg: "psycopg2>=2.9.2"
+            experimental: false
+          - python: "3.10"
+            django: "git+https://github.com/django/django.git@stable/5.0.x#egg=Django"
+            taggit: "django-taggit>=2.1.0"
+            database: "sqlite3"
+            psycopg: "psycopg2>=2.9.2"
+            experimental: true
+          - python: "3.10"
             django: "git+https://github.com/django/django.git@main#egg=Django"
+            taggit: "django-taggit>=2.1.0"
+            database: "postgresql"
+            psycopg: "psycopg2>=2.9.2"
+            experimental: true
 
     services:
       postgres:

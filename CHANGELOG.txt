@@ -3,6 +3,7 @@ Changelog
 
 6.1 (unreleased)
 ~~~~~~~~~~~~~~~~
+* Added Python 3.11 and 3.12 support
 * Removed Django 2.2, 3.0 and 3.1 support
 * Fixed deprecation warning for removal of `django.utils.timezone.utc` (John-Scott Atlakson)
 * Fix: Avoid unnecessary call to localtime for timestamps already in UTC (Stefan Hammer)

@@ -350,7 +350,8 @@ FILTER_EXPRESSION_TOKENS = {
 def _build_test_function_from_filter(model, key_clauses, val):
     # Translate a filter kwarg rule (e.g. foo__bar__exact=123) into a function which can
     # take a model instance and return a boolean indicating whether it passes the rule
-    if key_clauses[-1] in FILTER_EXPRESSION_TOKENS:
+    if len(key_clauses) > 1 and key_clauses[-1] in FILTER_EXPRESSION_TOKENS:
+        # when there are more than one clause,
         # the last clause indicates the type of test
         constructor = FILTER_EXPRESSION_TOKENS[key_clauses.pop()]
     else:

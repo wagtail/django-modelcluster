@@ -33,6 +33,12 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             self.model = rel_model
             self.instance = instance
 
+        @property
+        def is_deferring(self):
+            return relation_name in getattr(
+                self.instance, '_cluster_related_objects', {}
+            )
+
         def _get_cluster_related_objects(self):
             # Helper to retrieve the instance's _cluster_related_objects dict,
             # creating it if it does not already exist

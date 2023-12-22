@@ -47,33 +47,46 @@ class TagTest(TestCase):
         mission_burrito.save()
         self.assertEqual(2, TaggedPlace.objects.filter(content_object_id=mission_burrito.id).count())
 
-    def test_prefetch_tags_doesnt_break(self):
-        mission_burrito = Place(name='Mission Burrito')
-        mission_burrito.tags.add('mexican', 'burrito')
-        mission_burrito.save()
-
-        atomic_burger = Place(name='Atomic Burger')
-        atomic_burger.tags.add('burger')
-        atomic_burger.save()
-
-        places = list(Place.objects.order_by('name').prefetch_related('tags'))
-        self.assertEqual(places[0].name, 'Atomic Burger')
-        self.assertEqual(places[0].tags.first().name, 'burger')
-
-    @unittest.expectedFailure
     def test_prefetch_tags_actually_prefetches(self):
-        mission_burrito = Place(name='Mission Burrito')
-        mission_burrito.tags.add('mexican', 'burrito')
+        mission_burrito = Place(name="Mission Burrito")
+        mission_burrito.tags.add("mexican", "burrito")
         mission_burrito.save()
 
-        atomic_burger = Place(name='Atomic Burger')
-        atomic_burger.tags.add('burger')
+        atomic_burger = Place(name="Atomic Burger")
+        atomic_burger.tags.add("burger")
         atomic_burger.save()
 
         with self.assertNumQueries(2):
-            places = list(Place.objects.order_by('name').prefetch_related('tags'))
-            self.assertEqual(places[0].name, 'Atomic Burger')
-            self.assertEqual(places[0].tags.first().name, 'burger')
+            places = list(Place.objects.order_by("name").prefetch_related("tags"))
+            self.assertEqual(places[0].name, "Atomic Burger")
+            self.assertCountEqual(
+                [tag.name for tag in places[0].tags.all()], ["burger"]
+            )
+
+            self.assertEqual(places[1].name, "Mission Burrito")
+            self.assertCountEqual(
+                [tag.name for tag in places[1].tags.all()], ["mexican", "burrito"]
+            )
+
+    def test_prefetching_and_then_adding_works_as_expected(self):
+        mission_burrito = Place(name="Mission Burrito")
+        mission_burrito.tags.add("mexican", "burrito")
+        mission_burrito.save()
+
+        with self.assertNumQueries(2):
+            places = list(Place.objects.order_by("name").prefetch_related("tags"))
+            self.assertEqual(places[0].name, "Mission Burrito")
+            self.assertCountEqual(
+                [tag.name for tag in places[0].tags.all()], ["mexican", "burrito"]
+        )
+
+        places[0].tags.add("pizza")
+        places[0].save()
+
+        self.assertCountEqual(
+            [tag.name for tag in places[0].tags.all()],
+            ["mexican", "burrito", "pizza"],
+        )
 
     def test_tag_form_field(self):
         class PlaceForm(ClusterForm):

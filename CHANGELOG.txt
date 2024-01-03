@@ -1,6 +1,12 @@
 Changelog
 =========
 
+6.2 (03.01.2024)
+~~~~~~~~~~~~~~~~
+* Added Django 5.0 support
+* Removed Django 4.1 support
+* Implement prefetching for ClusterTaggableManager (Andy Chosak)
+
 6.1 (04.10.2023)
 ~~~~~~~~~~~~~~~~
 * Removed Django 2.2, 3.0, 3.1 & 4.0 support

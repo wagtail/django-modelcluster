@@ -91,7 +91,8 @@ class _ClusterTaggableManager(_TaggableManager):
 
     @require_instance_manager
     def add(self, *tags):
-        self._remove_prefetched_objects()
+        if TAGGIT_VERSION >= (3, 1, 0):
+            self._remove_prefetched_objects()
 
         if TAGGIT_VERSION >= (1, 3, 0):
             tag_objs = self._to_tag_model_instances(tags, {})
@@ -108,7 +109,8 @@ class _ClusterTaggableManager(_TaggableManager):
 
     @require_instance_manager
     def remove(self, *tags):
-        self._remove_prefetched_objects()
+        if TAGGIT_VERSION >= (3, 1, 0):
+            self._remove_prefetched_objects()
 
         tagged_item_manager = self.get_tagged_item_manager()
         tagged_items = [
@@ -135,7 +137,8 @@ class _ClusterTaggableManager(_TaggableManager):
 
     @require_instance_manager
     def clear(self):
-        self._remove_prefetched_objects()
+        if TAGGIT_VERSION >= (3, 1, 0):
+            self._remove_prefetched_objects()
         self.get_tagged_item_manager().clear()
 
 

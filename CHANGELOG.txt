@@ -1,6 +1,10 @@
 Changelog
 =========
 
+6.2.1 (04.01.2024)
+~~~~~~~~~~~~~~~~~~
+* Fix: Prevent failure on pre-3.1.0 versions of django-taggit without `_remove_prefetched_objects`
+
 6.2 (03.01.2024)
 ~~~~~~~~~~~~~~~~
 * Added Django 5.0 support

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 import re
 
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Model, prefetch_related_objects
 
 from modelcluster.utils import extract_field_value, get_model_field, sort_by_fields
@@ -350,8 +351,15 @@ FILTER_EXPRESSION_TOKENS = {
 def _build_test_function_from_filter(model, key_clauses, val):
     # Translate a filter kwarg rule (e.g. foo__bar__exact=123) into a function which can
     # take a model instance and return a boolean indicating whether it passes the rule
-    if key_clauses[-1] in FILTER_EXPRESSION_TOKENS:
-        # the last clause indicates the type of test
+    try:
+        get_model_field(model, "__".join(key_clauses))
+    except FieldDoesNotExist:
+        # it is safe to assume the last clause indicates the type of test
+        field_match_found = False
+    else:
+        field_match_found = True
+
+    if not field_match_found and key_clauses[-1] in FILTER_EXPRESSION_TOKENS:
         constructor = FILTER_EXPRESSION_TOKENS[key_clauses.pop()]
     else:
         constructor = test_exact

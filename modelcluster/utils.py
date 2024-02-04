@@ -93,7 +93,13 @@ def extract_field_value(obj, key, pk_only=False, suppress_fielddoesnotexist=Fals
 
     By default, ``FieldDoesNotExist`` is raised if the key cannot be mapped to
     a model field. Call the function with ``suppress_fielddoesnotexist=True``
-    to get ``None`` values instead.
+    to instead receive a ``None`` value when this occurs.
+
+    By default, ``NullRelationshipValueEncountered`` is raised if a ``None``
+    value is encountered while attempting to traverse relationships in order to
+    access further fields. Call the function with
+    ``suppress_nullrelationshipvalueencountered`` to instead receive a ``None``
+    value when this occurs.
     """
     source = obj
     latest_obj = obj

@@ -66,9 +66,18 @@ def get_model_field(model, name):
                         subject_model=subject_model,
                     )
                 )
-            if hasattr(field, "related_model"):
+            if getattr(field, "related_model", None):
                 traversals.append(TraversedRelationship(subject_model, field))
                 subject_model = field.related_model
+            else:
+                raise FieldDoesNotExist(
+                    "Failed attempting to traverse from {from_field} (a {from_field_type}) to '{to_field}'."
+                    .format(
+                        from_field=subject_model._meta.label + '.' + field.name,
+                        from_field_type=type(field),
+                        to_field=field_name,
+                    )
+                )
         try:
             field = subject_model._meta.get_field(field_name)
         except FieldDoesNotExist:

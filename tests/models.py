@@ -36,6 +36,7 @@ class Album(ClusterableModel):
     name = models.CharField(max_length=255)
     release_date = models.DateField(null=True, blank=True)
     sort_order = models.IntegerField(null=True, blank=True, editable=False)
+    label = models.ForeignKey("RecordLabel", blank=True, null=True, on_delete=models.SET_NULL)
 
     sort_order_field = 'sort_order'
 
@@ -58,6 +59,14 @@ class Song(models.Model):
 
     class Meta:
         ordering = ['sort_order']
+
+
+class RecordLabel(models.Model):
+    name = models.CharField(max_length=200)
+    range = models.SmallIntegerField(default=5, blank=True)
+
+    def __str__(self):
+        return self.name
 
 
 class TaggedPlace(TaggedItemBase):

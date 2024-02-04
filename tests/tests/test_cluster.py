@@ -11,8 +11,9 @@ from modelcluster.models import get_all_child_relations
 from modelcluster.queryset import FakeQuerySet
 from modelcluster.utils import ManyToManyTraversalError
 
-from tests.models import Band, BandMember, Chef, Feature, Place, Restaurant, SeafoodRestaurant, \
-    Review, Album, Article, Author, Category, Person, Room, House, Log, Dish, MenuItem, Wine
+from tests.models import Band, BandMember, Chef, Feature, Place, Restaurant, \
+    Review, Album, Song, RecordLabel, Article, Author, Category, Person, \
+    Room, House, Log, Dish, MenuItem, Wine
 
 
 class ClusterTest(TestCase):
@@ -141,6 +142,29 @@ class ClusterTest(TestCase):
 
         # queries on beatles.members should now revert to SQL
         self.assertTrue(beatles.members.extra(where=["tests_bandmember.name='John Lennon'"]).exists())
+
+    def test_filter_expression_token_clash_handling(self):
+        """
+        This tests ensures that the field name 'range' should not be mistaken
+        for the 'range' from FILTER_EXPRESSION_TOKENS when used in filter()
+        or exclude().
+
+        Plus, extract_field_value() should not crash when encountering albums
+        without a 'label' value specified (they should be classed as automatic
+        test failures and excluded from the result).
+        """
+        label = RecordLabel.objects.create(name="Parlophone", range=7)
+        beatles = Band(
+            name="The Beatles",
+            albums=[
+                Album(name='Please Please Me', label=label, sort_order=1),
+                Album(name='With The Beatles', sort_order=2),
+                Album(name='A Hard Day\'s Night', sort_order=3),
+            ],
+        )
+
+        self.assertEqual(beatles.albums.filter(label__range=7).count(), 1)
+        self.assertEqual(beatles.albums.exclude(label__range=7).count(), 2)
 
     def test_values_list(self):
         beatles = Band(

@@ -1,11 +1,15 @@
 from functools import lru_cache
 from django.core.exceptions import FieldDoesNotExist
-from django.db.models import ManyToManyField, ManyToManyRel
+from django.db.models import ManyToManyField, ManyToManyRel, Model
 
 REL_DELIMETER = "__"
 
 
 class ManyToManyTraversalError(ValueError):
+    pass
+
+
+class NullRelationshipValueEncountered(Exception):
     pass
 
 
@@ -76,7 +80,7 @@ def get_model_field(model, name):
     return field
 
 
-def extract_field_value(obj, key, pk_only=False, suppress_fielddoesnotexist=False):
+def extract_field_value(obj, key, pk_only=False, suppress_fielddoesnotexist=False, suppress_nullrelationshipvalueencountered=False):
     """
     Attempts to extract a field value from ``obj`` matching the ``key`` - which,
     can contain double-underscores (`'__'`) to indicate traversal of relationships
@@ -92,9 +96,25 @@ def extract_field_value(obj, key, pk_only=False, suppress_fielddoesnotexist=Fals
     to get ``None`` values instead.
     """
     source = obj
-    for attr in key.split(REL_DELIMETER):
-        if hasattr(source, attr):
-            value = getattr(source, attr)
+    latest_obj = obj
+    segments = key.split(REL_DELIMETER)
+    for i, segment in enumerate(segments, start=1):
+        if hasattr(source, segment):
+            value = getattr(source, segment)
+            if isinstance(value, Model):
+                latest_obj = value
+            if value is None and i < len(segments):
+                if suppress_nullrelationshipvalueencountered:
+                    return None
+                raise NullRelationshipValueEncountered(
+                    "'{key}' cannot be reached for {obj} because {model_class}.{field_name} "
+                    "is null.".format(
+                        key=key,
+                        obj=repr(obj),
+                        model_class=latest_obj._meta.label,
+                        field_name=segment,
+                    )
+                )
             source = value
             continue
         elif suppress_fielddoesnotexist:
@@ -102,7 +122,7 @@ def extract_field_value(obj, key, pk_only=False, suppress_fielddoesnotexist=Fals
         else:
             raise FieldDoesNotExist(
                 "'{name}' is not a valid field name for {model}".format(
-                    name=attr, model=type(source)
+                    name=segment, model=type(source)
                 )
             )
     if pk_only and hasattr(value, 'pk'):
@@ -128,7 +148,7 @@ def sort_by_fields(items, fields):
         def get_sort_value(item):
             # Use a tuple of (v is not None, v) as the key, to ensure that None sorts before other values,
             # as comparing directly with None breaks on python3
-            value = extract_field_value(item, key, pk_only=True, suppress_fielddoesnotexist=True)
+            value = extract_field_value(item, key, pk_only=True, suppress_fielddoesnotexist=True, suppress_nullrelationshipvalueencountered=True)
             return (value is not None, value)
 
         # Sort items

@@ -6,7 +6,7 @@ import re
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Model, prefetch_related_objects
 
-from modelcluster.utils import extract_field_value, get_model_field, sort_by_fields
+from modelcluster.utils import NullRelationshipValueEncountered, extract_field_value, get_model_field, sort_by_fields
 
 
 # Constructor for test functions that determine whether an object passes some boolean condition
@@ -14,23 +14,44 @@ def test_exact(model, attribute_name, value):
     if isinstance(value, Model):
         if value.pk is None:
             # comparing against an unsaved model, so objects need to match by reference
-            return lambda obj: extract_field_value(obj, attribute_name) is value
+            def _test(obj):
+                try:
+                    other_value = extract_field_value(obj, attribute_name)
+                except NullRelationshipValueEncountered:
+                    return False
+                return other_value is value
+
+            return _test
+
         else:
             # comparing against a saved model; objects need to match by type and ID.
             # Additionally, where model inheritance is involved, we need to treat it as a
             # positive match if one is a subclass of the other
             def _test(obj):
-                other_value = extract_field_value(obj, attribute_name)
-                if not (isinstance(value, other_value.__class__) or isinstance(other_value, value.__class__)):
+                try:
+                    other_value = extract_field_value(obj, attribute_name)
+                except NullRelationshipValueEncountered:
                     return False
-                return value.pk == other_value.pk
+                return value.pk == other_value.pk and (
+                    isinstance(value, other_value.__class__)
+                    or isinstance(other_value, value.__class__)
+                )
+
             return _test
     else:
         field = get_model_field(model, attribute_name)
         # convert value to the correct python type for this field
         typed_value = field.to_python(value)
+
         # just a plain Python value = do a normal equality check
-        return lambda obj: extract_field_value(obj, attribute_name) == typed_value
+        def _test(obj):
+            try:
+                other_value = extract_field_value(obj, attribute_name)
+            except NullRelationshipValueEncountered:
+                return False
+            return other_value == typed_value
+
+        return _test
 
 
 def test_iexact(model, attribute_name, match_value):
@@ -38,15 +59,24 @@ def test_iexact(model, attribute_name, match_value):
     match_value = field.to_python(match_value)
 
     if match_value is None:
-        return lambda obj: getattr(obj, attribute_name) is None
+
+        def _test(obj):
+            try:
+                val = extract_field_value(obj, attribute_name)
+            except NullRelationshipValueEncountered:
+                return False
+            return val is None
     else:
         match_value = match_value.upper()
 
         def _test(obj):
-            val = extract_field_value(obj, attribute_name)
+            try:
+                val = extract_field_value(obj, attribute_name)
+            except NullRelationshipValueEncountered:
+                return False
             return val is not None and val.upper() == match_value
 
-        return _test
+    return _test
 
 
 def test_contains(model, attribute_name, value):
@@ -54,7 +84,10 @@ def test_contains(model, attribute_name, value):
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and match_value in val
 
     return _test
@@ -65,7 +98,10 @@ def test_icontains(model, attribute_name, value):
     match_value = field.to_python(value).upper()
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and match_value in val.upper()
 
     return _test
@@ -76,7 +112,10 @@ def test_lt(model, attribute_name, value):
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val < match_value
 
     return _test
@@ -87,7 +126,10 @@ def test_lte(model, attribute_name, value):
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val <= match_value
 
     return _test
@@ -98,7 +140,10 @@ def test_gt(model, attribute_name, value):
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val > match_value
 
     return _test
@@ -109,7 +154,10 @@ def test_gte(model, attribute_name, value):
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val >= match_value
 
     return _test
@@ -118,7 +166,15 @@ def test_gte(model, attribute_name, value):
 def test_in(model, attribute_name, value_list):
     field = get_model_field(model, attribute_name)
     match_values = set(field.to_python(val) for val in value_list)
-    return lambda obj: extract_field_value(obj, attribute_name) in match_values
+
+    def _test(obj):
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
+        return val in match_values
+
+    return _test
 
 
 def test_startswith(model, attribute_name, value):
@@ -126,7 +182,10 @@ def test_startswith(model, attribute_name, value):
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val.startswith(match_value)
 
     return _test
@@ -137,7 +196,10 @@ def test_istartswith(model, attribute_name, value):
     match_value = field.to_python(value).upper()
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val.upper().startswith(match_value)
 
     return _test
@@ -148,7 +210,10 @@ def test_endswith(model, attribute_name, value):
     match_value = field.to_python(value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val.endswith(match_value)
 
     return _test
@@ -159,7 +224,10 @@ def test_iendswith(model, attribute_name, value):
     match_value = field.to_python(value).upper()
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val.upper().endswith(match_value)
 
     return _test
@@ -171,7 +239,10 @@ def test_range(model, attribute_name, range_val):
     end_val = field.to_python(range_val[1])
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return (val is not None and val >= start_val and val <= end_val)
 
     return _test
@@ -179,7 +250,10 @@ def test_range(model, attribute_name, range_val):
 
 def test_date(model, attribute_name, match_value):
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         if isinstance(val, datetime.datetime):
             return val.date() == match_value
         else:
@@ -192,7 +266,10 @@ def test_year(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val.year == match_value
 
     return _test
@@ -202,7 +279,10 @@ def test_month(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val.month == match_value
 
     return _test
@@ -212,7 +292,10 @@ def test_day(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val.day == match_value
 
     return _test
@@ -222,7 +305,10 @@ def test_week(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val.isocalendar()[1] == match_value
 
     return _test
@@ -232,7 +318,10 @@ def test_week_day(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val.isoweekday() % 7 + 1 == match_value
 
     return _test
@@ -242,7 +331,10 @@ def test_quarter(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and int((val.month - 1) / 3) + 1 == match_value
 
     return _test
@@ -250,7 +342,10 @@ def test_quarter(model, attribute_name, match_value):
 
 def test_time(model, attribute_name, match_value):
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         if isinstance(val, datetime.datetime):
             return val.time() == match_value
         else:
@@ -263,7 +358,10 @@ def test_hour(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val.hour == match_value
 
     return _test
@@ -273,7 +371,10 @@ def test_minute(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val.minute == match_value
 
     return _test
@@ -283,24 +384,37 @@ def test_second(model, attribute_name, match_value):
     match_value = int(match_value)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and val.second == match_value
 
     return _test
 
 
 def test_isnull(model, attribute_name, sense):
-    if sense:
-        return lambda obj: extract_field_value(obj, attribute_name) is None
-    else:
-        return lambda obj: extract_field_value(obj, attribute_name) is not None
+    def _test(obj):
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
+        if sense:
+            return val is None
+        else:
+            return val is not None
+
+    return _test
 
 
 def test_regex(model, attribute_name, regex_string):
     regex = re.compile(regex_string)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and regex.search(val)
 
     return _test
@@ -310,7 +424,10 @@ def test_iregex(model, attribute_name, regex_string):
     regex = re.compile(regex_string, re.I)
 
     def _test(obj):
-        val = extract_field_value(obj, attribute_name)
+        try:
+            val = extract_field_value(obj, attribute_name)
+        except NullRelationshipValueEncountered:
+            return False
         return val is not None and regex.search(val)
 
     return _test
@@ -384,7 +501,7 @@ class DictIterable(FakeQuerySetIterable):
         field_names = self.queryset.dict_fields or [field.name for field in self.queryset.model._meta.fields]
         for obj in self.queryset.results:
             yield {
-                field_name: extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True)
+                field_name: extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True, suppress_nullrelationshipvalueencountered=True)
                 for field_name in field_names
             }
 
@@ -393,14 +510,14 @@ class ValuesListIterable(FakeQuerySetIterable):
     def __iter__(self):
         field_names = self.queryset.tuple_fields or [field.name for field in self.queryset.model._meta.fields]
         for obj in self.queryset.results:
-            yield tuple([extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True) for field_name in field_names])
+            yield tuple([extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True, suppress_nullrelationshipvalueencountered=True) for field_name in field_names])
 
 
 class FlatValuesListIterable(FakeQuerySetIterable):
     def __iter__(self):
         field_name = self.queryset.tuple_fields[0]
         for obj in self.queryset.results:
-            yield extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True)
+            yield extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True, suppress_nullrelationshipvalueencountered=True)
 
 
 class FakeQuerySet(object):

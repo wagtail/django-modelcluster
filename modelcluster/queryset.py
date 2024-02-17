@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 
-import datetime
 import re
 
 from django.core.exceptions import FieldDoesNotExist
@@ -248,151 +247,6 @@ def test_range(model, attribute_name, range_val):
     return _test
 
 
-def test_date(model, attribute_name, match_value):
-    def _test(obj):
-        try:
-            val = extract_field_value(obj, attribute_name)
-        except NullRelationshipValueEncountered:
-            return False
-        if isinstance(val, datetime.datetime):
-            return val.date() == match_value
-        else:
-            return val == match_value
-
-    return _test
-
-
-def test_year(model, attribute_name, match_value):
-    match_value = int(match_value)
-
-    def _test(obj):
-        try:
-            val = extract_field_value(obj, attribute_name)
-        except NullRelationshipValueEncountered:
-            return False
-        return val is not None and val.year == match_value
-
-    return _test
-
-
-def test_month(model, attribute_name, match_value):
-    match_value = int(match_value)
-
-    def _test(obj):
-        try:
-            val = extract_field_value(obj, attribute_name)
-        except NullRelationshipValueEncountered:
-            return False
-        return val is not None and val.month == match_value
-
-    return _test
-
-
-def test_day(model, attribute_name, match_value):
-    match_value = int(match_value)
-
-    def _test(obj):
-        try:
-            val = extract_field_value(obj, attribute_name)
-        except NullRelationshipValueEncountered:
-            return False
-        return val is not None and val.day == match_value
-
-    return _test
-
-
-def test_week(model, attribute_name, match_value):
-    match_value = int(match_value)
-
-    def _test(obj):
-        try:
-            val = extract_field_value(obj, attribute_name)
-        except NullRelationshipValueEncountered:
-            return False
-        return val is not None and val.isocalendar()[1] == match_value
-
-    return _test
-
-
-def test_week_day(model, attribute_name, match_value):
-    match_value = int(match_value)
-
-    def _test(obj):
-        try:
-            val = extract_field_value(obj, attribute_name)
-        except NullRelationshipValueEncountered:
-            return False
-        return val is not None and val.isoweekday() % 7 + 1 == match_value
-
-    return _test
-
-
-def test_quarter(model, attribute_name, match_value):
-    match_value = int(match_value)
-
-    def _test(obj):
-        try:
-            val = extract_field_value(obj, attribute_name)
-        except NullRelationshipValueEncountered:
-            return False
-        return val is not None and int((val.month - 1) / 3) + 1 == match_value
-
-    return _test
-
-
-def test_time(model, attribute_name, match_value):
-    def _test(obj):
-        try:
-            val = extract_field_value(obj, attribute_name)
-        except NullRelationshipValueEncountered:
-            return False
-        if isinstance(val, datetime.datetime):
-            return val.time() == match_value
-        else:
-            return val == match_value
-
-    return _test
-
-
-def test_hour(model, attribute_name, match_value):
-    match_value = int(match_value)
-
-    def _test(obj):
-        try:
-            val = extract_field_value(obj, attribute_name)
-        except NullRelationshipValueEncountered:
-            return False
-        return val is not None and val.hour == match_value
-
-    return _test
-
-
-def test_minute(model, attribute_name, match_value):
-    match_value = int(match_value)
-
-    def _test(obj):
-        try:
-            val = extract_field_value(obj, attribute_name)
-        except NullRelationshipValueEncountered:
-            return False
-        return val is not None and val.minute == match_value
-
-    return _test
-
-
-def test_second(model, attribute_name, match_value):
-    match_value = int(match_value)
-
-    def _test(obj):
-        try:
-            val = extract_field_value(obj, attribute_name)
-        except NullRelationshipValueEncountered:
-            return False
-        return val is not None and val.second == match_value
-
-    return _test
-
-
 def test_isnull(model, attribute_name, sense):
     def _test(obj):
         try:
@@ -448,17 +302,6 @@ FILTER_EXPRESSION_TOKENS = {
     'endswith': test_endswith,
     'iendswith': test_iendswith,
     'range': test_range,
-    'date': test_date,
-    'year': test_year,
-    'month': test_month,
-    'day': test_day,
-    'week': test_week,
-    'week_day': test_week_day,
-    'quarter': test_quarter,
-    'time': test_time,
-    'hour': test_hour,
-    'minute': test_minute,
-    'second': test_second,
     'isnull': test_isnull,
     'regex': test_regex,
     'iregex': test_iregex,

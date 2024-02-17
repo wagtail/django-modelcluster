@@ -1,7 +1,17 @@
 from functools import lru_cache
-from django.core.exceptions import FieldDoesNotExist
-from django.db.models import ManyToManyField, ManyToManyRel, Model
 import random
+from django.core.exceptions import FieldDoesNotExist
+from django.db.models import (
+    DateField,
+    DateTimeField,
+    ManyToManyField,
+    ManyToManyRel,
+    Model,
+    TimeField,
+)
+
+from modelcluster import datetime_utils
+
 
 REL_DELIMETER = "__"
 
@@ -67,9 +77,24 @@ def get_model_field(model, name):
                         subject_model=subject_model,
                     )
                 )
-            if getattr(field, "related_model", None):
+            elif getattr(field, "related_model", None):
                 traversals.append(TraversedRelationship(subject_model, field))
                 subject_model = field.related_model
+            elif (
+                (
+                    isinstance(field, DateTimeField)
+                    and field_name in datetime_utils.DATETIMEFIELD_TRANSFORM_EXPRESSIONS
+                ) or (
+                    isinstance(field, DateField)
+                    and field_name in datetime_utils.DATEFIELD_TRANSFORM_EXPRESSIONS
+                ) or (
+                    isinstance(field, TimeField)
+                    and field_name in datetime_utils.TIMEFIELD_TRANSFORM_EXPRESSIONS
+                )
+            ):
+                transform_field_type = datetime_utils.TRANSFORM_FIELD_TYPES[field_name]
+                field = transform_field_type()
+                break
             else:
                 raise FieldDoesNotExist(
                     "Failed attempting to traverse from {from_field} (a {from_field_type}) to '{to_field}'."

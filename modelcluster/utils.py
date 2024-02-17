@@ -1,3 +1,4 @@
+import datetime
 from functools import lru_cache
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import (
@@ -139,7 +140,23 @@ def extract_field_value(obj, key, pk_only=False, suppress_fielddoesnotexist=Fals
     latest_obj = obj
     segments = key.split(REL_DELIMETER)
     for i, segment in enumerate(segments, start=1):
-        if hasattr(source, segment):
+        if (
+            (
+                isinstance(source, datetime.datetime)
+                and segment in datetime_utils.DATETIMEFIELD_TRANSFORM_EXPRESSIONS
+            )
+            or (
+                isinstance(source, datetime.date)
+                and segment in datetime_utils.DATEFIELD_TRANSFORM_EXPRESSIONS
+            )
+            or (
+                isinstance(source, datetime.time)
+                and segment in datetime_utils.TIMEFIELD_TRANSFORM_EXPRESSIONS
+            )
+        ):
+            source = datetime_utils.derive_from_value(source, segment)
+            value = source
+        elif hasattr(source, segment):
             value = getattr(source, segment)
             if isinstance(value, Model):
                 latest_obj = value
@@ -156,7 +173,6 @@ def extract_field_value(obj, key, pk_only=False, suppress_fielddoesnotexist=Fals
                     )
                 )
             source = value
-            continue
         elif suppress_fielddoesnotexist:
             return None
         else:

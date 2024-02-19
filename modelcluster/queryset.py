@@ -672,6 +672,18 @@ class FakeQuerySet(object):
         sort_by_fields(clone.results, fields)
         return clone
 
+    def distinct(self, *fields):
+        unique_results = []
+        if not fields:
+            fields = [field.name for field in self.model._meta.fields if not field.primary_key]
+        seen_keys = set()
+        for result in self.results:
+            key = tuple(str(extract_field_value(result, field)) for field in fields)
+            if key not in seen_keys:
+                seen_keys.add(key)
+                unique_results.append(result)
+        return self.get_clone(results=unique_results)
+
     # a standard QuerySet will store the results in _result_cache on running the query;
     # this is effectively the same as self.results on a FakeQuerySet, and so we'll make
     # _result_cache an alias of self.results for the benefit of Django internals that

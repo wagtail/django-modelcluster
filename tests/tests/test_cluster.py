@@ -726,6 +726,20 @@ class ClusterTest(TestCase):
             )
         )
 
+    def test_random_ordering(self):
+        beatles = Band(name='The Beatles', members=[
+            BandMember(name='John Lennon'),
+            BandMember(name='Paul McCartney'),
+            BandMember(name='George Harrison'),
+            BandMember(name='Ringo Starr'),
+        ])
+
+        # Check that all members are returned
+        self.assertCountEqual(
+            beatles.members.order_by('?'),
+            [beatles.members.get(name=name) for name in ['John Lennon', 'Paul McCartney', 'George Harrison', 'Ringo Starr']]
+        )
+    
     def test_filtering_via_manytomany_raises_exception(self):
         bay_window = Feature.objects.create(name="Bay window", desirability=6)
         underfloor_heating = Feature.objects.create(name="Underfloor heading", desirability=10)

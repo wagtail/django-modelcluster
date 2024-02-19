@@ -1,6 +1,7 @@
 from functools import lru_cache
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import ManyToManyField, ManyToManyRel, Model
+import random
 
 REL_DELIMETER = "__"
 
@@ -154,6 +155,10 @@ def sort_by_fields(items, fields):
     # To get the desired behaviour, we need to order by keys in reverse order
     # See: https://docs.python.org/2/howto/sorting.html#sort-stability-and-complex-sorts
     for key in reversed(fields):
+        if key == '?':
+            random.shuffle(items)
+            continue
+
         # Check if this key has been reversed
         reverse = False
         if key[0] == '-':

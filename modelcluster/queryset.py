@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import datetime
 import re
 
-from django.db.models import Model, prefetch_related_objects
+from django.db.models import Model, Q, prefetch_related_objects
 
 from modelcluster.utils import extract_field_value, get_model_field, sort_by_fields
 
@@ -412,11 +412,41 @@ class FakeQuerySet(object):
         new.tuple_fields = self.tuple_fields
         new.iterable_class = self.iterable_class
         return new
+    
+    def resolve_q_object(self, q_object):
+        connector = q_object.connector
+        filters = []
 
-    def _get_filters(self, **kwargs):
+        def test(filters):
+            def test_inner(obj):
+                result = False
+                if connector == Q.AND:
+                    result = all([test(obj) for test in filters])
+                elif connector == Q.OR:
+                    result = any([test(obj) for test in filters])
+                else:
+                    result = sum([test(obj) for test in filters]) == 1
+                if q_object.negated:
+                    return not result
+                return result
+            return test_inner
+
+        for child in q_object.children:
+            if isinstance(child, Q):
+                filters.append(self.resolve_q_object(child))
+            else:
+                key_clauses, val = child
+                filters.append(_build_test_function_from_filter(self.model, key_clauses.split('__'), val))
+        
+        return test(filters)
+
+    def _get_filters(self, *args, **kwargs):
         # a list of test functions; objects must pass all tests to be included
         # in the filtered list
         filters = []
+        
+        for q_object in args:
+            filters.append(self.resolve_q_object(q_object))
 
         for key, val in kwargs.items():
             filters.append(
@@ -425,8 +455,8 @@ class FakeQuerySet(object):
 
         return filters
 
-    def filter(self, **kwargs):
-        filters = self._get_filters(**kwargs)
+    def filter(self, *args, **kwargs):
+        filters = self._get_filters(*args, **kwargs)
 
         clone = self.get_clone(results=[
             obj for obj in self.results
@@ -434,8 +464,8 @@ class FakeQuerySet(object):
         ])
         return clone
 
-    def exclude(self, **kwargs):
-        filters = self._get_filters(**kwargs)
+    def exclude(self, *args, **kwargs):
+        filters = self._get_filters(*args, **kwargs)
 
         clone = self.get_clone(results=[
             obj for obj in self.results
@@ -443,8 +473,8 @@ class FakeQuerySet(object):
         ])
         return clone
 
-    def get(self, **kwargs):
-        clone = self.filter(**kwargs)
+    def get(self, *args, **kwargs):
+        clone = self.filter(*args, **kwargs)
         result_count = clone.count()
 
         if result_count == 0:

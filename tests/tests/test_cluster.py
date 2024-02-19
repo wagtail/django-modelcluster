@@ -5,7 +5,7 @@ import itertools
 
 from django.test import TestCase
 from django.db import IntegrityError
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 
 from modelcluster.models import get_all_child_relations
 from modelcluster.queryset import FakeQuerySet
@@ -703,6 +703,36 @@ class ClusterTest(TestCase):
         self.assertEqual(
             tuple(band.members.filter(band__name="The Monkeys")),
             ()
+        )
+
+    def test_filtering_via_models_Q_objects(self):
+        band = Band(
+            name="The Beatles",
+            members=[
+                BandMember(name="John Lennon", favourite_restaurant=self.strawberry_fields),
+                BandMember(name="Ringo Starr", favourite_restaurant=self.the_yellow_submarine),
+            ],
+        )
+
+        self.assertEqual(
+            tuple(band.members.filter(Q(name="John Lennon") | Q(favourite_restaurant__name="The Yellow Submarine"))),
+            (band.members.get(name="John Lennon"), band.members.get(name="Ringo Starr"))
+        )
+        self.assertEqual(
+            tuple(band.members.filter(Q(name="John Lennon") & Q(favourite_restaurant__name="Strawberry Fields"))),
+            (band.members.get(name="John Lennon"),)
+        )
+        self.assertEqual(
+            tuple(band.members.filter(Q(name="John Lennon") & ~Q(favourite_restaurant__name="The Yellow Submarine"))),
+            (band.members.get(name="John Lennon"),)
+        )
+        self.assertEqual(
+            tuple(band.members.filter(Q(name="John Lennon") & ~Q(favourite_restaurant__name="Strawberry Fields"))),
+            ()
+        )
+        self.assertEqual(
+            tuple(band.members.filter(Q(name="John Lennon") ^ Q(favourite_restaurant__name="The Yellow Submarine"))),
+            (band.members.get(name="John Lennon"), band.members.get(name="Ringo Starr"))
         )
 
     def test_ordering_accross_foreignkeys(self):

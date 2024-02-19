@@ -3,6 +3,7 @@ Changelog
 
 6.3 (xx.xx.xxxx)
 ~~~~~~~~~~~~~~~~
+* Support filtering with Q objects (Shohan Dutta Roy)
 * Fix: Correctly handle filtering on fields on related models when those fields have names that match a lookup type (Andy Babic)
 * Fix: Correctly handle null foreign keys when traversing related fields (Andy Babic)
 

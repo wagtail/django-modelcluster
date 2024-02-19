@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 import re
 
+from django.db import NotSupportedError, connection
 from django.db.models import Model, prefetch_related_objects
 
 from modelcluster.utils import extract_field_value, get_model_field, sort_by_fields
@@ -516,6 +517,21 @@ class FakeQuerySet(object):
         clone = self.get_clone(results=self.results[:])
         sort_by_fields(clone.results, fields)
         return clone
+    
+    def distinct(self, *fields):
+        if fields and connection.vendor != 'postgresql':
+            raise NotSupportedError("DISTINCT ON fields is not supported by this database backend")
+
+        unique_results = []
+        if not fields:
+            fields = [field.name for field in self.model._meta.fields if not field.primary_key]
+        seen_keys = set()
+        for result in self.results:
+            key = '$$$'.join([str(extract_field_value(result, field)) for field in fields])
+            if key not in seen_keys:
+                seen_keys.add(key)
+                unique_results.append(result)
+        return self.get_clone(results=unique_results)
 
     # a standard QuerySet will store the results in _result_cache on running the query;
     # this is effectively the same as self.results on a FakeQuerySet, and so we'll make

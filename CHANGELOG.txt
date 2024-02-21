@@ -1,6 +1,11 @@
 Changelog
 =========
 
+6.3 (xx.xx.xxxx)
+~~~~~~~~~~~~~~~~
+* Fix: Correctly handle filtering on fields on related models when those fields have names that match a lookup type (Andy Babic)
+* Fix: Correctly handle null foreign keys when traversing related fields (Andy Babic)
+
 6.2.1 (04.01.2024)
 ~~~~~~~~~~~~~~~~~~
 * Fix: Prevent failure on pre-3.1.0 versions of django-taggit without `_remove_prefetched_objects`

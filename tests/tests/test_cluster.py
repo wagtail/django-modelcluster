@@ -642,6 +642,74 @@ class ClusterTest(TestCase):
             "one person died"
         )
 
+    def test_datetime_derivatives_with_values(self):
+        logs = FakeQuerySet(Log, [
+            Log(time=datetime.datetime(1979, 7, 1, 1, 1, 1), data="nobody died"),
+            Log(time=datetime.datetime(1980, 2, 2, 2, 2, 2), data="one person died"),
+            Log(time=None, data="nothing happened")
+        ])
+
+        self.assertEqual(
+            list(logs.all().values("time__date", "time__time")),
+            [
+                {"time__date": datetime.date(1979, 7, 1), "time__time": datetime.time(1, 1, 1)},
+                {"time__date": datetime.date(1980, 2, 2), "time__time": datetime.time(2, 2, 2)},
+                {"time__date": None, "time__time": None},
+            ]
+        )
+
+        self.assertEqual(
+            list(logs.all().values("time__year", "time__iso_year", "time__month", "time__day", "time__hour", "time__minute", "time__second")),
+            [
+                {"time__year": 1979, "time__iso_year": 1979, "time__month": 7, "time__day": 1, "time__hour": 1, "time__minute": 1, "time__second": 1},
+                {"time__year": 1980, "time__iso_year": 1980, "time__month": 2, "time__day": 2, "time__hour": 2, "time__minute": 2, "time__second": 2},
+                {"time__year": None, "time__iso_year": None, "time__month": None, "time__day": None, "time__hour": None, "time__minute": None, "time__second": None}
+            ]
+        )
+
+        self.assertEqual(
+            list(logs.all().values("time__week", "time__week_day", "time__iso_week_day", "time__quarter")),
+            [
+                {"time__week": 26, "time__week_day": 1, "time__iso_week_day": 7, "time__quarter": 3},
+                {"time__week": 5, "time__week_day": 7, "time__iso_week_day": 6, "time__quarter": 1},
+                {"time__week": None, "time__week_day": None, "time__iso_week_day": None, "time__quarter": None},
+            ]
+        )
+
+    def test_datetime_derivatives_with_values_list(self):
+        logs = FakeQuerySet(Log, [
+            Log(time=datetime.datetime(1979, 7, 1, 1, 1, 1), data="nobody died"),
+            Log(time=datetime.datetime(1980, 2, 2, 2, 2, 2), data="one person died"),
+            Log(time=None, data="nothing happened")
+        ])
+
+        self.assertEqual(
+            list(logs.all().values_list("time__date", "time__time")),
+            [
+                (datetime.date(1979, 7, 1), datetime.time(1, 1, 1)),
+                (datetime.date(1980, 2, 2), datetime.time(2, 2, 2)),
+                (None, None),
+            ]
+        )
+
+        self.assertEqual(
+            list(logs.all().values_list("time__year", "time__iso_year", "time__month", "time__day", "time__hour", "time__minute", "time__second")),
+            [
+                (1979, 1979, 7, 1, 1, 1, 1),
+                (1980, 1980, 2, 2, 2, 2, 2),
+                (None, None, None, None, None, None, None),
+            ]
+        )
+
+        self.assertEqual(
+            list(logs.all().values_list("time__week", "time__week_day", "time__iso_week_day", "time__quarter")),
+            [
+                (26, 1, 7, 3),
+                (5, 7, 6, 1),
+                (None, None, None, None),
+            ]
+        )
+
     def test_queryset_filtering_accross_foreignkeys(self):
         band = Band(
             name="The Beatles",

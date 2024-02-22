@@ -560,6 +560,15 @@ class ClusterTest(TestCase):
         )
 
         self.assertEqual(
+            tmbg.albums.get(release_date__iso_year='1994').name,
+            "John Henry"
+        )
+        self.assertEqual(
+            logs.get(time__iso_year=1980).data,
+            "one person died"
+        )
+
+        self.assertEqual(
             tmbg.albums.get(release_date__month=7).name,
             "John Henry"
         )
@@ -592,6 +601,15 @@ class ClusterTest(TestCase):
         )
         self.assertEqual(
             logs.get(time__week_day=7).data,
+            "one person died"
+        )
+
+        self.assertEqual(
+            tmbg.albums.get(release_date__iso_week_day=4).name,
+            "John Henry"
+        )
+        self.assertEqual(
+            logs.get(time__iso_week_day=6).data,
             "one person died"
         )
 

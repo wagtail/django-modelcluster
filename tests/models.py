@@ -152,6 +152,8 @@ class Log(ClusterableModel):
     data = models.CharField(max_length=255)
 
     def __str__(self):
+        if self.time is None:
+            return "[None] %s" % self.data
         return "[%s] %s" % (self.time.isoformat(), self.data)
 
 

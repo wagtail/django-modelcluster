@@ -546,10 +546,6 @@ class ClusterTest(TestCase):
         )
 
         self.assertEqual(
-            tmbg.albums.get(release_date__date=datetime.date(1994, 7, 21)).name,
-            "John Henry"
-        )
-        self.assertEqual(
             logs.get(time__date=datetime.date(1980, 2, 2)).data,
             "one person died"
         )

@@ -1,7 +1,7 @@
 from functools import lru_cache
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import ManyToManyField, ManyToManyRel
-from random import random
+import random
 
 REL_DELIMETER = "__"
 
@@ -120,6 +120,10 @@ def sort_by_fields(items, fields):
     # To get the desired behaviour, we need to order by keys in reverse order
     # See: https://docs.python.org/2/howto/sorting.html#sort-stability-and-complex-sorts
     for key in reversed(fields):
+        if key == '?':
+            random.shuffle(items)
+            continue
+
         # Check if this key has been reversed
         reverse = False
         if key[0] == '-':
@@ -129,8 +133,6 @@ def sort_by_fields(items, fields):
         def get_sort_value(item):
             # Use a tuple of (v is not None, v) as the key, to ensure that None sorts before other values,
             # as comparing directly with None breaks on python3
-            if key == "?":  # Random ordering
-                return (True, random())
             value = extract_field_value(item, key, pk_only=True, suppress_fielddoesnotexist=True)
             return (value is not None, value)
 

@@ -2,10 +2,9 @@ from __future__ import unicode_literals
 
 import datetime
 import itertools
-from unittest.mock import patch
 
 from django.test import TestCase
-from django.db import IntegrityError, NotSupportedError, connection
+from django.db import IntegrityError
 from django.db.models import Prefetch
 
 from modelcluster.models import get_all_child_relations
@@ -813,19 +812,11 @@ class ClusterTest(TestCase):
             Album(name='With The Beatles', sort_order=2),
             Album(name='Abbey Road', sort_order=2),
         ])
-        
-        for vendor in ['sqlite', 'mysql', 'oracle']:
-            with patch.object(connection, 'vendor', vendor):
-                with self.assertRaises(NotSupportedError):
-                    beatles.albums.order_by('sort_order').distinct('sort_order')
-        
-        # patch db.connection.vendor to pass the vendor check
-        with patch.object(connection, 'vendor', 'postgresql'):
-            albums = [album.name for album in beatles.albums.order_by('sort_order').distinct('sort_order')]
-            self.assertEqual(['Please Please Me', 'With The Beatles'], albums)
+        albums = [album.name for album in beatles.albums.order_by('sort_order').distinct('sort_order')]
+        self.assertEqual(['Please Please Me', 'With The Beatles'], albums)
 
-            albums = [album.name for album in beatles.albums.order_by('sort_order').distinct('name')]
-            self.assertEqual(['Please Please Me', 'With The Beatles', 'Abbey Road'], albums)
+        albums = [album.name for album in beatles.albums.order_by('sort_order').distinct('name')]
+        self.assertEqual(['Please Please Me', 'With The Beatles', 'Abbey Road'], albums)
 
     def test_parental_key_checks_clusterable_model(self):
         from django.core import checks

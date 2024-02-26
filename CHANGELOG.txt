@@ -1,7 +1,7 @@
 Changelog
 =========
 
-6.3 (xx.xx.xxxx)
+6.3 (26.02.2024)
 ~~~~~~~~~~~~~~~~
 * Support filtering with Q objects (Shohan Dutta Roy)
 * Support random ordering with `.order_by("?")` (Shohan Dutta Roy)

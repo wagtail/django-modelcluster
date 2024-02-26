@@ -6,6 +6,8 @@ Changelog
 * Support filtering with Q objects (Shohan Dutta Roy)
 * Support random ordering with `.order_by("?")` (Shohan Dutta Roy)
 * Support `distinct()` on querysets (Shohan Dutta Roy)
+* Support `iso_weekday` and `iso_year` field lookups (Andy Babic)
+* Support datetime transform expressions on `values` and `values_list` (Andy Babic)
 * Fix: Correctly handle filtering on fields on related models when those fields have names that match a lookup type (Andy Babic)
 * Fix: Correctly handle null foreign keys when traversing related fields (Andy Babic)
 

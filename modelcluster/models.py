@@ -58,8 +58,17 @@ def get_serializable_data_for_fields(model, exclude_fields=None):
     return obj
 
 
-def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
+def model_from_serializable_data(model, data, check_fks=True, strict_fks=False, exclude_fields=None):
+    """
+    Return an instance of the given model, built from the serialised data (`data`).
+
+    :param check_fks: Optional. If set to False, disables checking of ForeignKey values.
+    :param strict_fks: Optional. If set to True, enables strict foreign key checks.
+    :param exclude_fields: Optional. An iterable of field names to exclude from the process.
+    """
+
     pk_field = model._meta.pk
+    exclude = set(exclude_fields or ())
     kwargs = {}
 
     # If model is a child via multitable inheritance, we need to set ptr_id fields all the way up
@@ -71,6 +80,9 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
     kwargs[pk_field.attname] = data['pk']
 
     for field_name, field_value in data.items():
+        if field_name in exclude:
+            continue
+
         try:
             field = model._meta.get_field(field_name)
         except FieldDoesNotExist:
@@ -81,35 +93,44 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
             continue
 
         if field.remote_field and isinstance(field.remote_field, models.ManyToManyRel):
-            related_objects = field.remote_field.model._default_manager.filter(pk__in=field_value)
-            kwargs[field.attname] = list(related_objects)
+            if field_name in exclude:
+                continue
+            kwargs[field.attname] = list(field.remote_field.model._default_manager.filter(pk__in=field_value))
+
 
         elif field.remote_field and isinstance(field.remote_field, models.ManyToOneRel):
+            if field_value in exclude:
+                continue
             if field_value is None:
                 kwargs[field.attname] = None
-            else:
-                clean_value = field.remote_field.model._meta.get_field(field.remote_field.field_name).to_python(field_value)
-                kwargs[field.attname] = clean_value
-                if check_fks:
-                    try:
-                        field.remote_field.model._default_manager.get(**{field.remote_field.field_name: clean_value})
-                    except field.remote_field.model.DoesNotExist:
-                        if field.remote_field.on_delete == models.DO_NOTHING:
-                            pass
-                        elif field.remote_field.on_delete == models.CASCADE:
-                            if strict_fks:
-                                return None
-                            else:
-                                kwargs[field.attname] = None
+                continue
 
-                        elif field.remote_field.on_delete == models.SET_NULL:
+            clean_value = field.remote_field.model._meta.get_field(field.remote_field.field_name).to_python(field_value)
+            kwargs[field.attname] = clean_value
+            if check_fks:
+                try:
+                    field.remote_field.model._default_manager.get(**{field.remote_field.field_name: clean_value})
+                except field.remote_field.model.DoesNotExist:
+                    if field.remote_field.on_delete == models.DO_NOTHING:
+                        pass
+                    elif field.remote_field.on_delete == models.CASCADE:
+                        if strict_fks:
+                            return None
+                        else:
                             kwargs[field.attname] = None
 
-                        else:
-                            raise Exception("can't currently handle on_delete types other than CASCADE, SET_NULL and DO_NOTHING")
-        else:
-            value = field.to_python(field_value)
+                    elif field.remote_field.on_delete == models.SET_NULL:
+                        kwargs[field.attname] = None
 
+                    else:
+                        raise Exception("can't currently handle on_delete types other than CASCADE, SET_NULL and DO_NOTHING")
+        else:
+            if field_name in exclude:
+                # load the field value from the db on request
+                kwargs[field.name] = models.DEFERRED
+                continue
+
+            value = field.to_python(field_value)
             # Make sure datetimes are converted to localtime
             if isinstance(field, models.DateTimeField) and settings.USE_TZ and value is not None:
                 default_timezone = timezone.get_default_timezone()

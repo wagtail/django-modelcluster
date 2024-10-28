@@ -231,17 +231,26 @@ class ClusterableModel(models.Model):
         for field in m2m_fields_to_commit:
             getattr(self, field).commit()
 
-    def serializable_data(self):
-        obj = get_serializable_data_for_fields(self)
+    def serializable_data(self, exclude_fields=None):
+        obj = get_serializable_data_for_fields(self, exclude_fields=exclude_fields)
+
+        # normalize exclude_fields to a set
+        exclude = set(exclude_fields or ())
 
         for rel in get_all_child_relations(self):
             rel_name = rel.get_accessor_name()
-            children = getattr(self, rel_name).all()
+            if rel_name in exclude:
+                continue
 
+            # define a subset of exclude_fields for this relationship
+            rel_exclude = {f[len(rel_name) + 2:] for f in exclude if f.startswith(rel_name + '__')}
+
+            # serialize children to a list, using only the fields we need
+            children = getattr(self, rel_name).all().defer(*rel_exclude)
             if hasattr(rel.related_model, 'serializable_data'):
-                obj[rel_name] = [child.serializable_data() for child in children]
+                obj[rel_name] = [child.serializable_data(exclude_fields=rel_exclude) for child in children]
             else:
-                obj[rel_name] = [get_serializable_data_for_fields(child) for child in children]
+                obj[rel_name] = [get_serializable_data_for_fields(child, exclude_fields=rel_exclude) for child in children]
 
         for field in get_all_child_m2m_relations(self):
             if field.serialize:

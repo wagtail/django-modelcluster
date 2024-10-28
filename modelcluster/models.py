@@ -36,11 +36,14 @@ def get_field_value(field, model):
         return getattr(model, field.get_attname())
 
 
-def get_serializable_data_for_fields(model):
+def get_serializable_data_for_fields(model, exclude_fields=None):
     """
     Return a serialised version of the model's fields which exist as local database
     columns (i.e. excluding m2m and incoming foreign key relations)
+
+    :param exclude_fields: Optional. An iterable of field names to exclude from the process (and resulting return value).
     """
+    exclude = set(exclude_fields or ())
     pk_field = model._meta.pk
     # If model is a child via multitable inheritance, use parent's pk
     while pk_field.remote_field and pk_field.remote_field.parent_link:
@@ -49,7 +52,7 @@ def get_serializable_data_for_fields(model):
     obj = {'pk': get_field_value(pk_field, model)}
 
     for field in model._meta.fields:
-        if field.serialize:
+        if field.serialize and field.name not in exclude:
             obj[field.name] = get_field_value(field, model)
 
     return obj

@@ -263,7 +263,7 @@ class ClusterableModel(models.Model):
         return json.dumps(self.serializable_data(), cls=DjangoJSONEncoder)
 
     @classmethod
-    def from_serializable_data(cls, data, check_fks=True, strict_fks=False):
+    def from_serializable_data(cls, data, check_fks=True, strict_fks=False, exclude_fields=None):
         """
         Build an instance of this model from the JSON-like structure passed in,
         recursing into related objects as required.
@@ -275,7 +275,7 @@ class ClusterableModel(models.Model):
         in which case any dangling foreign keys with on_delete=CASCADE will cause None to be
         returned for the entire object.
         """
-        obj = model_from_serializable_data(cls, data, check_fks=check_fks, strict_fks=strict_fks)
+        obj = model_from_serializable_data(cls, data, check_fks=check_fks, strict_fks=strict_fks, exclude_fields=exclude_fields)
         if obj is None:
             return None
 
@@ -307,8 +307,8 @@ class ClusterableModel(models.Model):
         return obj
 
     @classmethod
-    def from_json(cls, json_data, check_fks=True, strict_fks=False):
-        return cls.from_serializable_data(json.loads(json_data), check_fks=check_fks, strict_fks=strict_fks)
+    def from_json(cls, json_data, check_fks=True, strict_fks=False, exclude_fields=None):
+        return cls.from_serializable_data(json.loads(json_data), check_fks=check_fks, strict_fks=strict_fks, exclude_fields=exclude_fields)
 
     @transaction.atomic
     def copy_child_relation(self, child_relation, target, commit=False, append=False):

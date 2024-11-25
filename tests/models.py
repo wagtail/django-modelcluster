@@ -157,6 +157,22 @@ class Log(ClusterableModel):
         return "[%s] %s" % (self.time.isoformat(), self.data)
 
 
+class LogCategory(models.Model):
+    log = ParentalKey(Log, related_name="categories", on_delete=models.CASCADE)
+    name = models.CharField(max_length=32)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["log", "name"],
+                name="unique_log_category",
+            )
+        ]
+
+
 class Document(ClusterableModel):
     title = models.CharField(max_length=255)
     file = models.FileField(upload_to='documents')

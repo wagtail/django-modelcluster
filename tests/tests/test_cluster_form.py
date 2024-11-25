@@ -5,7 +5,7 @@ import unittest
 from django import VERSION as DJANGO_VERSION
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from tests.models import Band, BandMember, Album, Restaurant, Article, Author, Document, Gallery, Song
+from tests.models import Band, BandMember, Album, Log, Restaurant, Article, Author, Document, Gallery, Song
 from modelcluster.forms import ClusterForm
 from django.forms import Textarea, CharField
 from django.forms.widgets import TextInput, FileInput
@@ -767,6 +767,28 @@ class ClusterFormTest(TestCase):
             'albums-TOTAL_FORMS': 0,
             'albums-INITIAL_FORMS': 0,
             'albums-MAX_NUM_FORMS': 1000,
+        })
+        self.assertFalse(form.is_valid())
+
+    def test_unique_constraint(self):
+        class LogForm(ClusterForm):
+            class Meta:
+                model = Log
+                fields = ["data"]
+                formsets = ["categories"]
+
+        form = LogForm({
+            "data": "User signed in",
+
+            "categories-TOTAL_FORMS": 2,
+            "categories-INITIAL_FORMS": 0,
+            "categories-MAX_NUM_FORMS": 1000,
+
+            "categories-0-name": "user",
+            "categories-0-id": "",
+
+            "categories-1-name": "user",
+            "categories-1-id": "",
         })
         self.assertFalse(form.is_valid())
 

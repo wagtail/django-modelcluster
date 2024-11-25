@@ -134,7 +134,9 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         forms_to_delete = self.deleted_forms
         valid_forms = [form for form in self.forms if form.is_valid() and form not in forms_to_delete]
         for form in valid_forms:
-            unique_checks, date_checks = form.instance._get_unique_checks()
+            unique_checks, date_checks = form.instance._get_unique_checks(
+                include_meta_constraints=True
+            )
             all_unique_checks.update(unique_checks)
             all_date_checks.update(date_checks)
 

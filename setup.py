@@ -17,7 +17,6 @@ setup(
     long_description=open('README.rst').read(),
     python_requires=">=3.8",
     install_requires=[
-        "pytz>=2022.4",
         "django>=3.2",
     ],
     extras_require={

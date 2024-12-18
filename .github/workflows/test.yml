@@ -30,8 +30,14 @@ jobs:
             database: "sqlite3"
             psycopg: "psycopg2>=2.9.2"
             experimental: false
+          - python: "3.13"
+            django: "Django>=5.1,<5.2"
+            taggit: "django-taggit>=2.1.0"
+            database: "sqlite3"
+            psycopg: "psycopg2>=2.9.2"
+            experimental: false
           - python: "3.10"
-            django: "git+https://github.com/django/django.git@stable/5.0.x#egg=Django"
+            django: "git+https://github.com/django/django.git@stable/5.1.x#egg=Django"
             taggit: "django-taggit>=2.1.0"
             database: "sqlite3"
             psycopg: "psycopg2>=2.9.2"

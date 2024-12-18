@@ -5,6 +5,8 @@ Changelog
 ~~~~~~~~~~~~~~~~
 * Add `UniqueConstraint` support for uniqueness validation (Sage Abdullah)
 * Remove `pytz` dependency (Sage Abdullah)
+* Added Django 5.1 and Python 3.13 support
+* Removed Django 3.2 and Python 3.8 support
 
 6.3 (26.02.2024)
 ~~~~~~~~~~~~~~~~

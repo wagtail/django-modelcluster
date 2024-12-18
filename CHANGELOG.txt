@@ -1,7 +1,7 @@
 Changelog
 =========
 
-6.4 (xx.xx.xxxx)
+6.4 (18.12.2024)
 ~~~~~~~~~~~~~~~~
 * Add `UniqueConstraint` support for uniqueness validation (Sage Abdullah)
 * Remove `pytz` dependency (Sage Abdullah)

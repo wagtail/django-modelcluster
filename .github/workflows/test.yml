@@ -12,13 +12,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - python: "3.8"
-            django: "Django>=3.2,<4.0"
-            taggit: "django-taggit>=2.1.0"
-            database: "postgresql"
-            psycopg: "psycopg2>=2.9.2"
-            experimental: false
-          - python: "3.11"
+          - python: "3.9"
             django: "Django>=4.2,<4.3"
             taggit: "django-taggit>=2.1.0"
             database: "postgresql"

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+6.4 (xx.xx.xxxx)
+~~~~~~~~~~~~~~~~
+* Add `UniqueConstraint` support for uniqueness validation (Sage Abdullah)
+* Remove `pytz` dependency (Sage Abdullah)
+
 6.3 (26.02.2024)
 ~~~~~~~~~~~~~~~~
 * Support filtering with Q objects (Shohan Dutta Roy)

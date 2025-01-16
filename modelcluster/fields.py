@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django import VERSION as DJANGO_VERSION
 from django.core import checks
 from django.db import IntegrityError, connections, router
 from django.db.models import CASCADE
@@ -84,7 +85,10 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             # to work correctly with prefetch
             return queryset._next_is_sticky().all()
 
-        def get_prefetch_queryset(self, instances, queryset=None):
+        def get_prefetch_querysets(self, instances, querysets=None):
+            if querysets and len(querysets) != 1:
+                raise ValueError("get_prefetch_querysets() must be passed exactly one queryset")
+            queryset = querysets[0] if querysets else None
             if queryset is None:
                 db = self._db or router.db_for_read(self.model, instance=instances[0])
                 queryset = super().get_queryset().using(db)
@@ -102,6 +106,13 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
                 setattr(rel_obj, rel_field.name, instance)
             cache_name = rel_field.related_query_name()
             return qs, rel_obj_attr, instance_attr, False, cache_name, False
+
+        # Remove once we only support Django 5.0+
+        if not DJANGO_VERSION >= (5, 0):
+            def get_prefetch_queryset(self, instances, queryset=None):
+                if queryset is None:
+                    return self.get_prefetch_querysets(instances)
+                return self.get_prefetch_querysets(instances, querysets=[queryset])
 
         def get_object_list(self):
             """
@@ -338,8 +349,11 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
 
             return FakeQuerySet(rel_model, results)
 
-        def get_prefetch_queryset(self, instances, queryset=None):
+        def get_prefetch_querysets(self, instances, querysets=None):
             # Derived from Django's ManyRelatedManager.get_prefetch_queryset.
+            if querysets and len(querysets) != 1:
+                raise ValueError("get_prefetch_querysets() must be passed exactly one queryset")
+            queryset = querysets[0] if querysets else None
             if queryset is None:
                 queryset = super().get_queryset()
 
@@ -373,6 +387,13 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
                 relation_name,
                 False,
             )
+
+        # Remove once we only support Django 5.0+
+        if not DJANGO_VERSION >= (5, 0):
+            def get_prefetch_queryset(self, instances, queryset=None):
+                if queryset is None:
+                    return self.get_prefetch_querysets(instances)
+                return self.get_prefetch_querysets(instances, querysets=[queryset])
 
         def _apply_rel_filters(self, queryset):
             # Required for get_prefetch_queryset.

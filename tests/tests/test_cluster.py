@@ -968,6 +968,35 @@ class ClusterTest(TestCase):
         albums = [album.name for album in beatles.albums.order_by('sort_order').distinct('name')]
         self.assertEqual(['Please Please Me', 'With The Beatles', 'Abbey Road'], albums)
 
+    def test_none(self):
+        beatles = Band(
+            name="The Beatles",
+            albums=[
+                Album(name="Please Please Me", sort_order=1),
+                Album(name="With The Beatles", sort_order=2),
+                Album(name="Abbey Road", sort_order=3),
+            ],
+        )
+
+        # none() should return an empty queryset
+        self.assertEqual([], list(beatles.albums.none()))
+        self.assertEqual(0, beatles.albums.none().count())
+
+    def test_none_is_chainable(self):
+        beatles = Band(
+            name="The Beatles",
+            albums=[
+                Album(name="Please Please Me", sort_order=1),
+                Album(name="With The Beatles", sort_order=2),
+            ],
+        )
+
+        # Chaining operations after none() should still return empty results
+        self.assertEqual(
+            [], list(beatles.albums.none().filter(name="Please Please Me"))
+        )
+        self.assertEqual([], list(beatles.albums.none().order_by("name")))
+
     def test_parental_key_checks_clusterable_model(self):
         from django.core import checks
         from django.db import models

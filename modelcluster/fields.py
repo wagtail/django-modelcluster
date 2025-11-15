@@ -345,7 +345,7 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
                 else:
                     # the standard M2M manager fails on unsaved instances,
                     # so bypass it and return an empty queryset
-                    return rel_model.objects.none()
+                    return rel_model._default_manager.none()
 
             return FakeQuerySet(rel_model, results)
 

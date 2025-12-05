@@ -479,6 +479,9 @@ class FakeQuerySet(object):
         prefetch_related_objects(self.results, *args)
         return self
 
+    def _prefetch_related_lookups():
+        return []
+    
     def only(self, *args):
         # has no meaningful effect on non-db querysets
         return self

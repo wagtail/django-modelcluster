@@ -36,11 +36,14 @@ def get_field_value(field, model):
         return getattr(model, field.get_attname())
 
 
-def get_serializable_data_for_fields(model):
+def get_serializable_data_for_fields(model, exclude_fields=None):
     """
     Return a serialised version of the model's fields which exist as local database
     columns (i.e. excluding m2m and incoming foreign key relations)
+
+    :param exclude_fields: Optional. An iterable of field names to exclude from the process (and resulting return value).
     """
+    exclude = set(exclude_fields or ())
     pk_field = model._meta.pk
     # If model is a child via multitable inheritance, use parent's pk
     while pk_field.remote_field and pk_field.remote_field.parent_link:
@@ -49,14 +52,23 @@ def get_serializable_data_for_fields(model):
     obj = {'pk': get_field_value(pk_field, model)}
 
     for field in model._meta.fields:
-        if field.serialize:
+        if field.serialize and field.name not in exclude:
             obj[field.name] = get_field_value(field, model)
 
     return obj
 
 
-def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
+def model_from_serializable_data(model, data, check_fks=True, strict_fks=False, exclude_fields=None):
+    """
+    Return an instance of the given model, built from the serialised data (`data`).
+
+    :param check_fks: Optional. If set to False, disables checking of ForeignKey values.
+    :param strict_fks: Optional. If set to True, enables strict foreign key checks.
+    :param exclude_fields: Optional. An iterable of field names to exclude from the process.
+    """
+
     pk_field = model._meta.pk
+    exclude = set(exclude_fields or ())
     kwargs = {}
 
     # If model is a child via multitable inheritance, we need to set ptr_id fields all the way up
@@ -68,6 +80,9 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
     kwargs[pk_field.attname] = data['pk']
 
     for field_name, field_value in data.items():
+        if field_name in exclude:
+            continue
+
         try:
             field = model._meta.get_field(field_name)
         except FieldDoesNotExist:
@@ -78,35 +93,44 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
             continue
 
         if field.remote_field and isinstance(field.remote_field, models.ManyToManyRel):
-            related_objects = field.remote_field.model._default_manager.filter(pk__in=field_value)
-            kwargs[field.attname] = list(related_objects)
+            if field_name in exclude:
+                continue
+            kwargs[field.attname] = list(field.remote_field.model._default_manager.filter(pk__in=field_value))
+
 
         elif field.remote_field and isinstance(field.remote_field, models.ManyToOneRel):
+            if field_value in exclude:
+                continue
             if field_value is None:
                 kwargs[field.attname] = None
-            else:
-                clean_value = field.remote_field.model._meta.get_field(field.remote_field.field_name).to_python(field_value)
-                kwargs[field.attname] = clean_value
-                if check_fks:
-                    try:
-                        field.remote_field.model._default_manager.get(**{field.remote_field.field_name: clean_value})
-                    except field.remote_field.model.DoesNotExist:
-                        if field.remote_field.on_delete == models.DO_NOTHING:
-                            pass
-                        elif field.remote_field.on_delete == models.CASCADE:
-                            if strict_fks:
-                                return None
-                            else:
-                                kwargs[field.attname] = None
+                continue
 
-                        elif field.remote_field.on_delete == models.SET_NULL:
+            clean_value = field.remote_field.model._meta.get_field(field.remote_field.field_name).to_python(field_value)
+            kwargs[field.attname] = clean_value
+            if check_fks:
+                try:
+                    field.remote_field.model._default_manager.get(**{field.remote_field.field_name: clean_value})
+                except field.remote_field.model.DoesNotExist:
+                    if field.remote_field.on_delete == models.DO_NOTHING:
+                        pass
+                    elif field.remote_field.on_delete == models.CASCADE:
+                        if strict_fks:
+                            return None
+                        else:
                             kwargs[field.attname] = None
 
-                        else:
-                            raise Exception("can't currently handle on_delete types other than CASCADE, SET_NULL and DO_NOTHING")
-        else:
-            value = field.to_python(field_value)
+                    elif field.remote_field.on_delete == models.SET_NULL:
+                        kwargs[field.attname] = None
 
+                    else:
+                        raise Exception("can't currently handle on_delete types other than CASCADE, SET_NULL and DO_NOTHING")
+        else:
+            if field_name in exclude:
+                # load the field value from the db on request
+                kwargs[field.name] = models.DEFERRED
+                continue
+
+            value = field.to_python(field_value)
             # Make sure datetimes are converted to localtime
             if isinstance(field, models.DateTimeField) and settings.USE_TZ and value is not None:
                 default_timezone = timezone.get_default_timezone()
@@ -207,17 +231,26 @@ class ClusterableModel(models.Model):
         for field in m2m_fields_to_commit:
             getattr(self, field).commit()
 
-    def serializable_data(self):
-        obj = get_serializable_data_for_fields(self)
+    def serializable_data(self, exclude_fields=None):
+        obj = get_serializable_data_for_fields(self, exclude_fields=exclude_fields)
+
+        # normalize exclude_fields to a set
+        exclude = set(exclude_fields or ())
 
         for rel in get_all_child_relations(self):
             rel_name = rel.get_accessor_name()
-            children = getattr(self, rel_name).all()
+            if rel_name in exclude:
+                continue
 
+            # define a subset of exclude_fields for this relationship
+            rel_exclude = {f[len(rel_name) + 2:] for f in exclude if f.startswith(rel_name + '__')}
+
+            # serialize children to a list, using only the fields we need
+            children = getattr(self, rel_name).all().defer(*rel_exclude)
             if hasattr(rel.related_model, 'serializable_data'):
-                obj[rel_name] = [child.serializable_data() for child in children]
+                obj[rel_name] = [child.serializable_data(exclude_fields=rel_exclude) for child in children]
             else:
-                obj[rel_name] = [get_serializable_data_for_fields(child) for child in children]
+                obj[rel_name] = [get_serializable_data_for_fields(child, exclude_fields=rel_exclude) for child in children]
 
         for field in get_all_child_m2m_relations(self):
             if field.serialize:
@@ -230,7 +263,7 @@ class ClusterableModel(models.Model):
         return json.dumps(self.serializable_data(), cls=DjangoJSONEncoder)
 
     @classmethod
-    def from_serializable_data(cls, data, check_fks=True, strict_fks=False):
+    def from_serializable_data(cls, data, check_fks=True, strict_fks=False, exclude_fields=None):
         """
         Build an instance of this model from the JSON-like structure passed in,
         recursing into related objects as required.
@@ -242,7 +275,7 @@ class ClusterableModel(models.Model):
         in which case any dangling foreign keys with on_delete=CASCADE will cause None to be
         returned for the entire object.
         """
-        obj = model_from_serializable_data(cls, data, check_fks=check_fks, strict_fks=strict_fks)
+        obj = model_from_serializable_data(cls, data, check_fks=check_fks, strict_fks=strict_fks, exclude_fields=exclude_fields)
         if obj is None:
             return None
 
@@ -274,8 +307,8 @@ class ClusterableModel(models.Model):
         return obj
 
     @classmethod
-    def from_json(cls, json_data, check_fks=True, strict_fks=False):
-        return cls.from_serializable_data(json.loads(json_data), check_fks=check_fks, strict_fks=strict_fks)
+    def from_json(cls, json_data, check_fks=True, strict_fks=False, exclude_fields=None):
+        return cls.from_serializable_data(json.loads(json_data), check_fks=check_fks, strict_fks=strict_fks, exclude_fields=exclude_fields)
 
     @transaction.atomic
     def copy_child_relation(self, child_relation, target, commit=False, append=False):

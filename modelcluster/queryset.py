@@ -380,7 +380,7 @@ class FakeQuerySet(object):
         new.tuple_fields = self.tuple_fields
         new.iterable_class = self.iterable_class
         return new
-    
+
     def resolve_q_object(self, q_object):
         connector = q_object.connector
         filters = []
@@ -405,14 +405,14 @@ class FakeQuerySet(object):
             else:
                 key_clauses, val = child
                 filters.append(_build_test_function_from_filter(self.model, key_clauses.split('__'), val))
-        
+
         return test(filters)
 
     def _get_filters(self, *args, **kwargs):
         # a list of test functions; objects must pass all tests to be included
         # in the filtered list
         filters = []
-        
+
         for q_object in args:
             filters.append(self.resolve_q_object(q_object))
 
@@ -526,6 +526,12 @@ class FakeQuerySet(object):
                 seen_keys.add(key)
                 unique_results.append(result)
         return self.get_clone(results=unique_results)
+
+    def none(self):
+        """
+        Return an empty QuerySet.
+        """
+        return self.get_clone(results=[])
 
     # a standard QuerySet will store the results in _result_cache on running the query;
     # this is effectively the same as self.results on a FakeQuerySet, and so we'll make

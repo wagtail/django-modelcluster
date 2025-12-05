@@ -177,6 +177,11 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             items = self.get_object_list()
             new_item = related.related_model(**kwargs)
             items.append(new_item)
+
+            # Sort list
+            if rel_model._meta.ordering:
+                sort_by_fields(items, rel_model._meta.ordering)
+
             return new_item
 
         def clear(self):

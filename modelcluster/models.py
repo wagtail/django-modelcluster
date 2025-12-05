@@ -317,7 +317,11 @@ class ClusterableModel(models.Model):
         for child_object in source_manager.all().order_by('pk'):
             old_pk = child_object.pk
             is_saved = old_pk is not None
+            if isinstance(child_object, ClusterableModel):
+                child_object, _ = child_object.copy_cluster()
             child_object.pk = None
+            child_object.id = None
+            child_object._state.adding = True
             setattr(child_object, parental_key_name, target.id)
             target_manager.add(child_object)
 

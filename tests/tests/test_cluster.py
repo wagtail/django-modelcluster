@@ -1311,3 +1311,19 @@ class PrefetchRelatedTest(TestCase):
         res = list(query)
         self.assertEqual(query[0].menu_items.all()[0], menu_item1)
         self.assertEqual(query[1].menu_items.all()[0], menu_item2)
+
+    def test_m2m_prefetch_related_with_lookup(self):
+        person1 = Person.objects.create(name='Joe')
+        person2 = Person.objects.create(name='Mary')
+        room = Room.objects.create(name='Dining room')
+        house = House.objects.create(name='House 1', address='123 Main St', owner=person1, main_room=room)
+        person1.houses = [house]
+        person1.save()
+
+        query = Person.objects.all().prefetch_related(
+            Prefetch('houses', queryset=House.objects.all())
+        )
+
+        res = list(query)
+        self.assertEqual(query[0], person1)
+        self.assertEqual(query[0].houses.count(), 1)

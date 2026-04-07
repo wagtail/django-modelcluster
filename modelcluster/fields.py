@@ -451,7 +451,7 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
             """
             self.set([])
 
-        def set(self, objs, bulk=True, clear=False):
+        def set_base(self, objs, bulk=True, clear=False, through_defaults=None, raw=False):
             # cast objs to a list so that:
             # 1) we can call len() on it (which we can't do on, say, a queryset)
             # 2) if we need to sort it, we can do so without mutating the original
@@ -471,6 +471,9 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
                 sort_by_fields(objs, rel_model._meta.ordering)
 
             cluster_related_objects[relation_name] = objs
+
+        def set(self, objs, *, clear=False, through_defaults=None):
+            self.set_base(objs, clear=clear, through_defaults=through_defaults)
 
         def remove(self, *items_to_remove):
             """

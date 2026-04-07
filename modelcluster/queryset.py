@@ -556,3 +556,4 @@ class FakeQuerySet(object):
         return len(self.results)
 
     ordered = True  # results are returned in a consistent order
+    totally_ordered = True

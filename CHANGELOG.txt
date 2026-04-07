@@ -1,9 +1,9 @@
 Changelog
 =========
 
-6.5 (xx.xx.xxxx) - IN DEVELOPMENT
-~~~~~~~~~~~~~~~~
-* Handle `get_prefetch_queryset` deprecation in Django 5.0, for preliminary Django 6.0 support (Sage Abdullah)
+6.4.1 (04.12.2025)
+~~~~~~~~~~~~~~~~~~
+* Handle `get_prefetch_queryset` deprecation, for Django 6.0 support (Sage Abdullah)
 
 6.4 (18.12.2024)
 ~~~~~~~~~~~~~~~~

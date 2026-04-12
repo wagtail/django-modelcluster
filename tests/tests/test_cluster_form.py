@@ -5,7 +5,7 @@ import unittest
 from django import VERSION as DJANGO_VERSION
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from tests.models import Band, BandMember, Album, Log, Restaurant, Article, Author, Document, Gallery, Song
+from tests.models import Band, BandMember, Album, Log, Restaurant, Article, Author, Document, Gallery, Song, Comment
 from modelcluster.forms import ClusterForm
 from django.forms import Textarea, CharField
 from django.forms.widgets import TextInput, FileInput
@@ -112,6 +112,53 @@ class ClusterFormTest(TestCase):
         # this should create database entries
         self.assertTrue(Band.objects.filter(name='The Beatles').exists())
         self.assertTrue(BandMember.objects.filter(name='John Lennon').exists())
+
+    def test_update_instance_with_unsaved_data(self):
+        # Replicates saving a Wagtail page that has child objects that exist on the latest draft revision
+        # but were never created in the database. At the point of saving the form, the child objects will
+        # exist (without primary keys) both on the in-memory instance and in the form data. We need to
+        # ensure that this does not result in duplicate child objects being created.
+        # See https://github.com/wagtail/wagtail/issues/13332
+
+        class BandForm(ClusterForm):
+            class Meta:
+                model = Band
+                fields = ['name']
+                formsets = ['members']
+
+        john = BandMember(name='John Lennon')
+        beatles = Band(name='The Beatles', members=[
+            john,
+        ])
+        beatles.save()
+        paul = BandMember(name='Paul McCartney')
+        beatles.members.add(paul)
+
+        form = BandForm({
+            'name': 'The Beatles',
+
+            'members-TOTAL_FORMS': 3,
+            'members-INITIAL_FORMS': 1,
+            'members-MAX_NUM_FORMS': 1000,
+
+            'members-0-name': 'John Lennon',
+            'members-0-id': john.id,
+
+            'members-1-name': 'Paul McCartney',
+            'members-1-id': '',
+
+            'members-2-name': 'George Harrison',
+            'members-2-id': '',
+        }, instance=beatles)
+
+        self.assertTrue(form.is_valid())
+        result = form.save()
+
+        self.assertEqual(result.members.count(), 3)
+        self.assertQuerySetEqual(
+            result.members.values_list('name', flat=True).order_by('name'),
+            ['George Harrison', 'John Lennon', 'Paul McCartney'],
+        )
 
     def test_explicit_formset_list(self):
         class BandForm(ClusterForm):
@@ -869,6 +916,59 @@ class FormWithM2MTest(TestCase):
         db_article = Article.objects.get(pk=self.article.pk)
         self.assertEqual(db_article.title, 'Updated test article')
         self.assertEqual(list(db_article.authors.all()), [self.charles_dickens])
+
+    def test_create_form_with_standard_m2m(self):
+        class ArticleForm(ClusterForm):
+            class Meta:
+                model = Article
+                fields = ['title', 'authors', 'comments']
+                formsets = []
+
+        interesting_comment = Comment.objects.create(content='Interesting')
+        form = ArticleForm({
+            'title': 'New article',
+            'authors': [self.james_joyce.id],
+            'comments': [interesting_comment.id],
+        })
+        self.assertTrue(form.is_valid())
+        article = form.save()
+
+        self.assertIsNotNone(article.pk)
+        self.assertEqual(article.title, 'New article')
+        self.assertQuerySetEqual(article.authors.all(), [self.james_joyce])
+        self.assertQuerySetEqual(article.comments.all(), [interesting_comment])
+
+        db_article = Article.objects.get(pk=article.pk)
+        self.assertQuerySetEqual(db_article.authors.all(), [self.james_joyce])
+        self.assertQuerySetEqual(db_article.comments.all(), [interesting_comment])
+
+    def test_defer_commit_with_standard_m2m(self):
+        class ArticleForm(ClusterForm):
+            class Meta:
+                model = Article
+                fields = ['title', 'authors', 'comments']
+                formsets = []
+
+        interesting_comment = Comment.objects.create(content='Interesting')
+        form = ArticleForm({
+            'title': 'New article',
+            'authors': [self.james_joyce.id],
+            'comments': [interesting_comment.id],
+        })
+        self.assertTrue(form.is_valid())
+        article = form.save(commit=False)
+
+        self.assertIsNone(article.pk)
+
+        article.save()
+        self.assertIsNotNone(article.pk)
+
+        db_article = Article.objects.get(pk=article.pk)
+        self.assertQuerySetEqual(db_article.comments.all(), [])
+
+        form.save_m2m()
+        db_article.refresh_from_db()
+        self.assertQuerySetEqual(db_article.comments.all(), [interesting_comment])
 
 
 class NestedClusterFormTest(TestCase):

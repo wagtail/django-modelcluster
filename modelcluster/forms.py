@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from itertools import chain
 from django.forms import ValidationError
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.forms.formsets import TOTAL_FORM_COUNT
@@ -10,7 +11,7 @@ from django.forms.models import (
 from django.db.models.fields.related import ForeignObjectRel
 from django.utils.html import format_html_join
 
-
+from modelcluster.fields import ParentalManyToManyField
 from modelcluster.models import get_all_child_relations
 
 
@@ -359,48 +360,83 @@ class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
             media = media + formset.media
         return media
 
-    def save(self, commit=True):
-        # do we have any fields that expect us to call save_m2m immediately?
-        save_m2m_now = False
+    def save_cluster_m2m(self):
+        # Customised version of Django BaseModelForm.save_m2m for cluster M2M fields, limited to
+        # ParentalManyToManyField, or fields with the _need_commit_after_assignment flag.
+        cleaned_data = self.cleaned_data
         exclude = self._meta.exclude
         fields = self._meta.fields
-
-        for f in self.instance._meta.get_fields():
+        opts = self.instance._meta
+        for f in chain(opts.many_to_many, opts.private_fields):
+            # Standard Django save_m2m filtering
+            if not hasattr(f, "save_form_data"):
+                continue
             if fields and f.name not in fields:
                 continue
             if exclude and f.name in exclude:
                 continue
-            if getattr(f, '_need_commit_after_assignment', False):
-                save_m2m_now = True
-                break
 
-        instance = super().save(commit=(commit and not save_m2m_now))
+            # Cluster M2M filtering
+            is_cluster_m2m = isinstance(f, ParentalManyToManyField)
+            save_early = getattr(f, '_need_commit_after_assignment', False)
+            if not is_cluster_m2m and not save_early:
+                continue
+
+            if f.name in cleaned_data:
+                f.save_form_data(self.instance, cleaned_data[f.name])
+
+    def _save_m2m(self):
+        # Customised version of Django BaseModelForm.save_m2m for standard M2M fields, any
+        # ParentalManyToManyField fields will be skipped as they're saved earlier with
+        # save_cluster_m2m.
+        cleaned_data = self.cleaned_data
+        exclude = self._meta.exclude
+        fields = self._meta.fields
+        opts = self.instance._meta
+        for f in chain(opts.many_to_many, opts.private_fields):
+            # Standard Django save_m2m filtering
+            if not hasattr(f, "save_form_data"):
+                continue
+            if fields and f.name not in fields:
+                continue
+            if exclude and f.name in exclude:
+                continue
+
+            # Cluster M2M filtering
+            if isinstance(f, ParentalManyToManyField):
+                continue
+
+            if f.name in cleaned_data:
+                f.save_form_data(self.instance, cleaned_data[f.name])
+
+    def save(self, commit=True):
+        # Defer a full save until after formsets are saved. Calling an instance.save() with
+        # commit=True will save the instance *and* inlines too early, as modelcluster wants to
+        # save/update all the relations.
+        instance = super().save(commit=False)
 
         # The M2M-like fields designed for use with ClusterForm (currently
         # ParentalManyToManyField and ClusterTaggableManager) will manage their own in-memory
         # relations, and not immediately write to the database when we assign to them.
         # For these fields (identified by the _need_commit_after_assignment
-        # flag), save_m2m() is a safe operation that does not affect the database and is thus
-        # valid for commit=False. In the commit=True case, committing to the database happens
-        # in the subsequent instance.save (so this needs to happen after save_m2m to ensure
-        # we have the updated relation data in place).
-
-        # For annoying legacy reasons we sometimes need to accommodate 'classic' M2M fields
-        # (particularly taggit.TaggableManager) within ClusterForm. These fields
-        # generally do require our instance to exist in the database at the point we call
-        # save_m2m() - for this reason, we only proceed with the customisation described above
-        # (i.e. postpone the instance.save() operation until after save_m2m) if there's a
-        # _need_commit_after_assignment field on the form that demands it.
-
-        if save_m2m_now:
-            self.save_m2m()
-
-            if commit:
-                instance.save()
+        # flag), save_cluster_m2m() is a safe operation that does not affect the database.
+        self.save_cluster_m2m()
 
         for formset in self.formsets.values():
             formset.instance = instance
-            formset.save(commit=commit)
+            formset.save(commit=False)
+
+        # For annoying legacy reasons we sometimes need to accommodate 'classic' M2M fields within
+        # ClusterForm. These fields generally do require our instance to exist in the database at
+        # the point we call save_m2m().
+        if commit:
+            # Save the instance and M2M data
+            instance.save()
+            self._save_m2m()
+        else:
+            # Allow deferred saving of M2M data
+            self.save_m2m = self._save_m2m
+
         return instance
 
     def has_changed(self):

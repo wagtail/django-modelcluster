@@ -6,7 +6,8 @@ Changelog
 * Preliminary Django 6.1 support (Sage Abdullah)
 * Implement `none` method on FakeQuerySet (Victor Miti)
 * Fix: Recursively copy child relations on `copy_cluster`, `copy_all_child_relations` and `copy_child_relation` (Jakub Musil, Matt Westcott)
-* Fix: Fix behavior of ParentalManyToManyFields and prefetch_related() supplied with a lookup queryset (Bernhard Bliem)
+* Fix: Fix behavior of ParentalManyToManyFields and `prefetch_related()` supplied with a lookup queryset (Bernhard Bliem)
+* Fix: Prevent `ClusterForm` creating duplicates when unsaved child objects exist on both initial instance and form data (Alex Tomkins)
 
 6.4.1 (04.12.2025)
 ~~~~~~~~~~~~~~~~~~

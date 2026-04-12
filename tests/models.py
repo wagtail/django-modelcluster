@@ -192,6 +192,13 @@ class TaggedArticle(TaggedItemBase):
     content_object = ParentalKey('Article', related_name='tagged_items', on_delete=models.CASCADE)
 
 
+class Comment(models.Model):
+    content = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.content
+
+
 class Article(ClusterableModel):
     paper = ParentalKey(NewsPaper, blank=True, null=True, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
@@ -200,6 +207,7 @@ class Article(ClusterableModel):
     tags = ClusterTaggableManager(through=TaggedArticle, blank=True)
     related_articles = ParentalManyToManyField('self', serialize=False, blank=True)
     view_count = models.IntegerField(null=True, blank=True, serialize=False)
+    comments = models.ManyToManyField('Comment', related_name='comments', blank=True)
 
     def __str__(self):
         return self.title

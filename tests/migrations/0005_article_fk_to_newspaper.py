@@ -8,25 +8,37 @@ import modelcluster.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tests', '0004_auto_20170406_1734'),
+        ("tests", "0004_auto_20170406_1734"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='NewsPaper',
+            name="NewsPaper",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=255)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=255)),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.AddField(
-            model_name='article',
-            name='paper',
-            field=modelcluster.fields.ParentalKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='tests.NewsPaper'),
+            model_name="article",
+            name="paper",
+            field=modelcluster.fields.ParentalKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="tests.NewsPaper",
+            ),
         ),
     ]

@@ -7,47 +7,72 @@ import modelcluster.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tests', '0001_initial'),
+        ("tests", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Article',
+            name="Article",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=255)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=255)),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Author',
+            name="Author",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
             ],
-            options={
-                'ordering': ['name']
-            },
+            options={"ordering": ["name"]},
         ),
         migrations.CreateModel(
-            name='Category',
+            name="Category",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
             ],
         ),
         migrations.AddField(
-            model_name='article',
-            name='authors',
-            field=modelcluster.fields.ParentalManyToManyField(related_name='articles_by_author', to='tests.Author'),
+            model_name="article",
+            name="authors",
+            field=modelcluster.fields.ParentalManyToManyField(
+                related_name="articles_by_author", to="tests.Author"
+            ),
         ),
         migrations.AddField(
-            model_name='article',
-            name='categories',
-            field=modelcluster.fields.ParentalManyToManyField(related_name='articles_by_category', to='tests.Category'),
+            model_name="article",
+            name="categories",
+            field=modelcluster.fields.ParentalManyToManyField(
+                related_name="articles_by_category", to="tests.Category"
+            ),
         ),
     ]

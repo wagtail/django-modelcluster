@@ -6,22 +6,39 @@ import modelcluster.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tests', '0009_article_related_articles'),
+        ("tests", "0009_article_related_articles"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Song',
+            name="Song",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('sort_order', models.IntegerField(blank=True, editable=False, null=True)),
-                ('album', modelcluster.fields.ParentalKey(on_delete=django.db.models.deletion.CASCADE, related_name='songs', to='tests.Album')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                (
+                    "sort_order",
+                    models.IntegerField(blank=True, editable=False, null=True),
+                ),
+                (
+                    "album",
+                    modelcluster.fields.ParentalKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="songs",
+                        to="tests.Album",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['sort_order'],
+                "ordering": ["sort_order"],
             },
         ),
     ]

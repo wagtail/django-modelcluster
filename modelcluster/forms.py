@@ -2,10 +2,13 @@ from __future__ import unicode_literals
 
 from django.forms import ValidationError
 from django.core.exceptions import NON_FIELD_ERRORS
-from django.forms.formsets import TOTAL_FORM_COUNT
 from django.forms.models import (
-    BaseModelFormSet, modelformset_factory,
-    ModelForm, _get_foreign_key, ModelFormMetaclass, ModelFormOptions
+    BaseModelFormSet,
+    modelformset_factory,
+    ModelForm,
+    _get_foreign_key,
+    ModelFormMetaclass,
+    ModelFormOptions,
 )
 from django.db.models.fields.related import ForeignObjectRel
 from django.utils.html import format_html_join
@@ -15,26 +18,27 @@ from modelcluster.models import get_all_child_relations
 
 
 class BaseTransientModelFormSet(BaseModelFormSet):
-    """ A ModelFormSet that doesn't assume that all its initial data instances exist in the db """
+    """A ModelFormSet that doesn't assume that all its initial data instances exist in the db"""
+
     def _construct_form(self, i, **kwargs):
         # Need to override _construct_form to avoid calling to_python on an empty string PK value
 
         if self.is_bound and i < self.initial_form_count():
             pk_key = "%s-%s" % (self.add_prefix(i), self.model._meta.pk.name)
             pk = self.data[pk_key]
-            if pk == '':
-                kwargs['instance'] = self.model()
+            if pk == "":
+                kwargs["instance"] = self.model()
             else:
                 pk_field = self.model._meta.pk
                 to_python = self._get_to_python(pk_field)
                 pk = to_python(pk)
-                kwargs['instance'] = self._existing_object(pk)
-        if i < self.initial_form_count() and 'instance' not in kwargs:
-            kwargs['instance'] = self.get_queryset()[i]
+                kwargs["instance"] = self._existing_object(pk)
+        if i < self.initial_form_count() and "instance" not in kwargs:
+            kwargs["instance"] = self.get_queryset()[i]
         if i >= self.initial_form_count() and self.initial_extra:
             # Set initial values for extra forms
             try:
-                kwargs['initial'] = self.initial_extra[i - self.initial_form_count()]
+                kwargs["initial"] = self.initial_extra[i - self.initial_form_count()]
             except IndexError:
                 pass
 
@@ -82,7 +86,11 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         else:
             self.instance = instance
 
-        self.rel_name = ForeignObjectRel(self.fk, self.fk.remote_field.model, related_name=self.fk.remote_field.related_name).get_accessor_name()
+        self.rel_name = ForeignObjectRel(
+            self.fk,
+            self.fk.remote_field.model,
+            related_name=self.fk.remote_field.related_name,
+        ).get_accessor_name()
 
         if queryset is None:
             queryset = getattr(self.instance, self.rel_name).all()
@@ -99,8 +107,8 @@ class BaseChildFormSet(BaseTransientModelFormSet):
 
         # if model has a sort_order_field defined, assign order indexes to the attribute
         # named in it
-        if self.can_order and hasattr(self.model, 'sort_order_field'):
-            sort_order_field = getattr(self.model, 'sort_order_field')
+        if self.can_order and hasattr(self.model, "sort_order_field"):
+            sort_order_field = getattr(self.model, "sort_order_field")
             for i, form in enumerate(self.ordered_forms):
                 setattr(form.instance, sort_order_field, i)
 
@@ -127,12 +135,16 @@ class BaseChildFormSet(BaseTransientModelFormSet):
         return super().clean(*args, **kwargs)
 
     def validate_unique(self):
-        '''This clean method will check for unique_together condition'''
+        """This clean method will check for unique_together condition"""
         # Collect unique_checks and to run from all the forms.
         all_unique_checks = set()
         all_date_checks = set()
         forms_to_delete = self.deleted_forms
-        valid_forms = [form for form in self.forms if form.is_valid() and form not in forms_to_delete]
+        valid_forms = [
+            form
+            for form in self.forms
+            if form.is_valid() and form not in forms_to_delete
+        ]
         for form in valid_forms:
             unique_checks, date_checks = form.instance._get_unique_checks(
                 include_meta_constraints=True
@@ -148,18 +160,23 @@ class BaseChildFormSet(BaseTransientModelFormSet):
                 # Get the data for the set of fields that must be unique among the forms.
                 row_data = (
                     field if field in self.unique_fields else form.cleaned_data[field]
-                    for field in unique_check if field in form.cleaned_data
+                    for field in unique_check
+                    if field in form.cleaned_data
                 )
                 # Reduce Model instances to their primary key values
-                row_data = tuple(d._get_pk_val() if hasattr(d, '_get_pk_val') else d
-                                 for d in row_data)
+                row_data = tuple(
+                    d._get_pk_val() if hasattr(d, "_get_pk_val") else d
+                    for d in row_data
+                )
                 if row_data and None not in row_data:
                     # if we've already seen it then we have a uniqueness failure
                     if row_data in seen_data:
                         # poke error messages into the right places and mark
                         # the form as invalid
                         errors.append(self.get_unique_error_message(unique_check))
-                        form._errors[NON_FIELD_ERRORS] = self.error_class([self.get_form_error()])
+                        form._errors[NON_FIELD_ERRORS] = self.error_class(
+                            [self.get_form_error()]
+                        )
                         # remove the data from the cleaned_data dict since it was invalid
                         for field in unique_check:
                             if field in form.cleaned_data:
@@ -172,11 +189,25 @@ class BaseChildFormSet(BaseTransientModelFormSet):
 
 
 def childformset_factory(
-    parent_model, model, form=ModelForm,
-    formset=BaseChildFormSet, fk_name=None, fields=None, exclude=None,
-    extra=3, can_order=False, can_delete=True, max_num=None, validate_max=False,
-    formfield_callback=None, widgets=None, min_num=None, validate_min=False,
-    inherit_kwargs=None, formsets=None, exclude_formsets=None
+    parent_model,
+    model,
+    form=ModelForm,
+    formset=BaseChildFormSet,
+    fk_name=None,
+    fields=None,
+    exclude=None,
+    extra=3,
+    can_order=False,
+    can_delete=True,
+    max_num=None,
+    validate_max=False,
+    formfield_callback=None,
+    widgets=None,
+    min_num=None,
+    validate_min=False,
+    inherit_kwargs=None,
+    formsets=None,
+    exclude_formsets=None,
 ):
 
     fk = _get_foreign_key(parent_model, model, fk_name=fk_name)
@@ -189,7 +220,9 @@ def childformset_factory(
         exclude = []
     exclude += [fk.name]
 
-    if issubclass(form, ClusterForm) and (formsets is not None or exclude_formsets is not None):
+    if issubclass(form, ClusterForm) and (
+        formsets is not None or exclude_formsets is not None
+    ):
         # the modelformset_factory helper that we ultimately hand off to doesn't recognise
         # formsets / exclude_formsets, so we need to prepare a specific subclass of our `form`
         # class, with these pre-embedded in Meta, to use as the base form
@@ -197,30 +230,34 @@ def childformset_factory(
         # If parent form class already has an inner Meta, the Meta we're
         # creating needs to inherit from the parent's inner meta.
         bases = (form.Meta,) if hasattr(form, "Meta") else ()
-        Meta = type("Meta", bases, {
-            'formsets': formsets,
-            'exclude_formsets': exclude_formsets,
-        })
+        Meta = type(
+            "Meta",
+            bases,
+            {
+                "formsets": formsets,
+                "exclude_formsets": exclude_formsets,
+            },
+        )
 
         # Instantiate type(form) in order to use the same metaclass as form.
         form = type(form)("_ClusterForm", (form,), {"Meta": Meta})
 
     kwargs = {
-        'form': form,
-        'formfield_callback': formfield_callback,
-        'formset': formset,
-        'extra': extra,
-        'can_delete': can_delete,
+        "form": form,
+        "formfield_callback": formfield_callback,
+        "formset": formset,
+        "extra": extra,
+        "can_delete": can_delete,
         # if the model supplies a sort_order_field, enable ordering regardless of
         # the current setting of can_order
-        'can_order': (can_order or hasattr(model, 'sort_order_field')),
-        'fields': fields,
-        'exclude': exclude,
-        'max_num': max_num,
-        'validate_max': validate_max,
-        'widgets': widgets,
-        'min_num': min_num,
-        'validate_min': validate_min,
+        "can_order": (can_order or hasattr(model, "sort_order_field")),
+        "fields": fields,
+        "exclude": exclude,
+        "max_num": max_num,
+        "validate_max": validate_max,
+        "widgets": widgets,
+        "min_num": min_num,
+        "validate_min": validate_min,
     }
     FormSet = transientmodelformset_factory(model, **kwargs)
     FormSet.fk = fk
@@ -235,8 +272,8 @@ def childformset_factory(
 class ClusterFormOptions(ModelFormOptions):
     def __init__(self, options=None):
         super().__init__(options=options)
-        self.formsets = getattr(options, 'formsets', None)
-        self.exclude_formsets = getattr(options, 'exclude_formsets', None)
+        self.formsets = getattr(options, "formsets", None)
+        self.exclude_formsets = getattr(options, "exclude_formsets", None)
 
 
 class ClusterFormMetaclass(ModelFormMetaclass):
@@ -256,7 +293,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
         # grab any formfield_callback that happens to be defined in attrs -
         # so that we can pass it on to child formsets - before ModelFormMetaclass deletes it.
         # BAD METACLASS NO BISCUIT.
-        formfield_callback = attrs.get('formfield_callback')
+        formfield_callback = attrs.get("formfield_callback")
 
         new_class = super().__new__(cls, name, bases, attrs)
         if not parents:
@@ -264,7 +301,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
 
         # ModelFormMetaclass will have set up new_class._meta as a ModelFormOptions instance;
         # replace that with ClusterFormOptions so that we can access _meta.formsets
-        opts = new_class._meta = ClusterFormOptions(getattr(new_class, 'Meta', None))
+        opts = new_class._meta = ClusterFormOptions(getattr(new_class, "Meta", None))
         if opts.model:
             formsets = {}
 
@@ -277,7 +314,10 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                 rel_name = rel.get_accessor_name()
 
                 # apply 'formsets' and 'exclude_formsets' rules from meta
-                if opts.exclude_formsets is not None and rel_name in opts.exclude_formsets:
+                if (
+                    opts.exclude_formsets is not None
+                    and rel_name in opts.exclude_formsets
+                ):
                     # formset is explicitly excluded
                     continue
                 elif opts.formsets is not None and rel_name not in opts.formsets:
@@ -293,12 +333,12 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                     widgets = None
 
                 kwargs = {
-                    'extra': cls.extra_form_count,
-                    'form': cls.child_form(),
-                    'formfield_callback': formfield_callback,
-                    'fk_name': rel.field.name,
-                    'widgets': widgets,
-                    'formset_name': rel_name
+                    "extra": cls.extra_form_count,
+                    "form": cls.child_form(),
+                    "formfield_callback": formfield_callback,
+                    "fk_name": rel.field.name,
+                    "widgets": widgets,
+                    "formset_name": rel_name,
                 }
 
                 # see if opts.formsets looks like a dict; if so, allow the value
@@ -308,7 +348,7 @@ class ClusterFormMetaclass(ModelFormMetaclass):
                 except AttributeError:
                     pass
 
-                formset_name = kwargs.pop('formset_name')
+                formset_name = kwargs.pop("formset_name")
                 formset = childformset_factory(opts.model, rel.field.model, **kwargs)
                 formsets[formset_name] = formset
 
@@ -334,22 +374,29 @@ class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
                     child_form_kwargs[kwarg_name] = getattr(self, kwarg_name, None)
 
             self.formsets[rel_name] = formset_class(
-                data, files, instance=instance, prefix=formset_prefix, form_kwargs=child_form_kwargs
+                data,
+                files,
+                instance=instance,
+                prefix=formset_prefix,
+                form_kwargs=child_form_kwargs,
             )
 
     def as_p(self):
         form_as_p = super().as_p()
-        return form_as_p + format_html_join('', '{}', [(formset.as_p(),) for formset in self.formsets.values()])
+        return form_as_p + format_html_join(
+            "", "{}", [(formset.as_p(),) for formset in self.formsets.values()]
+        )
 
     def is_valid(self):
         form_is_valid = super().is_valid()
-        formsets_are_valid = all(formset.is_valid() for formset in self.formsets.values())
+        formsets_are_valid = all(
+            formset.is_valid() for formset in self.formsets.values()
+        )
         return form_is_valid and formsets_are_valid
 
     def is_multipart(self):
-        return (
-            super().is_multipart()
-            or any(formset.is_multipart() for formset in self.formsets.values())
+        return super().is_multipart() or any(
+            formset.is_multipart() for formset in self.formsets.values()
         )
 
     @property
@@ -370,7 +417,7 @@ class ClusterForm(ModelForm, metaclass=ClusterFormMetaclass):
                 continue
             if exclude and f.name in exclude:
                 continue
-            if getattr(f, '_need_commit_after_assignment', False):
+            if getattr(f, "_need_commit_after_assignment", False):
                 save_m2m_now = True
                 break
 
@@ -428,7 +475,7 @@ def clusterform_factory(model, form=ClusterForm, **kwargs):
     # creating needs to inherit from the parent's inner meta.
     bases = (form.Meta,) if hasattr(form, "Meta") else ()
     Meta = type("Meta", bases, meta_class_attrs)
-    formfield_callback = meta_class_attrs.get('formfield_callback')
+    formfield_callback = meta_class_attrs.get("formfield_callback")
     if formfield_callback:
         Meta.formfield_callback = staticmethod(formfield_callback)
     # Give this new form class a reasonable name.

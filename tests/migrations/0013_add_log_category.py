@@ -6,22 +6,38 @@ import modelcluster.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tests', '0012_add_record_label'),
+        ("tests", "0012_add_record_label"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='LogCategory',
+            name="LogCategory",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=32)),
-                ('log', modelcluster.fields.ParentalKey(on_delete=django.db.models.deletion.CASCADE, related_name='categories', to='tests.log')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=32)),
+                (
+                    "log",
+                    modelcluster.fields.ParentalKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="categories",
+                        to="tests.log",
+                    ),
+                ),
             ],
         ),
         migrations.AddConstraint(
-            model_name='logcategory',
-            constraint=models.UniqueConstraint(fields=('log', 'name'), name='unique_log_category'),
+            model_name="logcategory",
+            constraint=models.UniqueConstraint(
+                fields=("log", "name"), name="unique_log_category"
+            ),
         ),
     ]

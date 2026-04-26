@@ -1,0 +1,37 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [ "setuptools>=71" ]
+
+[project]
+name = "django-modelcluster"
+version = "6.4.1"
+description = "Django extension to allow working with 'clusters' of models as a single unit, independently of the database"
+readme = "README.rst"
+keywords = [ "cluster", "django", "model" ]
+license = "BSD-3-Clause"
+authors = [
+  { name = "Matthew Westcott", email = "matthew.westcott@torchbox.com" },
+  { name = "Wagtail Team", email = "hello@wagtail.org" },
+]
+requires-python = ">=3.9"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Web Environment",
+  "Framework :: Django",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+  "django>=4.2",
+]
+optional-dependencies.taggit = [ "django-taggit>=3.1" ]
+urls.Changelog = "https://github.com/wagtail/django-modelcluster/blob/main/CHANGELOG.txt"
+urls.Homepage = "https://github.com/wagtail/django-modelcluster"

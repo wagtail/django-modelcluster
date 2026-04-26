@@ -34,11 +34,11 @@ But what if you could? There are all sorts of scenarios where you might want to 
 **django-modelcluster** extends Django's foreign key relations to make this possible. It introduces a new type of relation, *ParentalKey*, where the related models are stored locally to the 'parent' model until the parent is explicitly saved. Up to that point, the related models can still be accessed through a subset of the QuerySet API:
 
 .. code-block:: python
- 
+
  from modelcluster.models import ClusterableModel
  from modelcluster.fields import ParentalKey
- 
- 
+
+
  class Band(ClusterableModel):
      name = models.CharField(max_length=255)
 

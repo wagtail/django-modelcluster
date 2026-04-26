@@ -1,0 +1,37 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: trailing-whitespace
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: "v2.21.1"
+    hooks:
+      - id: pyproject-fmt
+        args: ["--max-supported-python=3.14"]
+  - repo: https://github.com/adamchainz/django-upgrade
+    rev: "1.30.0"
+    hooks:
+      - id: django-upgrade
+        args: [--target-version, "4.2"]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.15.11"
+    hooks:
+      - id: ruff-check
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+  - repo: https://github.com/pycontribs/mirrors-prettier
+    rev: v3.6.2
+    hooks:
+      - id: prettier
+        types_or: [json, yaml, markdown, bash, editorconfig, toml]

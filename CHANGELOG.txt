@@ -8,6 +8,10 @@ Changelog
 * Fix: Recursively copy child relations on `copy_cluster`, `copy_all_child_relations` and `copy_child_relation` (Jakub Musil, Matt Westcott)
 * Fix: Fix behavior of ParentalManyToManyFields and `prefetch_related()` supplied with a lookup queryset (Bernhard Bliem)
 * Fix: Prevent `ClusterForm` creating duplicates when unsaved child objects exist on both initial instance and form data (Alex Tomkins)
+* Maintenance: Migrate setup.py to pyproject.toml (Storm Heg)
+* Maintenance: Add tooling for linting / formatting (Storm Heg)
+* Maintenance: Set up nightly testing against Django main branch (Storm Heg)
+* Maintenance: Set up PyPI trusted publishing (Storm Heg)
 
 6.4.1 (04.12.2025)
 ~~~~~~~~~~~~~~~~~~

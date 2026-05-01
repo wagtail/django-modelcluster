@@ -6,48 +6,76 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('taggit', '0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx'),
-        ('tests', '0013_add_log_category'),
+        (
+            "taggit",
+            "0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx",
+        ),
+        ("tests", "0013_add_log_category"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Comment',
+            name="Comment",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('content', models.CharField(max_length=255)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("content", models.CharField(max_length=255)),
             ],
         ),
         migrations.AlterField(
-            model_name='article',
-            name='related_articles',
-            field=modelcluster.fields.ParentalManyToManyField(blank=True, serialize=False, to='tests.article'),
+            model_name="article",
+            name="related_articles",
+            field=modelcluster.fields.ParentalManyToManyField(
+                blank=True, serialize=False, to="tests.article"
+            ),
         ),
         migrations.AlterField(
-            model_name='room',
-            name='features',
-            field=modelcluster.fields.ParentalManyToManyField(blank=True, related_name='rooms', to='tests.feature'),
+            model_name="room",
+            name="features",
+            field=modelcluster.fields.ParentalManyToManyField(
+                blank=True, related_name="rooms", to="tests.feature"
+            ),
         ),
         migrations.AlterField(
-            model_name='taggedarticle',
-            name='tag',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='%(app_label)s_%(class)s_items', to='taggit.tag'),
+            model_name="taggedarticle",
+            name="tag",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="%(app_label)s_%(class)s_items",
+                to="taggit.tag",
+            ),
         ),
         migrations.AlterField(
-            model_name='taggednonclusterplace',
-            name='tag',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='%(app_label)s_%(class)s_items', to='taggit.tag'),
+            model_name="taggednonclusterplace",
+            name="tag",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="%(app_label)s_%(class)s_items",
+                to="taggit.tag",
+            ),
         ),
         migrations.AlterField(
-            model_name='taggedplace',
-            name='tag',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='%(app_label)s_%(class)s_items', to='taggit.tag'),
+            model_name="taggedplace",
+            name="tag",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="%(app_label)s_%(class)s_items",
+                to="taggit.tag",
+            ),
         ),
         migrations.AddField(
-            model_name='article',
-            name='comments',
-            field=models.ManyToManyField(blank=True, related_name='comments', to='tests.comment'),
+            model_name="article",
+            name="comments",
+            field=models.ManyToManyField(
+                blank=True, related_name="comments", to="tests.comment"
+            ),
         ),
     ]

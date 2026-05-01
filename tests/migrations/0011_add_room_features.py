@@ -3,27 +3,37 @@
 from django.db import migrations, models
 import modelcluster.fields
 
-class Migration(migrations.Migration):
 
+class Migration(migrations.Migration):
     dependencies = [
-        ('tests', '0010_song'),
+        ("tests", "0010_song"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Feature',
+            name="Feature",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('desirability', models.PositiveIntegerField()),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("desirability", models.PositiveIntegerField()),
             ],
             options={
-                'ordering': ['-desirability'],
+                "ordering": ["-desirability"],
             },
         ),
         migrations.AddField(
-            model_name='Room',
-            name='features',
-            field=modelcluster.fields.ParentalManyToManyField(blank=True, related_name='rooms', serialize=False, to='tests.Feature'),
-        )
+            model_name="Room",
+            name="features",
+            field=modelcluster.fields.ParentalManyToManyField(
+                blank=True, related_name="rooms", serialize=False, to="tests.Feature"
+            ),
+        ),
     ]

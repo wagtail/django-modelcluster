@@ -5,7 +5,12 @@ import re
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Model, Q, prefetch_related_objects
 
-from modelcluster.utils import NullRelationshipValueEncountered, extract_field_value, get_model_field, sort_by_fields
+from modelcluster.utils import (
+    NullRelationshipValueEncountered,
+    extract_field_value,
+    get_model_field,
+    sort_by_fields,
+)
 
 
 # Constructor for test functions that determine whether an object passes some boolean condition
@@ -242,7 +247,7 @@ def test_range(model, attribute_name, range_val):
             val = extract_field_value(obj, attribute_name)
         except NullRelationshipValueEncountered:
             return False
-        return (val is not None and val >= start_val and val <= end_val)
+        return val is not None and val >= start_val and val <= end_val
 
     return _test
 
@@ -288,23 +293,23 @@ def test_iregex(model, attribute_name, regex_string):
 
 
 FILTER_EXPRESSION_TOKENS = {
-    'exact': test_exact,
-    'iexact': test_iexact,
-    'contains': test_contains,
-    'icontains': test_icontains,
-    'lt': test_lt,
-    'lte': test_lte,
-    'gt': test_gt,
-    'gte': test_gte,
-    'in': test_in,
-    'startswith': test_startswith,
-    'istartswith': test_istartswith,
-    'endswith': test_endswith,
-    'iendswith': test_iendswith,
-    'range': test_range,
-    'isnull': test_isnull,
-    'regex': test_regex,
-    'iregex': test_iregex,
+    "exact": test_exact,
+    "iexact": test_iexact,
+    "contains": test_contains,
+    "icontains": test_icontains,
+    "lt": test_lt,
+    "lte": test_lte,
+    "gt": test_gt,
+    "gte": test_gte,
+    "in": test_in,
+    "startswith": test_startswith,
+    "istartswith": test_istartswith,
+    "endswith": test_endswith,
+    "iendswith": test_iendswith,
+    "range": test_range,
+    "isnull": test_isnull,
+    "regex": test_regex,
+    "iregex": test_iregex,
 }
 
 
@@ -341,26 +346,53 @@ class ModelIterable(FakeQuerySetIterable):
 
 class DictIterable(FakeQuerySetIterable):
     def __iter__(self):
-        field_names = self.queryset.dict_fields or [field.name for field in self.queryset.model._meta.fields]
+        field_names = self.queryset.dict_fields or [
+            field.name for field in self.queryset.model._meta.fields
+        ]
         for obj in self.queryset.results:
             yield {
-                field_name: extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True, suppress_nullrelationshipvalueencountered=True)
+                field_name: extract_field_value(
+                    obj,
+                    field_name,
+                    pk_only=True,
+                    suppress_fielddoesnotexist=True,
+                    suppress_nullrelationshipvalueencountered=True,
+                )
                 for field_name in field_names
             }
 
 
 class ValuesListIterable(FakeQuerySetIterable):
     def __iter__(self):
-        field_names = self.queryset.tuple_fields or [field.name for field in self.queryset.model._meta.fields]
+        field_names = self.queryset.tuple_fields or [
+            field.name for field in self.queryset.model._meta.fields
+        ]
         for obj in self.queryset.results:
-            yield tuple([extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True, suppress_nullrelationshipvalueencountered=True) for field_name in field_names])
+            yield tuple(
+                [
+                    extract_field_value(
+                        obj,
+                        field_name,
+                        pk_only=True,
+                        suppress_fielddoesnotexist=True,
+                        suppress_nullrelationshipvalueencountered=True,
+                    )
+                    for field_name in field_names
+                ]
+            )
 
 
 class FlatValuesListIterable(FakeQuerySetIterable):
     def __iter__(self):
         field_name = self.queryset.tuple_fields[0]
         for obj in self.queryset.results:
-            yield extract_field_value(obj, field_name, pk_only=True, suppress_fielddoesnotexist=True, suppress_nullrelationshipvalueencountered=True)
+            yield extract_field_value(
+                obj,
+                field_name,
+                pk_only=True,
+                suppress_fielddoesnotexist=True,
+                suppress_nullrelationshipvalueencountered=True,
+            )
 
 
 class FakeQuerySet(object):
@@ -374,7 +406,7 @@ class FakeQuerySet(object):
     def all(self):
         return self
 
-    def get_clone(self, results = None):
+    def get_clone(self, results=None):
         new = FakeQuerySet(self.model, results if results is not None else self.results)
         new.dict_fields = self.dict_fields
         new.tuple_fields = self.tuple_fields
@@ -397,6 +429,7 @@ class FakeQuerySet(object):
                 if q_object.negated:
                     return not result
                 return result
+
             return test_inner
 
         for child in q_object.children:
@@ -404,7 +437,11 @@ class FakeQuerySet(object):
                 filters.append(self.resolve_q_object(child))
             else:
                 key_clauses, val = child
-                filters.append(_build_test_function_from_filter(self.model, key_clauses.split('__'), val))
+                filters.append(
+                    _build_test_function_from_filter(
+                        self.model, key_clauses.split("__"), val
+                    )
+                )
 
         return test(filters)
 
@@ -418,7 +455,7 @@ class FakeQuerySet(object):
 
         for key, val in kwargs.items():
             filters.append(
-                _build_test_function_from_filter(self.model, key.split('__'), val)
+                _build_test_function_from_filter(self.model, key.split("__"), val)
             )
 
         return filters
@@ -426,19 +463,21 @@ class FakeQuerySet(object):
     def filter(self, *args, **kwargs):
         filters = self._get_filters(*args, **kwargs)
 
-        clone = self.get_clone(results=[
-            obj for obj in self.results
-            if all([test(obj) for test in filters])
-        ])
+        clone = self.get_clone(
+            results=[
+                obj for obj in self.results if all([test(obj) for test in filters])
+            ]
+        )
         return clone
 
     def exclude(self, *args, **kwargs):
         filters = self._get_filters(*args, **kwargs)
 
-        clone = self.get_clone(results=[
-            obj for obj in self.results
-            if not all([test(obj) for test in filters])
-        ])
+        clone = self.get_clone(
+            results=[
+                obj for obj in self.results if not all([test(obj) for test in filters])
+            ]
+        )
         return clone
 
     def get(self, *args, **kwargs):
@@ -446,13 +485,16 @@ class FakeQuerySet(object):
         result_count = clone.count()
 
         if result_count == 0:
-            raise self.model.DoesNotExist("%s matching query does not exist." % self.model._meta.object_name)
+            raise self.model.DoesNotExist(
+                "%s matching query does not exist." % self.model._meta.object_name
+            )
         elif result_count == 1:
             for result in clone:
                 return result
         else:
             raise self.model.MultipleObjectsReturned(
-                "get() returned more than one %s -- it returned %s!" % (self.model._meta.object_name, result_count)
+                "get() returned more than one %s -- it returned %s!"
+                % (self.model._meta.object_name, result_count)
             )
 
     def count(self):
@@ -504,7 +546,9 @@ class FakeQuerySet(object):
             get_model_field(self.model, f)
         if flat:
             if len(fields) > 1:
-                raise TypeError("'flat' is not valid when values_list is called with more than one field.")
+                raise TypeError(
+                    "'flat' is not valid when values_list is called with more than one field."
+                )
             clone.iterable_class = FlatValuesListIterable
         else:
             clone.iterable_class = ValuesListIterable
@@ -518,7 +562,9 @@ class FakeQuerySet(object):
     def distinct(self, *fields):
         unique_results = []
         if not fields:
-            fields = [field.name for field in self.model._meta.fields if not field.primary_key]
+            fields = [
+                field.name for field in self.model._meta.fields if not field.primary_key
+            ]
         seen_keys = set()
         for result in self.results:
             key = tuple(str(extract_field_value(result, field)) for field in fields)

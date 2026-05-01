@@ -7,21 +7,20 @@ from tests.models import Album, Article, Author, Band, BandMember, Category, Son
 
 # Get child relations
 band_child_rels_by_model = {
-    rel.related_model: rel
-    for rel in get_all_child_relations(Band)
+    rel.related_model: rel for rel in get_all_child_relations(Band)
 }
 band_members_rel = band_child_rels_by_model[BandMember]
 
 
 class TestCopyCluster(TestCase):
     def test_can_create_cluster(self):
-        beatles = Band(name='The Beatles')
+        beatles = Band(name="The Beatles")
 
         self.assertEqual(0, beatles.members.count())
 
         beatles.members = [
-            BandMember(name='John Lennon'),
-            BandMember(name='Paul McCartney'),
+            BandMember(name="John Lennon"),
+            BandMember(name="Paul McCartney"),
         ]
         beatles.save()
 
@@ -33,21 +32,30 @@ class TestCopyCluster(TestCase):
 
         # Check that both versions have the same content
         self.assertEqual(beatles.name, beatles_copy.name)
-        self.assertEqual([member.name for member in beatles.members.all()], [member.name for member in beatles_copy.members.all()])
+        self.assertEqual(
+            [member.name for member in beatles.members.all()],
+            [member.name for member in beatles_copy.members.all()],
+        )
 
         # Check that the content has been copied
         self.assertNotEqual(beatles.pk, beatles_copy.pk)
-        self.assertNotEqual([member.pk for member in beatles.members.all()], [member.pk for member in beatles_copy.members.all()])
+        self.assertNotEqual(
+            [member.pk for member in beatles.members.all()],
+            [member.pk for member in beatles_copy.members.all()],
+        )
 
         # Check child_object_map
-        old_john = beatles.members.get(name='John Lennon')
-        old_paul = beatles.members.get(name='Paul McCartney')
-        new_john = beatles_copy.members.get(name='John Lennon')
-        new_paul = beatles_copy.members.get(name='Paul McCartney')
-        self.assertEqual(child_object_map, {
-            (band_members_rel, old_john.pk): new_john,
-            (band_members_rel, old_paul.pk): new_paul,
-        })
+        old_john = beatles.members.get(name="John Lennon")
+        old_paul = beatles.members.get(name="Paul McCartney")
+        new_john = beatles_copy.members.get(name="John Lennon")
+        new_paul = beatles_copy.members.get(name="Paul McCartney")
+        self.assertEqual(
+            child_object_map,
+            {
+                (band_members_rel, old_john.pk): new_john,
+                (band_members_rel, old_paul.pk): new_paul,
+            },
+        )
 
     def test_copies_parental_many_to_many_fields(self):
         article = Article(title="Test Title")
@@ -67,8 +75,14 @@ class TestCopyCluster(TestCase):
 
         # Check that both versions have the same content
         self.assertEqual(article.title, article_copy.title)
-        self.assertEqual([author.name for author in article.authors.all()], [author.name for author in article_copy.authors.all()])
-        self.assertEqual([category.name for category in article.categories.all()], [category.name for category in article_copy.categories.all()])
+        self.assertEqual(
+            [author.name for author in article.authors.all()],
+            [author.name for author in article_copy.authors.all()],
+        )
+        self.assertEqual(
+            [category.name for category in article.categories.all()],
+            [category.name for category in article_copy.categories.all()],
+        )
 
         # Check that the content has been copied
         self.assertNotEqual(article.pk, article_copy.pk)
@@ -79,10 +93,13 @@ class TestCopyCluster(TestCase):
         self.assertEqual(child_object_map, {})
 
     def test_copy_cluster_recursive(self):
-        old_album = Album(name="Please Please Me", songs=[
-            Song(name="I Saw Her Standing There"),
-            Song(name="Love Me Do"),
-        ])
+        old_album = Album(
+            name="Please Please Me",
+            songs=[
+                Song(name="I Saw Her Standing There"),
+                Song(name="Love Me Do"),
+            ],
+        )
 
         beatles = Band(name="The Beatles", albums=[old_album])
         beatles.save()

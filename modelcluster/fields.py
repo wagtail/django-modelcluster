@@ -7,7 +7,10 @@ from django.db.models import CASCADE
 from django.db.models.fields.related import ForeignKey, ManyToManyField
 from django.utils.functional import cached_property
 
-from django.db.models.fields.related import ReverseManyToOneDescriptor, ManyToManyDescriptor
+from django.db.models.fields.related import (
+    ReverseManyToOneDescriptor,
+    ManyToManyDescriptor,
+)
 
 
 from modelcluster.utils import sort_by_fields
@@ -37,7 +40,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
         @property
         def is_deferring(self):
             return relation_name in getattr(
-                self.instance, '_cluster_related_objects', {}
+                self.instance, "_cluster_related_objects", {}
             )
 
         def _get_cluster_related_objects(self):
@@ -87,7 +90,9 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
 
         def get_prefetch_querysets(self, instances, querysets=None):
             if querysets and len(querysets) != 1:
-                raise ValueError("get_prefetch_querysets() must be passed exactly one queryset")
+                raise ValueError(
+                    "get_prefetch_querysets() must be passed exactly one queryset"
+                )
             queryset = querysets[0] if querysets else None
             if queryset is None:
                 db = self._db or router.db_for_read(self.model, instance=instances[0])
@@ -97,7 +102,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             instance_attr = rel_field.get_foreign_related_value
             instances_dict = dict((instance_attr(inst), inst) for inst in instances)
 
-            query = {'%s__in' % rel_field.name: instances}
+            query = {"%s__in" % rel_field.name: instances}
             qs = queryset.filter(**query)
             # Since we just bypassed this class' get_queryset(), we must manage
             # the reverse relation manually.
@@ -109,6 +114,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
 
         # Remove once we only support Django 5.0+
         if not DJANGO_VERSION >= (5, 0):
+
             def get_prefetch_queryset(self, instances, queryset=None):
                 if queryset is None:
                     return self.get_prefetch_querysets(instances)
@@ -210,7 +216,9 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
             from the database.
             """
             if self.instance.pk is None:
-                raise IntegrityError("Cannot commit relation %r on an unsaved model" % relation_name)
+                raise IntegrityError(
+                    "Cannot commit relation %r on an unsaved model" % relation_name
+                )
 
             try:
                 final_items = self.instance._cluster_related_objects[relation_name]
@@ -252,14 +260,16 @@ class ChildObjectsDescriptor(ReverseManyToOneDescriptor):
 
     @cached_property
     def child_object_manager_cls(self):
-        return create_deferring_foreign_related_manager(self.rel, self.related_manager_cls)
+        return create_deferring_foreign_related_manager(
+            self.rel, self.related_manager_cls
+        )
 
 
 class ParentalKey(ForeignKey):
     related_accessor_class = ChildObjectsDescriptor
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('on_delete', CASCADE)
+        kwargs.setdefault("on_delete", CASCADE)
         super().__init__(*args, **kwargs)
 
     def check(self, **kwargs):
@@ -271,26 +281,30 @@ class ParentalKey(ForeignKey):
         # If self.rel.to is a string at this point, it means that Django has been unable
         # to resolve it as a model name; if so, skip this test so that Django's own
         # system checks can report the appropriate error
-        if isinstance(self.remote_field.model, type) and not issubclass(self.remote_field.model, ClusterableModel):
+        if isinstance(self.remote_field.model, type) and not issubclass(
+            self.remote_field.model, ClusterableModel
+        ):
             errors.append(
                 checks.Error(
-                    'ParentalKey must point to a subclass of ClusterableModel.',
-                    hint='Change {model_name} into a ClusterableModel or use a ForeignKey instead.'.format(
-                        model_name=self.remote_field.model._meta.app_label + '.' + self.remote_field.model.__name__,
+                    "ParentalKey must point to a subclass of ClusterableModel.",
+                    hint="Change {model_name} into a ClusterableModel or use a ForeignKey instead.".format(
+                        model_name=self.remote_field.model._meta.app_label
+                        + "."
+                        + self.remote_field.model.__name__,
                     ),
                     obj=self,
-                    id='modelcluster.E001',
+                    id="modelcluster.E001",
                 )
             )
 
         # ParentalKeys must have an accessor name (#49)
-        if self.remote_field.get_accessor_name() == '+':
+        if self.remote_field.get_accessor_name() == "+":
             errors.append(
                 checks.Error(
                     "related_name='+' is not allowed on ParentalKey fields",
                     hint="Either change it to a valid name or remove it",
                     obj=self,
-                    id='modelcluster.E002',
+                    id="modelcluster.E002",
                 )
             )
 
@@ -352,7 +366,9 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
         def get_prefetch_querysets(self, instances, querysets=None):
             # Derived from Django's ManyRelatedManager.get_prefetch_queryset.
             if querysets and len(querysets) != 1:
-                raise ValueError("get_prefetch_querysets() must be passed exactly one queryset")
+                raise ValueError(
+                    "get_prefetch_querysets() must be passed exactly one queryset"
+                )
             queryset = querysets[0] if querysets else None
             if queryset is None:
                 queryset = super().get_queryset()
@@ -360,7 +376,7 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
             queryset._add_hints(instance=instances[0])
             queryset = queryset.using(queryset._db or self._db)
 
-            query = {'%s__in' % query_field_name: instances}
+            query = {"%s__in" % query_field_name: instances}
             queryset = queryset._next_is_sticky().filter(**query)
 
             fk = self.through._meta.get_field(source_field_name)
@@ -369,14 +385,18 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
             connection = connections[queryset.db]
             qn = connection.ops.quote_name
 
-            queryset = queryset.extra(select={
-                '_prefetch_related_val_%s' % f.attname:
-                '%s.%s' % (qn(join_table), qn(f.column)) for f in fk.local_related_fields})
+            queryset = queryset.extra(
+                select={
+                    "_prefetch_related_val_%s" % f.attname: "%s.%s"
+                    % (qn(join_table), qn(f.column))
+                    for f in fk.local_related_fields
+                }
+            )
 
             return (
                 queryset,
                 lambda result: tuple(
-                    getattr(result, '_prefetch_related_val_%s' % f.attname)
+                    getattr(result, "_prefetch_related_val_%s" % f.attname)
                     for f in fk.local_related_fields
                 ),
                 lambda inst: tuple(
@@ -390,6 +410,7 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
 
         # Remove once we only support Django 5.0+
         if not DJANGO_VERSION >= (5, 0):
+
             def get_prefetch_queryset(self, instances, queryset=None):
                 if queryset is None:
                     return self.get_prefetch_querysets(instances)
@@ -427,8 +448,10 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
 
             for target in new_items:
                 if target.pk is None:
-                    raise ValueError('"%r" needs to have a primary key value before '
-                        'it can be added to a parental many-to-many relation.' % target)
+                    raise ValueError(
+                        '"%r" needs to have a primary key value before '
+                        "it can be added to a parental many-to-many relation." % target
+                    )
                 item_matched = False
                 for i, item in enumerate(items):
                     if item == target:
@@ -453,7 +476,9 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
             """
             self.set([])
 
-        def set_base(self, objs, bulk=True, clear=False, through_defaults=None, raw=False):
+        def set_base(
+            self, objs, bulk=True, clear=False, through_defaults=None, raw=False
+        ):
             # cast objs to a list so that:
             # 1) we can call len() on it (which we can't do on, say, a queryset)
             # 2) if we need to sort it, we can do so without mutating the original
@@ -492,7 +517,9 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
             Apply any changes made to the stored object set to the database.
             """
             if not self.instance.pk:
-                raise IntegrityError("Cannot commit relation %r on an unsaved model" % relation_name)
+                raise IntegrityError(
+                    "Cannot commit relation %r on an unsaved model" % relation_name
+                )
 
             try:
                 final_items = self.instance._cluster_related_objects[relation_name]
@@ -532,7 +559,9 @@ class ParentalManyToManyDescriptor(ManyToManyDescriptor):
     def child_object_manager_cls(self):
         rel = self.rel
 
-        return create_deferring_forward_many_to_many_manager(rel, self.related_manager_cls)
+        return create_deferring_forward_many_to_many_manager(
+            rel, self.related_manager_cls
+        )
 
 
 class ParentalManyToManyField(ManyToManyField):

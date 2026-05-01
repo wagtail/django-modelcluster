@@ -23,7 +23,9 @@ def get_field_value(field, model):
         if isinstance(value, datetime.datetime) and settings.USE_TZ:
             if timezone.is_naive(value):
                 default_timezone = timezone.get_default_timezone()
-                value = timezone.make_aware(value, default_timezone).astimezone(datetime.timezone.utc)
+                value = timezone.make_aware(value, default_timezone).astimezone(
+                    datetime.timezone.utc
+                )
             else:
                 # convert to UTC
                 value = timezone.localtime(value, datetime.timezone.utc)
@@ -46,7 +48,7 @@ def get_serializable_data_for_fields(model):
     while pk_field.remote_field and pk_field.remote_field.parent_link:
         pk_field = pk_field.remote_field.model._meta.pk
 
-    obj = {'pk': get_field_value(pk_field, model)}
+    obj = {"pk": get_field_value(pk_field, model)}
 
     for field in model._meta.fields:
         if field.serialize:
@@ -62,10 +64,10 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
     # If model is a child via multitable inheritance, we need to set ptr_id fields all the way up
     # to the main PK field, as Django won't populate these for us automatically.
     while pk_field.remote_field and pk_field.remote_field.parent_link:
-        kwargs[pk_field.attname] = data['pk']
+        kwargs[pk_field.attname] = data["pk"]
         pk_field = pk_field.remote_field.model._meta.pk
 
-    kwargs[pk_field.attname] = data['pk']
+    kwargs[pk_field.attname] = data["pk"]
 
     for field_name, field_value in data.items():
         try:
@@ -78,18 +80,24 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
             continue
 
         if field.remote_field and isinstance(field.remote_field, models.ManyToManyRel):
-            related_objects = field.remote_field.model._default_manager.filter(pk__in=field_value)
+            related_objects = field.remote_field.model._default_manager.filter(
+                pk__in=field_value
+            )
             kwargs[field.attname] = list(related_objects)
 
         elif field.remote_field and isinstance(field.remote_field, models.ManyToOneRel):
             if field_value is None:
                 kwargs[field.attname] = None
             else:
-                clean_value = field.remote_field.model._meta.get_field(field.remote_field.field_name).to_python(field_value)
+                clean_value = field.remote_field.model._meta.get_field(
+                    field.remote_field.field_name
+                ).to_python(field_value)
                 kwargs[field.attname] = clean_value
                 if check_fks:
                     try:
-                        field.remote_field.model._default_manager.get(**{field.remote_field.field_name: clean_value})
+                        field.remote_field.model._default_manager.get(
+                            **{field.remote_field.field_name: clean_value}
+                        )
                     except field.remote_field.model.DoesNotExist:
                         if field.remote_field.on_delete == models.DO_NOTHING:
                             pass
@@ -103,12 +111,18 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
                             kwargs[field.attname] = None
 
                         else:
-                            raise Exception("can't currently handle on_delete types other than CASCADE, SET_NULL and DO_NOTHING")
+                            raise Exception(
+                                "can't currently handle on_delete types other than CASCADE, SET_NULL and DO_NOTHING"
+                            )
         else:
             value = field.to_python(field_value)
 
             # Make sure datetimes are converted to localtime
-            if isinstance(field, models.DateTimeField) and settings.USE_TZ and value is not None:
+            if (
+                isinstance(field, models.DateTimeField)
+                and settings.USE_TZ
+                and value is not None
+            ):
                 default_timezone = timezone.get_default_timezone()
                 if timezone.is_aware(value):
                     value = timezone.localtime(value, default_timezone)
@@ -119,7 +133,7 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
 
     obj = model(**kwargs)
 
-    if data['pk'] is not None:
+    if data["pk"] is not None:
         # Set state to indicate that this object has come from the database, so that
         # ModelForm validation doesn't try to enforce a uniqueness check on the primary key
         obj._state.adding = False
@@ -133,7 +147,8 @@ def get_all_child_relations(model):
     including ones attached to ancestors of the model
     """
     return [
-        field for field in model._meta.get_fields()
+        field
+        for field in model._meta.get_fields()
         if isinstance(field.remote_field, ParentalKey)
     ]
 
@@ -144,7 +159,8 @@ def get_all_child_m2m_relations(model):
     including ones attached to ancestors of the model
     """
     return [
-        field for field in model._meta.get_fields()
+        field
+        for field in model._meta.get_fields()
         if isinstance(field, ParentalManyToManyField)
     ]
 
@@ -155,10 +171,9 @@ class ClusterableModel(models.Model):
         Extend the standard model constructor to allow child object lists to be passed in
         via kwargs
         """
-        child_relation_names = (
-            [rel.get_accessor_name() for rel in get_all_child_relations(self)] +
-            [field.name for field in get_all_child_m2m_relations(self)]
-        )
+        child_relation_names = [
+            rel.get_accessor_name() for rel in get_all_child_relations(self)
+        ] + [field.name for field in get_all_child_m2m_relations(self)]
 
         if any(name in kwargs for name in child_relation_names):
             # One or more child relation values is being passed in the constructor; need to
@@ -170,7 +185,7 @@ class ClusterableModel(models.Model):
                     relation_assignments[rel_name] = kwargs_for_super.pop(rel_name)
 
             super().__init__(*args, **kwargs_for_super)
-            for (field_name, related_instances) in relation_assignments.items():
+            for field_name, related_instances in relation_assignments.items():
                 setattr(self, field_name, related_instances)
         else:
             super().__init__(*args, **kwargs)
@@ -179,10 +194,14 @@ class ClusterableModel(models.Model):
         """
         Save the model and commit all child relations.
         """
-        child_relation_names = [rel.get_accessor_name() for rel in get_all_child_relations(self)]
-        child_m2m_field_names = [field.name for field in get_all_child_m2m_relations(self)]
+        child_relation_names = [
+            rel.get_accessor_name() for rel in get_all_child_relations(self)
+        ]
+        child_m2m_field_names = [
+            field.name for field in get_all_child_m2m_relations(self)
+        ]
 
-        update_fields = kwargs.pop('update_fields', None)
+        update_fields = kwargs.pop("update_fields", None)
         if update_fields is None:
             real_update_fields = None
             relations_to_commit = child_relation_names
@@ -214,10 +233,12 @@ class ClusterableModel(models.Model):
             rel_name = rel.get_accessor_name()
             children = getattr(self, rel_name).all()
 
-            if hasattr(rel.related_model, 'serializable_data'):
+            if hasattr(rel.related_model, "serializable_data"):
                 obj[rel_name] = [child.serializable_data() for child in children]
             else:
-                obj[rel_name] = [get_serializable_data_for_fields(child) for child in children]
+                obj[rel_name] = [
+                    get_serializable_data_for_fields(child) for child in children
+                ]
 
         for field in get_all_child_m2m_relations(self):
             if field.serialize:
@@ -242,7 +263,9 @@ class ClusterableModel(models.Model):
         in which case any dangling foreign keys with on_delete=CASCADE will cause None to be
         returned for the entire object.
         """
-        obj = model_from_serializable_data(cls, data, check_fks=check_fks, strict_fks=strict_fks)
+        obj = model_from_serializable_data(
+            cls, data, check_fks=check_fks, strict_fks=strict_fks
+        )
         if obj is None:
             return None
 
@@ -256,14 +279,18 @@ class ClusterableModel(models.Model):
                 continue
 
             related_model = rel.related_model
-            if hasattr(related_model, 'from_serializable_data'):
+            if hasattr(related_model, "from_serializable_data"):
                 children = [
-                    related_model.from_serializable_data(child_data, check_fks=check_fks, strict_fks=True)
+                    related_model.from_serializable_data(
+                        child_data, check_fks=check_fks, strict_fks=True
+                    )
                     for child_data in child_data_list
                 ]
             else:
                 children = [
-                    model_from_serializable_data(related_model, child_data, check_fks=check_fks, strict_fks=True)
+                    model_from_serializable_data(
+                        related_model, child_data, check_fks=check_fks, strict_fks=True
+                    )
                     for child_data in child_data_list
                 ]
 
@@ -275,7 +302,9 @@ class ClusterableModel(models.Model):
 
     @classmethod
     def from_json(cls, json_data, check_fks=True, strict_fks=False):
-        return cls.from_serializable_data(json.loads(json_data), check_fks=check_fks, strict_fks=strict_fks)
+        return cls.from_serializable_data(
+            json.loads(json_data), check_fks=check_fks, strict_fks=strict_fks
+        )
 
     @transaction.atomic
     def copy_child_relation(self, child_relation, target, commit=False, append=False):
@@ -302,7 +331,9 @@ class ClusterableModel(models.Model):
             child_relation = self._meta.get_field(child_relation)
 
         if not isinstance(child_relation.remote_field, ParentalKey):
-            raise LookupError("copy_child_relation can only be used for relationships defined with a ParentalKey")
+            raise LookupError(
+                "copy_child_relation can only be used for relationships defined with a ParentalKey"
+            )
 
         # The name of the ParentalKey field on the child model
         parental_key_name = child_relation.field.attname
@@ -314,7 +345,7 @@ class ClusterableModel(models.Model):
         if not append:
             target_manager.clear()
 
-        for child_object in source_manager.all().order_by('pk'):
+        for child_object in source_manager.all().order_by("pk"):
             old_pk = child_object.pk
             is_saved = old_pk is not None
             if isinstance(child_object, ClusterableModel):
@@ -340,7 +371,9 @@ class ClusterableModel(models.Model):
 
         return child_object_map
 
-    def copy_all_child_relations(self, target, exclude=None, commit=False, append=False):
+    def copy_all_child_relations(
+        self, target, exclude=None, commit=False, append=False
+    ):
         """
         Copies all of the objects in all child relations to the target object.
 
@@ -358,7 +391,11 @@ class ClusterableModel(models.Model):
             if child_relation.get_accessor_name() in exclude:
                 continue
 
-            child_object_map.update(self.copy_child_relation(child_relation, target, commit=commit, append=append))
+            child_object_map.update(
+                self.copy_child_relation(
+                    child_relation, target, commit=commit, append=append
+                )
+            )
 
         return child_object_map
 
@@ -390,14 +427,17 @@ class ClusterableModel(models.Model):
             if field.many_to_many:
                 if isinstance(field, ParentalManyToManyField):
                     parental_field = getattr(self, field.name)
-                    if hasattr(parental_field, 'all'):
+                    if hasattr(parental_field, "all"):
                         values = parental_field.all()
                         if values:
                             data_dict[field.name] = values
                 continue
 
             # Ignore parent links (page_ptr)
-            if isinstance(field, models.OneToOneField) and field.remote_field.parent_link:
+            if (
+                isinstance(field, models.OneToOneField)
+                and field.remote_field.parent_link
+            ):
                 continue
 
             if isinstance(field, models.ForeignKey):

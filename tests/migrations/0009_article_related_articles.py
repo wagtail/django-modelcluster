@@ -8,20 +8,24 @@ import modelcluster.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tests', '0008_prefetch_related_tests'),
+        ("tests", "0008_prefetch_related_tests"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='article',
-            name='related_articles',
-            field=modelcluster.fields.ParentalManyToManyField(blank=True, related_name='_article_related_articles_+', serialize=False, to='tests.Article'),
+            model_name="article",
+            name="related_articles",
+            field=modelcluster.fields.ParentalManyToManyField(
+                blank=True,
+                related_name="_article_related_articles_+",
+                serialize=False,
+                to="tests.Article",
+            ),
         ),
         migrations.AddField(
-            model_name='article',
-            name='view_count',
+            model_name="article",
+            name="view_count",
             field=models.IntegerField(blank=True, null=True, serialize=False),
         ),
     ]

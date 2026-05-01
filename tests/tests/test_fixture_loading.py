@@ -6,7 +6,6 @@ from tests.models import Person
 
 
 class TestLoadsParentalManyToManyToOrderedModel(TestCase):
-
     fixtures = ["parentalmanytomany-to-ordered-model.json"]
 
     def test_data_loads_from_fixture(self):

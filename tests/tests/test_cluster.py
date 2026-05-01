@@ -20,7 +20,6 @@ from tests.models import (
     Restaurant,
     Review,
     Album,
-    Song,
     RecordLabel,
     Article,
     Author,

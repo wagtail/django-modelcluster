@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 from itertools import chain
 from django.forms import ValidationError
 from django.core.exceptions import NON_FIELD_ERRORS
-from django.forms.formsets import TOTAL_FORM_COUNT
 from django.forms.models import (
     BaseModelFormSet,
     modelformset_factory,

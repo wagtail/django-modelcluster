@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-import unittest
-
 from django import VERSION as DJANGO_VERSION
 from django.core.exceptions import ValidationError
 from django.test import TestCase

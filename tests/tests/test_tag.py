@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-import unittest
-
 from django import VERSION as DJANGO_VERSION
 from django.test import TestCase, override_settings
 from taggit import VERSION as TAGGIT_VERSION

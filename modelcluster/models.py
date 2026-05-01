@@ -65,7 +65,7 @@ def model_from_serializable_data(model, data, check_fks=True, strict_fks=False):
         kwargs[pk_field.attname] = data['pk']
         pk_field = pk_field.remote_field.model._meta.pk
 
-    kwargs[pk_field.attname] = data['pk']
+    kwargs[pk_field.attname] = pk_field.to_python(data['pk'])
 
     for field_name, field_value in data.items():
         try:

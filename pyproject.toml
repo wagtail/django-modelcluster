@@ -4,7 +4,7 @@ requires = [ "setuptools>=71" ]
 
 [project]
 name = "django-modelcluster"
-version = "6.4.1"
+version = "6.5"
 description = "Django extension to allow working with 'clusters' of models as a single unit, independently of the database"
 readme = "README.rst"
 keywords = [ "cluster", "django", "model" ]

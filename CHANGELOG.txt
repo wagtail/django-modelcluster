@@ -1,7 +1,7 @@
 Changelog
 =========
 
-6.5 (xx.xx.xxxx)
+6.5 (01.05.2026)
 ~~~~~~~~~~~~~~~~
 * Preliminary Django 6.1 support (Sage Abdullah)
 * Implement `none` method on FakeQuerySet (Victor Miti)

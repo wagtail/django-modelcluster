@@ -2,11 +2,9 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import modelcluster.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("taggit", "0005_auto_20220424_2025"),
         ("tests", "0011_add_room_features"),

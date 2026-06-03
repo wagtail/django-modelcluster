@@ -9,27 +9,54 @@ import modelcluster.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('taggit', '0002_auto_20150616_2121'),
-        ('tests', '0005_article_fk_to_newspaper'),
+        ("taggit", "0002_auto_20150616_2121"),
+        ("tests", "0005_article_fk_to_newspaper"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='TaggedArticle',
+            name="TaggedArticle",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('content_object', modelcluster.fields.ParentalKey(on_delete=django.db.models.deletion.CASCADE, related_name='tagged_items', to='tests.Article')),
-                ('tag', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='tests_taggedarticle_items', to='taggit.Tag')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "content_object",
+                    modelcluster.fields.ParentalKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="tagged_items",
+                        to="tests.Article",
+                    ),
+                ),
+                (
+                    "tag",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="tests_taggedarticle_items",
+                        to="taggit.Tag",
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.AddField(
-            model_name='article',
-            name='tags',
-            field=modelcluster.contrib.taggit.ClusterTaggableManager(blank=True, help_text='A comma-separated list of tags.', through='tests.TaggedArticle', to='taggit.Tag', verbose_name='Tags'),
+            model_name="article",
+            name="tags",
+            field=modelcluster.contrib.taggit.ClusterTaggableManager(
+                blank=True,
+                help_text="A comma-separated list of tags.",
+                through="tests.TaggedArticle",
+                to="taggit.Tag",
+                verbose_name="Tags",
+            ),
         ),
     ]

@@ -1,0 +1,31 @@
+name: Nightly Modelcluster Test
+
+on:
+  schedule:
+    # Run every Monday at midnight
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+jobs:
+  nightly-wagtail-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - name: Install Tox
+        run: |
+          python -m pip install --upgrade pip setuptools wheel tox
+      - name: Run 'future' tests
+        id: test
+        continue-on-error: true
+        run: |
+          tox -e future
+      - name: "On failure, report to #nightly-build-failures in Wagtail Slack"
+        if: steps.test.outcome == 'failure'
+        run: |
+          python -m pip install --upgrade requests
+          python .github/report_nightly_build_failure.py
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

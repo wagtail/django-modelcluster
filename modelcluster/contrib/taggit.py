@@ -9,7 +9,9 @@ from modelcluster.queryset import FakeQuerySet
 
 
 if TAGGIT_VERSION < (0, 20, 0):
-    raise Exception("modelcluster.contrib.taggit requires django-taggit version 0.20 or above")
+    raise Exception(
+        "modelcluster.contrib.taggit requires django-taggit version 0.20 or above"
+    )
 
 
 class _ClusterTaggableManager(_TaggableManager):
@@ -20,7 +22,9 @@ class _ClusterTaggableManager(_TaggableManager):
         DeferringRelatedManager which allows writing related objects without committing them
         to the database.
         """
-        rel_name = self.through._meta.get_field('content_object').remote_field.get_accessor_name()
+        rel_name = self.through._meta.get_field(
+            "content_object"
+        ).remote_field.get_accessor_name()
         return getattr(self.instance, rel_name)
 
     def get_queryset(self, extra_filters=None):
@@ -114,7 +118,8 @@ class _ClusterTaggableManager(_TaggableManager):
 
         tagged_item_manager = self.get_tagged_item_manager()
         tagged_items = [
-            tagged_item for tagged_item in tagged_item_manager.all()
+            tagged_item
+            for tagged_item in tagged_item_manager.all()
             if tagged_item.tag.name in tags
         ]
         tagged_item_manager.remove(*tagged_items)
@@ -149,7 +154,10 @@ class ClusterTaggableManager(TaggableManager):
         # override TaggableManager's requirement for instance to have a primary key
         # before we can access its tags
         manager = _ClusterTaggableManager(
-            through=self.through, model=model, instance=instance, prefetch_cache_name=self.name
+            through=self.through,
+            model=model,
+            instance=instance,
+            prefetch_cache_name=self.name,
         )
 
         return manager
@@ -158,8 +166,10 @@ class ClusterTaggableManager(TaggableManager):
         # retrieve the queryset via the related manager on the content object,
         # to accommodate the possibility of this having uncommitted changes relative to
         # the live database
-        rel_name = self.through._meta.get_field('content_object').remote_field.get_accessor_name()
+        rel_name = self.through._meta.get_field(
+            "content_object"
+        ).remote_field.get_accessor_name()
         ret = getattr(instance, rel_name).all()
-        if TAGGIT_VERSION >= (1, ):  # expects a Tag list instead of TaggedItem List
+        if TAGGIT_VERSION >= (1,):  # expects a Tag list instead of TaggedItem List
             ret = [tagged_item.tag for tagged_item in ret]
         return ret

@@ -26,7 +26,7 @@ class NullRelationshipValueEncountered(Exception):
 
 
 class TraversedRelationship:
-    __slots__ = ['from_model', 'field']
+    __slots__ = ["from_model", "field"]
 
     def __init__(self, from_model, field):
         self.from_model = from_model
@@ -62,7 +62,6 @@ def get_model_field(model, name):
     traversals = []
     field = None
     for field_name in name.split(REL_DELIMETER):
-
         if field is not None:
             if isinstance(field, (ManyToManyField, ManyToManyRel)):
                 raise ManyToManyTraversalError(
@@ -70,8 +69,7 @@ def get_model_field(model, name):
                     "by modelcluster, because the '{field_name}' "
                     "relationship from {subject_model} is a many-to-many, "
                     "and traversal is only supported for one-to-one or "
-                    "many-to-one relationships."
-                    .format(
+                    "many-to-one relationships.".format(
                         name=name,
                         model=model,
                         field_name=field_name,
@@ -85,10 +83,12 @@ def get_model_field(model, name):
                 (
                     isinstance(field, DateTimeField)
                     and field_name in datetime_utils.DATETIMEFIELD_TRANSFORM_EXPRESSIONS
-                ) or (
+                )
+                or (
                     isinstance(field, DateField)
                     and field_name in datetime_utils.DATEFIELD_TRANSFORM_EXPRESSIONS
-                ) or (
+                )
+                or (
                     isinstance(field, TimeField)
                     and field_name in datetime_utils.TIMEFIELD_TRANSFORM_EXPRESSIONS
                 )
@@ -98,9 +98,8 @@ def get_model_field(model, name):
                 break
             else:
                 raise FieldDoesNotExist(
-                    "Failed attempting to traverse from {from_field} (a {from_field_type}) to '{to_field}'."
-                    .format(
-                        from_field=subject_model._meta.label + '.' + field.name,
+                    "Failed attempting to traverse from {from_field} (a {from_field_type}) to '{to_field}'.".format(
+                        from_field=subject_model._meta.label + "." + field.name,
                         from_field_type=type(field),
                         to_field=field_name,
                     )
@@ -116,7 +115,13 @@ def get_model_field(model, name):
     return field
 
 
-def extract_field_value(obj, key, pk_only=False, suppress_fielddoesnotexist=False, suppress_nullrelationshipvalueencountered=False):
+def extract_field_value(
+    obj,
+    key,
+    pk_only=False,
+    suppress_fielddoesnotexist=False,
+    suppress_nullrelationshipvalueencountered=False,
+):
     """
     Attempts to extract a field value from ``obj`` matching the ``key`` - which,
     can contain double-underscores (`'__'`) to indicate traversal of relationships
@@ -182,7 +187,7 @@ def extract_field_value(obj, key, pk_only=False, suppress_fielddoesnotexist=Fals
                     name=segment, model=type(source)
                 )
             )
-    if pk_only and hasattr(value, 'pk'):
+    if pk_only and hasattr(value, "pk"):
         return value.pk
     return value
 
@@ -196,20 +201,26 @@ def sort_by_fields(items, fields):
     # To get the desired behaviour, we need to order by keys in reverse order
     # See: https://docs.python.org/2/howto/sorting.html#sort-stability-and-complex-sorts
     for key in reversed(fields):
-        if key == '?':
+        if key == "?":
             random.shuffle(items)
             continue
 
         # Check if this key has been reversed
         reverse = False
-        if key[0] == '-':
+        if key[0] == "-":
             reverse = True
             key = key[1:]
 
         def get_sort_value(item):
             # Use a tuple of (v is not None, v) as the key, to ensure that None sorts before other values,
             # as comparing directly with None breaks on python3
-            value = extract_field_value(item, key, pk_only=True, suppress_fielddoesnotexist=True, suppress_nullrelationshipvalueencountered=True)
+            value = extract_field_value(
+                item,
+                key,
+                pk_only=True,
+                suppress_fielddoesnotexist=True,
+                suppress_nullrelationshipvalueencountered=True,
+            )
             return (value is not None, value)
 
         # Sort items

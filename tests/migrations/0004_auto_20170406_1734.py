@@ -8,34 +8,69 @@ import taggit.managers
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('taggit', '0002_auto_20150616_2121'),
-        ('tests', '0003_gallery_galleryimage'),
+        ("taggit", "0002_auto_20150616_2121"),
+        ("tests", "0003_gallery_galleryimage"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='NonClusterPlace',
+            name="NonClusterPlace",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
             ],
         ),
         migrations.CreateModel(
-            name='TaggedNonClusterPlace',
+            name="TaggedNonClusterPlace",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('content_object', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='tagged_items', to='tests.NonClusterPlace')),
-                ('tag', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='tests_taggednonclusterplace_items', to='taggit.Tag')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "content_object",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="tagged_items",
+                        to="tests.NonClusterPlace",
+                    ),
+                ),
+                (
+                    "tag",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="tests_taggednonclusterplace_items",
+                        to="taggit.Tag",
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.AddField(
-            model_name='nonclusterplace',
-            name='tags',
-            field=taggit.managers.TaggableManager(blank=True, help_text='A comma-separated list of tags.', through='tests.TaggedNonClusterPlace', to='taggit.Tag', verbose_name='Tags'),
+            model_name="nonclusterplace",
+            name="tags",
+            field=taggit.managers.TaggableManager(
+                blank=True,
+                help_text="A comma-separated list of tags.",
+                through="tests.TaggedNonClusterPlace",
+                to="taggit.Tag",
+                verbose_name="Tags",
+            ),
         ),
     ]

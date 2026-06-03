@@ -795,8 +795,8 @@ class ClusterFormTest(TestCase):
 
 class FormWithM2MTest(TestCase):
     def setUp(self):
-        self.james_joyce = Author.objects.create(name='James Joyce')
-        self.charles_dickens = Author.objects.create(name='Charles Dickens')
+        self.james_joyce = Author._default_manager.create(name='James Joyce')
+        self.charles_dickens = Author._default_manager.create(name='Charles Dickens')
 
         self.article = Article.objects.create(
             title='Test article',

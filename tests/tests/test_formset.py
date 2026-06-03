@@ -341,8 +341,8 @@ class ChildFormsetTest(TestCase):
 class ChildFormsetWithM2MTest(TestCase):
 
     def setUp(self):
-        self.james_joyce = Author.objects.create(name='James Joyce')
-        self.charles_dickens = Author.objects.create(name='Charles Dickens')
+        self.james_joyce = Author._default_manager.create(name='James Joyce')
+        self.charles_dickens = Author._default_manager.create(name='Charles Dickens')
 
         self.paper = NewsPaper.objects.create(title='the daily record')
         self.article = Article.objects.create(

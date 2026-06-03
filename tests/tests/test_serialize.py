@@ -59,8 +59,8 @@ class SerializeTest(TestCase):
         self.assertEqual(expected, beatles.serializable_data())
 
     def test_serialize_m2m(self):
-        george_orwell = Author.objects.create(name="George Orwell")
-        charles_dickens = Author.objects.create(name="Charles Dickens")
+        george_orwell = Author._default_manager.create(name="George Orwell")
+        charles_dickens = Author._default_manager.create(name="Charles Dickens")
 
         article = Article(
             title="Down and Out in Paris and London",
@@ -113,7 +113,7 @@ class SerializeTest(TestCase):
         authors = {}
         categories = {}
         for i in range(1, 6):
-            authors[i] = Author.objects.create(name="Author %d" % i)
+            authors[i] = Author._default_manager.create(name="Author %d" % i)
             categories[i] = Category.objects.create(name="Category %d" % i)
 
         article = Article.from_serializable_data(
@@ -333,8 +333,8 @@ class SerializeTest(TestCase):
         self.assertEqual(new_doc.file.read(), b"Hello world")
 
     def test_ignored_relations(self):
-        george_orwell = Author.objects.create(name="George Orwell")
-        charles_dickens = Author.objects.create(name="Charles Dickens")
+        george_orwell = Author._default_manager.create(name="George Orwell")
+        charles_dickens = Author._default_manager.create(name="Charles Dickens")
 
         rel_article = Article(
             title="Round and round wherever",

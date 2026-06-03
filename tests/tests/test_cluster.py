@@ -1518,8 +1518,8 @@ class GetAllChildRelationsTest(TestCase):
 class ParentalM2MTest(TestCase):
     def setUp(self):
         self.article = Article(title="Test Title")
-        self.author_1 = Author.objects.create(name="Author 1")
-        self.author_2 = Author.objects.create(name="Author 2")
+        self.author_1 = Author._default_manager.create(name="Author 1")
+        self.author_2 = Author._default_manager.create(name="Author 2")
         self.article.authors = [self.author_1, self.author_2]
         self.category_1 = Category.objects.create(name="Category 1")
         self.category_2 = Category.objects.create(name="Category 2")
@@ -1549,7 +1549,7 @@ class ParentalM2MTest(TestCase):
         self.assertEqual(Author, self.article.authors.model)
 
         # Test adding to the relation
-        author_3 = Author.objects.create(name="Author 3")
+        author_3 = Author._default_manager.create(name="Author 3")
         self.article.authors.add(author_3)
         self.assertEqual(
             ["Author 1", "Author 2", "Author 3"],
@@ -1604,12 +1604,11 @@ class ParentalM2MTest(TestCase):
 
     def test_ordering(self):
         # our fake querysets should respect the ordering defined on the target model
-        bela_bartok = Author.objects.create(name="Bela Bartok")
-        graham_greene = Author.objects.create(name="Graham Greene")
-        janis_joplin = Author.objects.create(name="Janis Joplin")
-        simon_sharma = Author.objects.create(name="Simon Sharma")
-        william_wordsworth = Author.objects.create(name="William Wordsworth")
-
+        bela_bartok = Author._default_manager.create(name="Bela Bartok")
+        graham_greene = Author._default_manager.create(name="Graham Greene")
+        janis_joplin = Author._default_manager.create(name="Janis Joplin")
+        simon_sharma = Author._default_manager.create(name="Simon Sharma")
+        william_wordsworth = Author._default_manager.create(name="William Wordsworth")
         article3 = Article(title="Test article 3")
         article3.authors = [
             janis_joplin,
@@ -1681,10 +1680,10 @@ class ParentalM2MTest(TestCase):
 class ParentalManyToManyPrefetchTests(TestCase):
     def setUp(self):
         # Create 10 articles with 10 authors each.
-        authors = Author.objects.bulk_create(
+        authors = Author._default_manager.bulk_create(
             Author(id=i, name=str(i)) for i in range(10)
         )
-        authors = Author.objects.all()
+        authors = Author._default_manager.all()
 
         for i in range(10):
             article = Article(title=str(i))
@@ -1711,7 +1710,7 @@ class ParentalManyToManyPrefetchTests(TestCase):
         with self.assertNumQueries(2):
             names = self.get_author_names(
                 Article.objects.prefetch_related(
-                    Prefetch("authors", queryset=Author.objects.filter(name__lt="5"))
+                    Prefetch("authors", queryset=Author._default_manager.filter(name__lt="5"))
                 )
             )
 

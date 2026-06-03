@@ -236,6 +236,7 @@ class Article(ClusterableModel):
 
 class Author(models.Model):
     name = models.CharField(max_length=255)
+    authors = models.Manager() # Test that a custom manager doesn't break assumptions.
 
     def __str__(self):
         return self.name

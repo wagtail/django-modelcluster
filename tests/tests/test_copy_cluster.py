@@ -59,8 +59,8 @@ class TestCopyCluster(TestCase):
 
     def test_copies_parental_many_to_many_fields(self):
         article = Article(title="Test Title")
-        author_1 = Author.objects.create(name="Author 1")
-        author_2 = Author.objects.create(name="Author 2")
+        author_1 = Author._default_manager.create(name="Author 1")
+        author_2 = Author._default_manager.create(name="Author 2")
         article.authors = [author_1, author_2]
         category_1 = Category.objects.create(name="Category 1")
         category_2 = Category.objects.create(name="Category 2")

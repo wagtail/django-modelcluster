@@ -6,6 +6,7 @@ import itertools
 from django.test import TestCase
 from django.db import IntegrityError
 from django.db.models import Prefetch, Q
+from django.db import models
 
 from modelcluster.models import get_all_child_relations
 from modelcluster.queryset import FakeQuerySet
@@ -1422,7 +1423,6 @@ class ClusterTest(TestCase):
 
     def test_parental_key_checks_clusterable_model(self):
         from django.core import checks
-        from django.db import models
         from modelcluster.fields import ParentalKey
 
         class Instrument(models.Model):
@@ -1453,7 +1453,6 @@ class ClusterTest(TestCase):
 
     def test_parental_key_checks_related_name_is_not_plus(self):
         from django.core import checks
-        from django.db import models
         from modelcluster.fields import ParentalKey
 
         class Instrument(models.Model):
@@ -1481,7 +1480,6 @@ class ClusterTest(TestCase):
 
     def test_parental_key_checks_target_is_resolved_as_class(self):
         from django.core import checks
-        from django.db import models
         from modelcluster.fields import ParentalKey
 
         class Instrument(models.Model):

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+~~~~~~~~~~
+* Add decorator-based registration for exposing custom QuerySet helper methods on model-specific FakeQuerySet instances.
+* Allow `fakequeryset_compatible` to attach methods to generated FakeQuerySet classes under an alternative method name.
+
 6.5 (01.05.2026)
 ~~~~~~~~~~~~~~~~
 * Preliminary Django 6.1 support (Sage Abdullah)

@@ -62,6 +62,54 @@ But what if you could? There are all sorts of scenarios where you might want to 
 For more examples, see the unit tests.
 
 
+Custom QuerySet helpers on in-memory relations
+----------------------------------------------
+
+Custom ``QuerySet`` helper methods can be made available on in-memory relation querysets
+by decorating methods with ``fakequeryset_compatible``:
+
+.. code-block:: python
+
+ from django.db import models
+ from modelcluster.queryset import fakequeryset_compatible
+
+ class BandMemberQuerySet(models.QuerySet):
+     @fakequeryset_compatible
+     def named_paul(self):
+         return self.filter(name__contains="Paul")
+
+    # Database implementation
+     def with_name_uppercase(self):
+         return self.extra(select={"name_upper": "UPPER(name)"})
+
+    @fakequeryset_compatible(as_name="with_name_uppercase")
+    def with_name_uppercase_fake(self):
+        # No-op version specifically for FakeBandMemberQuerySet
+        return self
+
+ class BandMember(models.Model):
+     objects = BandMemberQuerySet.as_manager()
+     band = ParentalKey("Band", related_name="members", on_delete=models.CASCADE)
+     name = models.CharField(max_length=255)
+
+ >>> beatles = Band(name="The Beatles")
+ >>> beatles.members = [BandMember(name="John Lennon"), BandMember(name="Paul McCartney")]
+ >>> [member.name for member in beatles.members.named_paul()]
+ ['Paul McCartney']
+
+``as_name=...`` allows you to keep the original database-only method while attaching a
+separate in-memory implementation to the generated FakeQuerySet under that method name.
+
+Important: ``fakequeryset_compatible`` methods are discovered from the queryset class
+used by the model's default manager (``Model._default_manager``), including its queryset
+base classes. Decorating methods on unrelated queryset classes or non-default managers
+will not make them available on that model's generated FakeQuerySet.
+
+When you need to construct model-aware in-memory querysets directly, use
+``FakeQuerySet.from_instances(...)`` or ``get_fake_queryset_for_model(...)`` from
+``modelcluster.queryset``.
+
+
 Many-to-many relations
 ----------------------
 

@@ -15,7 +15,7 @@ from django.db.models.fields.related import (
 
 from modelcluster.utils import sort_by_fields
 
-from modelcluster.queryset import FakeQuerySet
+from modelcluster.queryset import get_fake_queryset_for_model
 
 
 def create_deferring_foreign_related_manager(related, original_manager_cls):
@@ -78,7 +78,7 @@ def create_deferring_foreign_related_manager(related, original_manager_cls):
                 else:
                     return self.get_live_queryset()
 
-            return FakeQuerySet(related.related_model, results)
+            return get_fake_queryset_for_model(related.related_model, results)
 
         def _apply_rel_filters(self, queryset):
             # Implemented as empty for compatibility sake
@@ -361,7 +361,7 @@ def create_deferring_forward_many_to_many_manager(rel, original_manager_cls):
                     # so bypass it and return an empty queryset
                     return rel_model.objects.none()
 
-            return FakeQuerySet(rel_model, results)
+            return get_fake_queryset_for_model(rel_model, results)
 
         def get_prefetch_querysets(self, instances, querysets=None):
             # Derived from Django's ManyRelatedManager.get_prefetch_queryset.

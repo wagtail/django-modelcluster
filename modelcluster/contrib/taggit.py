@@ -5,7 +5,7 @@ from taggit import VERSION as TAGGIT_VERSION
 from taggit.managers import TaggableManager, _TaggableManager
 from taggit.utils import require_instance_manager
 
-from modelcluster.queryset import FakeQuerySet
+from modelcluster.queryset import get_fake_queryset_for_model
 
 
 if TAGGIT_VERSION < (0, 20, 0):
@@ -35,7 +35,7 @@ class _ClusterTaggableManager(_TaggableManager):
             # we want to return those uncommitted changes. This shouldn't
             # require a request to the database.
             if tagged_item_manager.is_deferring:
-                return FakeQuerySet(
+                return get_fake_queryset_for_model(
                     self.through.tag_model(),
                     [tagged_item.tag for tagged_item in tagged_item_manager.all()],
                 )
@@ -75,7 +75,7 @@ class _ClusterTaggableManager(_TaggableManager):
             # To handle this case we return an empty tag list since there won't
             # be any existing tags in the database for an unsaved instance.
             elif self.instance.pk is None:
-                return FakeQuerySet(self.through.tag_model(), [])
+                return get_fake_queryset_for_model(self.through.tag_model(), [])
 
         # If we've reached this point then either this manager isn't associated
         # with a specific model, which probably means it's being invoked within

@@ -113,14 +113,13 @@ class BaseChildFormSet(BaseTransientModelFormSet):
             for i, form in enumerate(self.ordered_forms):
                 setattr(form.instance, sort_order_field, i)
 
-        # If the manager has existing instances with a blank ID, we have no way of knowing
-        # whether these correspond to items in the submitted data. We'll assume that they do,
-        # as that's the most common case (i.e. the formset contains the full set of child objects,
-        # not just a selection of additions / updates) and so we delete all ID-less objects here
-        # on the basis that they will be re-added by the formset saving mechanism.
-        no_id_instances = [obj for obj in manager.all() if obj.pk is None]
-        if no_id_instances:
-            manager.remove(*no_id_instances)
+        # Remove existing instances that are not represented by the submitted forms.
+        # This handles the case where an existing child is submitted with a blank ID,
+        # which would otherwise result in a duplicate child being added.
+        form_pks = {form.instance.pk for form in self.forms} - {None}
+        stale_instances = [obj for obj in manager.all() if obj.pk not in form_pks]
+        if stale_instances:
+            manager.remove(*stale_instances)
 
         manager.add(*saved_instances)
         manager.remove(*self.deleted_objects)

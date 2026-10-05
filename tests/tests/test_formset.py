@@ -244,6 +244,38 @@ class ChildFormsetTest(TestCase):
         band_members_formset.save(commit=False)
         self.assertEqual(2, beatles.members.count())
 
+    def test_save_replaces_stale_child_with_blank_id(self):
+        john = BandMember(name="John Lennon")
+        beatles = Band(name="The Beatles", members=[john])
+        beatles.save()
+
+        # Simulate a previously saved parent being loaded with its children
+        # carrying real primary keys.
+        reloaded = Band.from_json(beatles.to_json())
+
+        BandMembersFormset = childformset_factory(
+            Band, BandMember, fields=["name"], extra=1
+        )
+
+        # The existing child is submitted again, but with a blank ID.
+        band_members_formset = BandMembersFormset(
+            {
+                "form-TOTAL_FORMS": 1,
+                "form-INITIAL_FORMS": 0,
+                "form-MAX_NUM_FORMS": 1000,
+                "form-0-id": "",
+                "form-0-name": "John Lennon",
+            },
+            instance=reloaded,
+        )
+
+        self.assertTrue(band_members_formset.is_valid())
+        band_members_formset.save()
+
+        self.assertEqual(
+            1, BandMember.objects.filter(name="John Lennon").count()
+        )
+
     def test_max_num_ignored_in_validation_when_validate_max_false(self):
         BandMembersFormset = childformset_factory(Band, BandMember, max_num=2)
 
